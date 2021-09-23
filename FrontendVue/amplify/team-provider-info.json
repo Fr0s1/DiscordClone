@@ -1,0 +1,26 @@
+{
+    "dev": {
+        "awscloudformation": {
+            "AuthRoleName": "amplify-realworldvue-dev-164326-authRole",
+            "UnauthRoleArn": "arn:aws:iam::207986101045:role/amplify-realworldvue-dev-164326-unauthRole",
+            "AuthRoleArn": "arn:aws:iam::207986101045:role/amplify-realworldvue-dev-164326-authRole",
+            "Region": "ap-southeast-1",
+            "DeploymentBucketName": "amplify-realworldvue-dev-164326-deployment",
+            "UnauthRoleName": "amplify-realworldvue-dev-164326-unauthRole",
+            "StackName": "amplify-realworldvue-dev-164326",
+            "StackId": "arn:aws:cloudformation:ap-southeast-1:207986101045:stack/amplify-realworldvue-dev-164326/0be24150-192e-11ec-91b4-02cc03300d1e",
+            "AmplifyAppId": "ds0c5qqlpzokj"
+        },
+        "categories": {
+            "auth": {
+                "realworldvuee32f5ea4": {}
+            },
+            "hosting": {
+                "amplifyhosting": {
+                    "appId": "ds0c5qqlpzokj",
+                    "type": "manual"
+                }
+            }
+        }
+    }
+}
