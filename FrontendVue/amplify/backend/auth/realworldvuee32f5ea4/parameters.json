@@ -24,15 +24,23 @@
         "preferred_username"
     ],
     "userpoolClientGenerateSecret": false,
-    "userpoolClientRefreshTokenValidity": 30,
+    "userpoolClientRefreshTokenValidity": "7",
     "userpoolClientWriteAttributes": [
+        "birthdate",
+        "name",
+        "phone_number",
+        "picture",
         "email"
     ],
     "userpoolClientReadAttributes": [
-        "email"
+        "birthdate",
+        "email",
+        "name",
+        "phone_number",
+        "picture"
     ],
     "userpoolClientLambdaRole": "realwoe32f5ea4_userpoolclient_lambda_role",
-    "userpoolClientSetAttributes": false,
+    "userpoolClientSetAttributes": true,
     "sharedId": "e32f5ea4",
     "resourceName": "realworldvuee32f5ea4",
     "authSelections": "identityPoolAndUserPool",
@@ -48,9 +56,20 @@
             "Arn"
         ]
     },
-    "useDefault": "default",
+    "useDefault": "manual",
     "userPoolGroupList": [],
     "serviceName": "Cognito",
     "usernameCaseSensitive": false,
-    "dependsOn": []
+    "dependsOn": [],
+    "thirdPartyAuth": false,
+    "userPoolGroups": false,
+    "adminQueries": true,
+    "triggers": "{}",
+    "hostedUI": false,
+    "parentStack": {
+        "Ref": "AWS::StackId"
+    },
+    "breakCircularDependency": true,
+    "permissions": [],
+    "authProviders": []
 }
