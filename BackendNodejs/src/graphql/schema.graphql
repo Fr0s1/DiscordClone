@@ -1,0 +1,71 @@
+type Query {
+  user(username: String): User
+  group(admin: String!, groupName: String!): GroupChat
+}
+
+type Mutation {
+  addUser(
+    username: String!
+    email: String!
+    name: String!
+    phone_number: String!
+  ): User!
+
+  createGroup(groupName: String!, username: String!): GroupChat
+
+  addUserToGroup(
+    admin: String!
+    groupName: String!
+    username: String!
+  ): GroupChat
+
+  removeUserFromGroup(
+    admin: String!
+    groupName: String!
+    username: String!
+  ): GroupChat
+}
+
+scalar Date
+
+type User {
+  # The following fields are saved in AWS Cognito
+  username: String!
+  #   birthdate: Date!
+  email: String!
+  name: String!
+  phone_number: String!
+
+  # The following fields are saved in MongoDB
+  friendlist: [User!]
+  groups: [GroupChat!]!
+  contactlist: [User!]
+  #   avatar: String! # S3 Image Url
+  #   messages: [Message!]!
+}
+
+type Message {
+  id: ID!
+  sender: User!
+  receiver: User!
+  content: String!
+  fileUrls: [String!]!
+  # sentTime: Date!
+  groupChat: GroupChat
+}
+
+type GroupChat {
+  groupName: String!
+  admin: User!
+  members: [User!]!
+  # messages: [Message!]!
+  # groupAvatar: String!
+  # createdAt: Date!
+}
+
+type FriendRequest {
+  sender: User!
+  receiver: User!
+  acceptStatus: Boolean!
+  # sentTime: Date!
+}
