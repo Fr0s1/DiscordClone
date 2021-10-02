@@ -29,7 +29,10 @@ const userSchema = new Schema({
     groups: [{
         type: Schema.Types.ObjectId,
         ref: 'Group'
-    }]
+    }],
+    avatarUrl: {
+        type: String
+    }
 }, { versionKey: false })
 
 module.exports = userSchema

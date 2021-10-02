@@ -1,6 +1,11 @@
 type Query {
   user(username: String): User
   group(admin: String!, groupName: String!): GroupChat
+  groupsList(groupName: String!): [GroupChat]!
+
+  # firstUserId is the user id of currently logged in user who make request
+  # secondUserId is the user id who the logged in user is chatting
+  userMessages(firstUser: String!, secondUser: String!): [Message!]
 }
 
 type Mutation {
@@ -24,6 +29,13 @@ type Mutation {
     groupName: String!
     username: String!
   ): GroupChat
+
+  deleteMessage(username: String!, messageId: String!): Message
+}
+
+enum OperationStatus {
+  SUCCESS
+  FAILED
 }
 
 scalar Date
@@ -37,21 +49,29 @@ type User {
   phone_number: String!
 
   # The following fields are saved in MongoDB
+  _id: String!
   friendlist: [User!]
   groups: [GroupChat!]!
   contactlist: [User!]
-  #   avatar: String! # S3 Image Url
+  avatar: String # S3 Image Url
   #   messages: [Message!]!
 }
 
 type Message {
-  id: ID!
+  _id: ID!
   sender: User!
-  receiver: User!
+  receiver: User
   content: String!
-  fileUrls: [String!]!
-  # sentTime: Date!
-  groupChat: GroupChat
+  files: [File]!
+  markedDeletedBySender: Boolean
+  markedDeletedByReceiver: Boolean
+  sentTime: String!
+}
+
+type File {
+  fileName: String!
+  fileType: String!
+  fileUrl: String!
 }
 
 type GroupChat {
@@ -59,7 +79,7 @@ type GroupChat {
   admin: User!
   members: [User!]!
   # messages: [Message!]!
-  # groupAvatar: String!
+  groupAvatar: String!
   # createdAt: Date!
 }
 

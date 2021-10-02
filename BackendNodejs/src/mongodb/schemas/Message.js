@@ -11,18 +11,25 @@ const messageSchema = new Schema({
         ref: 'User'
     },
     content: {
-        type: String
+        type: Schema.Types.String
     },
-    group: {
-        type: Schema.Types.ObjectId,
-        ref: 'Group',
-        default: null
+    files: {
+        type: [{
+            fileType: Schema.Types.String,
+            fileName: Schema.Types.String
+        }]
     },
-    filesUrl: [{
-        type: String
-    }],
+    markedDeletedBySender: {
+        type: Schema.Types.Boolean,
+        default: false
+    },
+    markedDeletedByReceiver: {
+        type: Schema.Types.Boolean,
+        default: false
+    },
     sentTime: {
-        type: Schema.Types.Date
+        type: Schema.Types.Date,
+        default: Date.now()
     }
 }, { versionKey: false })
 
