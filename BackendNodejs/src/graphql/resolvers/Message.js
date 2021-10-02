@@ -6,8 +6,6 @@ async function files(parent, args, context) {
         files: parent.files
     })
 
-    console.log(files.data)
-
     return files.data
 }
 

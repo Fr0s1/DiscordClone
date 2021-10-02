@@ -28,7 +28,6 @@ async function getFileUrlsOfMessage(bucket, message) {
         const result = await s3.getSignedUrlPromise('getObject', destparams)
 
         file.fileUrl = result
-        console.log(result)
     }
 }
 

@@ -217,7 +217,6 @@ async function deleteMessage(parent, args, context) {
 
         await context.aws.emptyS3Directory(Bucket, Key)
 
-        console.log(deletedMessage)
         return deletedMessage
     } else {
         await Message.findOneAndUpdate({

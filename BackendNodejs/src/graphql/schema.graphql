@@ -5,7 +5,7 @@ type Query {
 
   # firstUserId is the user id of currently logged in user who make request
   # secondUserId is the user id who the logged in user is chatting
-  userMessages(firstUser: String!, secondUser: String!): [Message!]
+  userMessages(firstUser: String!, secondUser: String!, limit: Int): [Message!]
 }
 
 type Mutation {
@@ -65,7 +65,7 @@ type Message {
   files: [File]!
   markedDeletedBySender: Boolean
   markedDeletedByReceiver: Boolean
-  sentTime: String!
+  sentTime: Date!
 }
 
 type File {

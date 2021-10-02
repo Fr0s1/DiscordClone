@@ -10,13 +10,13 @@ const Message = require('./graphql/resolvers/Message')
 const GroupChat = require('./graphql/resolvers/GroupChat')
 
 require('dotenv').config()
-// const dateScalar = require('./graphql/scalars/Date')
+const dateScalar = require('./graphql/scalars/Date')
 const aws = require('./aws')
 
 const mongo = require('./mongodb/schemas')
 
 const resolvers = {
-    // Date: dateScalar,
+    Date: dateScalar,
     Query,
     Mutation,
     User,

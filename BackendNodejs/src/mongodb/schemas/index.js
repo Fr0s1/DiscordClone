@@ -49,10 +49,9 @@ async function main() {
 
     // let username = mongoose.Types.ObjectId('6151ad49dc7dc28f1ba1e0df')
 
-    // let messages = await Message.find({
-    //     sender: username
-    // }).populate('receiver')
-    // console.log(messages)
+    let messages = await Message.find({
+    }).sort({sentTime: 'desc'})
+    console.log(messages)
 
     // const axios = require('axios')
 

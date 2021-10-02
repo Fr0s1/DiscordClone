@@ -5,7 +5,6 @@ async function admin(parent, args, context) {
         _id: parent.admin
     })
     
-    console.log(admin)
     return admin
 }
 
@@ -22,7 +21,6 @@ async function members(parent, args, context) {
         groupName: parent.groupName
     }).populate('members').select({"members": 1})
 
-    console.log(data.members)
     return data.members
 }
 
