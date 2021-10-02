@@ -4,14 +4,12 @@ exports.uploadUserAvatar = async (req, res) => {
     var multer = require('multer')
 
     upload = multer()
-    const { User } = require('../models')
 
     const username = req.body.username
     const file = req.file
 
     let BucketName = process.env.BUCKET_NAME
 
-    console.log(BucketName)
     const destparams = {
         Bucket: BucketName,
         Key: `users/${username}/avatar/${file.originalname}`,
@@ -24,7 +22,7 @@ exports.uploadUserAvatar = async (req, res) => {
     const result = await s3.getSignedUrlPromise('getObject', {
         Bucket: BucketName,
         Key: destparams.Key,
-        Expires: 3600
+        Expires: 7200
     })
 
     res.send(result)
@@ -39,7 +37,6 @@ exports.getUserAvatarUrl = async (req, res) => {
 
     const listedObjects = await s3.listObjectsV2(listParams).promise();
 
-    console.log(listedObjects)
     if (listedObjects.Contents.length == 0) {
         res.json({
             avatar: ""

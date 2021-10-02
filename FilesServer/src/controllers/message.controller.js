@@ -1,5 +1,4 @@
 exports.getMessageFilesUrls = async (req, res) => {
-    console.log(req.body)
     let files = req.body.files
     let messageId = req.body.messageId
     let BucketName = process.env.BUCKET_NAME
