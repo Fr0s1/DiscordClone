@@ -1,5 +1,7 @@
 const { User } = require("../../mongodb/schemas")
 
+// Add AWS Cognito user information to MongoDB to make it easier to write resolvers 
+// Just need to query to MongoDB instead of fetching using Cognito SDK
 async function addUser(parent, args, context) {
     const User = context.mongo.User
 
@@ -22,6 +24,7 @@ async function addUser(parent, args, context) {
     }
 }
 
+// Create group chat
 async function createGroup(parent, args, context) {
     let admin = args.username
     let Group = context.mongo.Group
@@ -37,13 +40,13 @@ async function createGroup(parent, args, context) {
         // Get admin id because MongoDB save ObjectID
         let adminId = userFound._id
 
-        // Check if the group already exists
+        // Check if the group was already created by this user
         let groupFound = await Group.find({
             groupName: args.groupName,
             admin: adminId
         })
 
-        if (groupFound.length == 0) {
+        if (groupFound.length == 0) { // No group found
             let newGroup = {
                 groupName: args.groupName,
                 admin: adminId,
@@ -52,8 +55,6 @@ async function createGroup(parent, args, context) {
 
             try {
                 let result = await Group.create(newGroup)
-
-                await Group.populate(result, { path: 'admin members' })
 
                 // Add this newly created group to admin's list of groups
                 await User.findOneAndUpdate({
@@ -100,24 +101,23 @@ async function addUserToGroup(parent, args, context) {
             if (groupFound.members.includes(userId)) {
                 throw new Error('User is already in group')
             } else {
-                await Group.findOneAndUpdate({
+                let result = await Group.findOneAndUpdate({
                     groupName: args.groupName,
                     admin: groupAdmin._id
                 }, {
                     $push: { members: userId }
+                }, {
+                    new: true
                 })
 
-                // Add this newly created group to user's list of groups
+                console.log(result)
+
+                // Include this group to user list of group the user is in
                 await User.findOneAndUpdate({
                     username
                 }, {
                     $push: { groups: groupFound._id }
                 })
-
-                let result = await Group.findOne({
-                    groupName: args.groupName,
-                    admin: groupAdmin._id
-                }).populate('admin members').select({ "_id": 0 })
 
                 return result
             }
@@ -164,8 +164,6 @@ async function removeUserFromGroup(parent, args, context) {
                     members: groupFound.members
                 })
 
-                await Group.populate(groupFound, { path: 'admin members' })
-
                 userFound.groups.splice(userFound.groups.indexOf(groupFound._id), 1)
 
                 await User.findOneAndUpdate({
@@ -196,7 +194,7 @@ async function deleteMessage(parent, args, context) {
 
     let foundMessage = await Message.findOne({
         _id: messageId
-    }).populate('sender').populate('receiver').populate('files')
+    })
 
     if (!foundMessage) {
         throw new Error('Message does not exist')
@@ -213,7 +211,7 @@ async function deleteMessage(parent, args, context) {
         let Key = `message/${foundMessage._id}/`
         let deletedMessage = await Message.findByIdAndDelete({
             _id: foundMessage._id
-        }).populate('sender').populate('receiver').populate('files')
+        })
 
         await context.aws.emptyS3Directory(Bucket, Key)
 

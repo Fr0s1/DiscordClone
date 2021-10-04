@@ -3,9 +3,15 @@ type Query {
   group(admin: String!, groupName: String!): GroupChat
   groupsList(groupName: String!): [GroupChat]!
 
-  # firstUserId is the user id of currently logged in user who make request
-  # secondUserId is the user id who the logged in user is chatting
-  userMessages(firstUser: String!, secondUser: String!, limit: Int): [Message!]
+  # firstUserId is the user id of currently logged in user who makes request
+  # secondUserId is the id of user to whom the logged in user is chatting
+  userMessages(firstUser: String!, secondUser: String!, nextCursor: Date, limit: Int): MessagesList
+}
+
+type MessagesList {
+  messages: [Message]!
+  count: Int!, # number of message to get in 1 query
+  nextCursor: Date! # id of last message in this query
 }
 
 type Mutation {
@@ -33,17 +39,11 @@ type Mutation {
   deleteMessage(username: String!, messageId: String!): Message
 }
 
-enum OperationStatus {
-  SUCCESS
-  FAILED
-}
-
 scalar Date
 
 type User {
   # The following fields are saved in AWS Cognito
   username: String!
-  #   birthdate: Date!
   email: String!
   name: String!
   phone_number: String!
@@ -54,17 +54,25 @@ type User {
   groups: [GroupChat!]!
   contactlist: [User!]
   avatar: String # S3 Image Url
-  #   messages: [Message!]!
 }
 
 type Message {
   _id: ID!
   sender: User!
-  receiver: User
+  receiver: User!
   content: String!
   files: [File]!
   markedDeletedBySender: Boolean
   markedDeletedByReceiver: Boolean
+  sentTime: Date!
+}
+
+type GroupMessage {
+  _id: ID!
+  sender: User!
+  content: String!
+  files: [File]!
+  group: GroupChat!
   sentTime: Date!
 }
 
@@ -75,6 +83,7 @@ type File {
 }
 
 type GroupChat {
+  _id: String!
   groupName: String!
   admin: User!
   members: [User!]!

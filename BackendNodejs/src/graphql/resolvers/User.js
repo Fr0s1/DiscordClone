@@ -34,7 +34,7 @@ async function avatar(parent, args, context) {
     const axios = context.axios
 
     let FILE_SERVER_ENDPOINT = process.env.FILE_SERVER_ENDPOINT
-    let result = await axios.get(`${FILE_SERVER_ENDPOINT}/users/avatar/${username}`)
+    let result = await axios.get(`${FILE_SERVER_ENDPOINT}/users/${username}/avatar`)
     
     return result.data.avatar
 }

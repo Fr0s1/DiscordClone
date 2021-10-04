@@ -1,12 +1,8 @@
 const mongoose = require('mongoose')
 const { Schema } = mongoose;
 
-const messageSchema = new Schema({
+const groupMessageSchema = new Schema({
     sender: {
-        type: Schema.Types.ObjectId,
-        ref: 'User'
-    },
-    receiver: {
         type: Schema.Types.ObjectId,
         ref: 'User'
     },
@@ -19,13 +15,9 @@ const messageSchema = new Schema({
             fileName: Schema.Types.String
         }]
     },
-    markedDeletedBySender: {
-        type: Schema.Types.Boolean,
-        default: false
-    },
-    markedDeletedByReceiver: {
-        type: Schema.Types.Boolean,
-        default: false
+    group: {
+        type: Schema.Types.ObjectId,
+        ref: 'Group'
     },
     sentTime: {
         type: Schema.Types.Date,
@@ -33,4 +25,4 @@ const messageSchema = new Schema({
     }
 }, { versionKey: false })
 
-module.exports = messageSchema
+module.exports = groupMessageSchema

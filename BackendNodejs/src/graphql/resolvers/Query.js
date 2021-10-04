@@ -33,7 +33,7 @@ async function groupsList(parent, args, context) {
 
     let result = await Group.find({
         groupName: args.groupName
-    }).populate('admin').populate('members')
+    })
 
     return result
 }
@@ -42,6 +42,9 @@ async function userMessages(parent, args, context) {
     const Message = context.mongo.Message
     const User = context.mongo.User
 
+    const nextCursor = args.nextCursor
+    const limit = args.limit
+    
     let firstUser = await User.findOne({
         username: args.firstUser
     })
@@ -52,7 +55,7 @@ async function userMessages(parent, args, context) {
 
     let messages = await Message.find(
         {
-            $and: [{ group: null }, {
+            $and: [{ sentTime: {$lt: nextCursor} }, {
                 $or: [
                     {
                         $and: [
@@ -71,9 +74,16 @@ async function userMessages(parent, args, context) {
                 ]
             }]
         }
-    ).populate('sender').populate('receiver').populate('files')
-
-    return messages
+    ).sort({sentTime: 'desc'}).limit(limit)
+    
+    let result = {
+        messages,
+        count: messages.length,
+        get nextCursor() {
+            return this.count > 0 ? messages[messages.length-1].sentTime : ""
+        }
+    }
+    return result
 }
 
 module.exports = {

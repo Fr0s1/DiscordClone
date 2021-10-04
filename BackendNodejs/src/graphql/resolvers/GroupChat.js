@@ -24,7 +24,20 @@ async function members(parent, args, context) {
     return data.members
 }
 
+async function groupAvatar(parent, args, context) {
+    let groupId = parent._id
+
+    const axios = context.axios
+
+    let FILE_SERVER_ENDPOINT = process.env.FILE_SERVER_ENDPOINT
+    // Get group avatar url
+    let result = await axios.get(`${FILE_SERVER_ENDPOINT}/groups/${groupId}/avatar`)
+    
+    return result.data.groupAvatar
+}
+
 module.exports = {
     admin,
-    members
+    members,
+    groupAvatar
 }

@@ -16,21 +16,6 @@ const aws = {
     emptyS3Directory
 }
 
-async function getFileUrlsOfMessage(bucket, message) {
-    let BucketName = process.env.BUCKET_NAME
-    for (file of message.files) {
-        const destparams = {
-            Bucket: BucketName,
-            Key: `message/${message._id}/${file.fileName}`,
-            Expires: 3600
-        };
-
-        const result = await s3.getSignedUrlPromise('getObject', destparams)
-
-        file.fileUrl = result
-    }
-}
-
 async function emptyS3Directory(bucket, dir) {
     const listParams = {
         Bucket: bucket,
