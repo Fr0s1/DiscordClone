@@ -7,7 +7,8 @@ module.exports = app => {
 
     const upload = multer()
 
-    router.post('/avatar', upload.single('avatar'), group.uploadGroupAvatar)
+    router.post('/avatar', upload.single('groupAvatar'), group.uploadGroupAvatar)
+    router.get('/:groupId/avatar/', group.getGroupAvatar)
 
-    app.use('/file/users', router);
+    app.use('/file/groups', router);
 };

@@ -9,7 +9,9 @@ module.exports = app => {
 
     router.post('/avatar', upload.single('avatar'), user.uploadUserAvatar)
 
-    router.get('/avatar/:username', user.getUserAvatarUrl)
+    router.get('/:username/avatar', user.getUserAvatarUrl)
+    
+    router.delete('/:username/avatar', user.deleteUserAvatar)
     
     app.use('/file/users', router);
 };

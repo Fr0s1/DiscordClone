@@ -11,11 +11,11 @@ exports.getMessageFilesUrls = async (req, res) => {
             Expires: 3600
         };
 
-        const result = await s3.getSignedUrlPromise('getObject', destparams)
+        // const result = await s3.getSignedUrlPromise('getObject', destparams)
 
+        const result = " "
         file.fileUrl = result
     }
 
     res.json(files)
-
 }
