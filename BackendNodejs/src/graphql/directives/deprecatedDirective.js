@@ -22,3 +22,7 @@ function deprecatedDirective(directiveName) {
         }),
     };
 }
+
+module.exports = {
+    deprecatedDirective
+}
