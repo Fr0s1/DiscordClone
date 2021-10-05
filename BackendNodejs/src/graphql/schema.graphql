@@ -37,6 +37,13 @@ type Mutation {
   ): GroupChat
 
   deleteMessage(username: String!, messageId: String!): Message
+
+  # addUserToFriendList(username: String!): [String!]!
+}
+
+enum OperationStatus {
+  SUCCESS
+  FAILED
 }
 
 scalar Date

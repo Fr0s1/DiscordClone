@@ -225,6 +225,10 @@ async function deleteMessage(parent, args, context) {
     return foundMessage
 }
 
+// async function addUserToFriendList(parent, args, context, info) {
+//     let username = context.tokenPayload.
+// }
+
 module.exports = {
     addUser,
     createGroup,
