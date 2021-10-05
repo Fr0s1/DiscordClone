@@ -12,13 +12,18 @@
       "AmplifyAppId": "ds0c5qqlpzokj"
     },
     "categories": {
-      "auth": {
-        "realworldvuee32f5ea4": {}
-      },
       "hosting": {
         "amplifyhosting": {
           "appId": "ds0c5qqlpzokj",
           "type": "manual"
+        }
+      },
+      "auth": {
+        "realworldvuee96d13e1": {
+          "userPoolId": "ap-southeast-1_tO2VfGlVT",
+          "userPoolName": "DiscordUser",
+          "webClientId": "6umk03ua6t2t5ld83bj8j00b8k",
+          "nativeClientId": "6umk03ua6t2t5ld83bj8j00b8k"
         }
       }
     }
