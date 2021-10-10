@@ -3,6 +3,9 @@ const app = express();
 const http = require('http');
 const server = http.createServer(app);
 const cors = require('cors')
+const path = require('path')
+
+require('dotenv').config({ path: path.join(process.cwd(), 'env/.env') })
 
 let corsOptions = {
     origin: '*'
@@ -11,6 +14,7 @@ let corsOptions = {
 app.use(cors(corsOptions));
 
 require('./routes/message.route')(app)
+require('./routes/groupmessage.route')(app)
 
 const io = require("socket.io")(server, {
     cors: {
