@@ -1,4 +1,5 @@
 const s3 = require('../aws/s3')
+const redisClient = require('../redis/redisClient')
 
 exports.uploadGroupAvatar = async (req, res) => {
     var multer = require('multer')
@@ -19,24 +20,31 @@ exports.uploadGroupAvatar = async (req, res) => {
         ContentEncoding: file.encoding
     };
 
-    // const putResult = await s3.putObject(destparams).promise();
+    const putResult = await s3.putObject(destparams).promise();
 
-    // const result = await s3.getSignedUrlPromise('getObject', {
-    //     Bucket: BucketName,
-    //     Key: destparams.Key,
-    //     Expires: 3600
-    // })
+    let groupAvatarRedisKey = `groups:${groupId}:avatar`
 
-    res.send(" ")
+    const result = await s3.getSignedUrlPromise('getObject', {
+        Bucket: BucketName,
+        Key: destparams.Key,
+        Expires: parseInt(process.env.redisKeyExpireTime)
+    })
+
+    redisClient.setexAsync(groupAvatarRedisKey, parseInt(process.env.redisKeyExpireTime), result)
+
+    res.json({
+        groupAvatar: result
+    })
 }
 
 exports.getGroupAvatar = async (req, res) => {
+    let groupId = req.params.groupId
     const Bucket = process.env.BUCKET_NAME
     const listParams = {
         Bucket,
-        Prefix: `groups/${req.params.groupId}/avatar/`
+        Prefix: `groups/${groupId}/avatar/`
     };
-    // const listedObjects = await s3.listObjectsV2(listParams).promise();
+    const listedObjects = await s3.listObjectsV2(listParams).promise();
 
     let contentLength = listedObjects.Contents.length
     if (contentLength == 0) {
@@ -44,14 +52,27 @@ exports.getGroupAvatar = async (req, res) => {
             groupAvatar: " "
         })
     } else {
-        // let avatarUrl = await s3.getSignedUrlPromise('getObject', {
-        //     Bucket,
-        //     Key: listedObjects.Contents[0].Key,
-        //     Expires: 7200
-        // })
+        let groupAvatarRedisKey = `groups:${groupId}:avatar`
 
-        res.json({
-            groupAvatar: " "
-        })
+        if (await redisClient.existsAsync(groupAvatarRedisKey)) {
+            let result = await redisClient.getAsync(groupAvatarRedisKey)
+
+            console.log("Group Avatar Cached")
+            res.json({
+                groupAvatar: result
+            })
+        } else {
+            let avatarUrl = await s3.getSignedUrlPromise('getObject', {
+                Bucket,
+                Key: listedObjects.Contents[0].Key,
+                Expires: parseInt(process.env.redisKeyExpireTime)
+            })
+
+            redisClient.setex(groupAvatarRedisKey, parseInt(process.env.redisKeyExpireTime), avatarUrl)
+
+            res.json({
+                groupAvatar: avatarUrl
+            })
+        }
     }
 }

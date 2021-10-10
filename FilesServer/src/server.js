@@ -3,7 +3,8 @@ const app = express();
 const http = require('http'); 
 const server = http.createServer(app);
 const cors = require('cors')
-require('dotenv').config()
+const path = require('path')
+require('dotenv').config({ path: path.join(process.cwd(), 'env/.env') })
 
 let corsOptions = {
     origin: '*'
@@ -15,6 +16,7 @@ app.use(express.json())
 require('./routes/user.route')(app)
 require('./routes/message.route')(app)
 require('./routes/group.route')(app)
+require('./routes/groupmessage.route')(app)
 
 app.get('/file/healthcheck', (req, res) => { 
     res.send('File server is running'); 
