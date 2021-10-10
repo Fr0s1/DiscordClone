@@ -7,6 +7,7 @@ exports.uploadUserAvatar = async (req, res) => {
     upload = multer()
 
     const username = req.body.username
+
     const file = req.file
 
     let BucketName = process.env.BUCKET_NAME
@@ -21,28 +22,44 @@ exports.uploadUserAvatar = async (req, res) => {
 
     let redisUserAvatarKey = `users:${username}:avatar`
 
-    const putResult = await s3.putObject(destparams).promise();
+    try {
+        const putResult = await s3.putObject(destparams).promise();
+    } catch (e) {
+        console.log(e)
 
-    const avatar = await s3.getSignedUrlPromise('getObject', {
-        Bucket: BucketName,
-        Key: destparams.Key,
-        Expires: parseInt(process.env.redisKeyExpireTime)
-    })
+        res.status(500).json({
+            error: "Can't upload user avatar at the moment"
+        })
+    }
 
-    // Cached user avatar url in redis for next request
-    // and set key expire time equal s3 url time
-    redisClient.setexAsync(redisUserAvatarKey, parseInt(process.env.redisKeyExpireTime), avatar)
+    try {
+        const avatar = await s3.getSignedUrlPromise('getObject', {
+            Bucket: BucketName,
+            Key: destparams.Key,
+            Expires: parseInt(process.env.redisKeyExpireTime)
+        })
 
-    // const result = " "
-    res.json({
-        avatar 
-    })
+        // Cached user avatar url in redis for next request
+        // and set key expire time equal s3 url time
+        redisClient.setexAsync(redisUserAvatarKey, parseInt(process.env.redisKeyExpireTime), avatar)
+
+        // const result = " "
+        res.json({
+            avatar
+        })
+    } catch (e) {
+        console.log(e)
+        res.status(500).json({
+            error: "Can't get user avatar url"
+        })
+    }
 }
 
 exports.getUserAvatarUrl = async (req, res) => {
     const Bucket = process.env.BUCKET_NAME
 
     let username = req.params.username
+
     const listParams = {
         Bucket,
         Prefix: `users/${username}/avatar/`
@@ -68,12 +85,14 @@ exports.getUserAvatarUrl = async (req, res) => {
                 avatar
             })
         } else {
+            // If not cached, then get url from AWS S3
             let avatar = await s3.getSignedUrlPromise('getObject', {
                 Bucket,
                 Key: listedObjects.Contents[0].Key,
                 Expires: 3600
             })
 
+            // Then cached the result
             redisClient.setexAsync(redisUserAvatarKey, parseInt(process.env.redisKeyExpireTime), avatar)
 
             res.json({
@@ -81,11 +100,6 @@ exports.getUserAvatarUrl = async (req, res) => {
             })
         }
     }
-
-    // let avatarUrl = " "
-    // res.json({
-    //     avatar: avatarUrl
-    // })
 }
 
 exports.deleteUserAvatar = async (req, res) => {
@@ -111,6 +125,8 @@ exports.deleteUserAvatar = async (req, res) => {
                 Bucket,
                 Key: listedObjects.Contents[0].Key,
             }).promise()
+
+            // Delete cached in redis also
             let redisUserAvatarKey = `users:${username}:avatar`
 
             redisClient.delAsync(redisUserAvatarKey)

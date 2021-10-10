@@ -1,5 +1,6 @@
-API List:
+RUN "npm run dev" to start server in dev mode
 
+API List:
 Base URL: http://localhost:8000/file/...
 
 Group:
@@ -30,3 +31,4 @@ User:
        <button type="submit">Send</button>
    </form>
 
+2. GET /users/{username}/avatar: get user avatar

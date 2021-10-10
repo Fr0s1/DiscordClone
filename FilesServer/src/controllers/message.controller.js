@@ -17,7 +17,7 @@ exports.getMessageFilesUrls = async (req, res) => {
 
         if (await redisClient.hexistsAsync(redisMessageId, file.fileName)) {
             let fileUrl = await redisClient.hgetAsync(redisMessageId, file.fileName)
-            console.log('Message Files Urls Cached')
+            console.log(`Message ${messageId} files urls are cached`)
             file.fileUrl = fileUrl
         } else {
             const result = await s3.getSignedUrlPromise('getObject', destparams)

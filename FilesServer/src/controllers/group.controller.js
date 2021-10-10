@@ -20,21 +20,35 @@ exports.uploadGroupAvatar = async (req, res) => {
         ContentEncoding: file.encoding
     };
 
-    const putResult = await s3.putObject(destparams).promise();
+    try {
+        const putResult = await s3.putObject(destparams).promise();
+    } catch (e) {
+        console.log(e)
+        res.status(500).json({
+            message: "Can't upload group avatar at the moment"
+        })
+    }
 
-    let groupAvatarRedisKey = `groups:${groupId}:avatar`
+    try {
+        let groupAvatarRedisKey = `groups:${groupId}:avatar`
 
-    const result = await s3.getSignedUrlPromise('getObject', {
-        Bucket: BucketName,
-        Key: destparams.Key,
-        Expires: parseInt(process.env.redisKeyExpireTime)
-    })
+        const result = await s3.getSignedUrlPromise('getObject', {
+            Bucket: BucketName,
+            Key: destparams.Key,
+            Expires: parseInt(process.env.redisKeyExpireTime)
+        })
 
-    redisClient.setexAsync(groupAvatarRedisKey, parseInt(process.env.redisKeyExpireTime), result)
+        redisClient.setexAsync(groupAvatarRedisKey, parseInt(process.env.redisKeyExpireTime), result)
 
-    res.json({
-        groupAvatar: result
-    })
+        res.json({
+            groupAvatar: result
+        })
+    } catch (e) {
+        console.log(e)
+        res.status(500).json({
+            error: "Can't get group avatar url"
+        })
+    }
 }
 
 exports.getGroupAvatar = async (req, res) => {
@@ -47,6 +61,7 @@ exports.getGroupAvatar = async (req, res) => {
     const listedObjects = await s3.listObjectsV2(listParams).promise();
 
     let contentLength = listedObjects.Contents.length
+
     if (contentLength == 0) {
         res.json({
             groupAvatar: " "
@@ -57,7 +72,7 @@ exports.getGroupAvatar = async (req, res) => {
         if (await redisClient.existsAsync(groupAvatarRedisKey)) {
             let result = await redisClient.getAsync(groupAvatarRedisKey)
 
-            console.log("Group Avatar Cached")
+            console.log(`Group ${groupId} avatar is cached`)
             res.json({
                 groupAvatar: result
             })
