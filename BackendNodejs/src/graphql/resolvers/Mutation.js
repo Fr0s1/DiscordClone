@@ -183,24 +183,18 @@ async function removeUserFromGroup(parent, args, context) {
 }
 
 async function deleteMessage(parent, args, context) {
-    let username = args.username
     let messageId = args.messageId
     let Message = context.mongo.Message
-    let User = context.mongo.User
-
-    let user = await User.findOne({
-        username
-    })
 
     let foundMessage = await Message.findOne({
         _id: messageId
-    })
+    }).populate('sender').populate('receiver')
 
     if (!foundMessage) {
         throw new Error('Message does not exist')
     }
 
-    if (username == foundMessage.sender.username) {
+    if (context.tokenPayload.username == foundMessage.sender.username) {
         foundMessage.markedDeletedBySender = true;
     } else {
         foundMessage.markedDeletedByReceiver = true;
@@ -225,6 +219,37 @@ async function deleteMessage(parent, args, context) {
     return foundMessage
 }
 
+async function deleteGroupMessage(parent, args, context) {
+    let username = context.tokenPayload.username
+    let messageId = args.messageId
+    let GroupMessage = context.mongo.GroupMessage
+
+    try {
+        let foundMessage = await GroupMessage.findOne({
+            _id: messageId
+        }).populate('sender')
+
+        if (!foundMessage) {
+            throw new Error(`Message with id ${messageId} does not exists`)
+        }
+        
+        if (username == foundMessage.sender.username) {
+            let Bucket = process.env.BUCKET_NAME
+            let Key = `groupmessage/${foundMessage._id}/`
+            let deletedMessage = await GroupMessage.findByIdAndDelete({
+                _id: foundMessage._id
+            })
+
+            await context.aws.emptyS3Directory(Bucket, Key)
+
+            return deletedMessage
+        }
+
+    } catch (e) {
+        throw new Error(e)
+    }
+}
+
 // async function addUserToFriendList(parent, args, context, info) {
 //     let username = context.tokenPayload.
 // }
@@ -234,5 +259,6 @@ module.exports = {
     createGroup,
     addUserToGroup,
     removeUserFromGroup,
-    deleteMessage
+    deleteMessage,
+    deleteGroupMessage
 }

@@ -24,7 +24,6 @@ const GroupMessage = require('./graphql/resolvers/GroupMessage')
 
 const dateScalar = require('./graphql/scalars/Date')
 
-
 const { deprecatedDirective } = require('./graphql/directives/deprecatedDirective')
 const { makeExecutableSchema } = require('@graphql-tools/schema')
 
@@ -80,6 +79,7 @@ async function startApolloServer() {
 
                 try {
                     let tokenPayload = await cognitoExpress.validate(token)
+
                     return {
                         mongo,
                         aws,

@@ -6,24 +6,11 @@ type Query {
   # firstUserId is the user id of currently logged in user who makes request
   # secondUserId is the id of user to whom the logged in user is chatting
   userMessages(firstUser: String!, secondUser: String!, nextCursor: Date, limit: Int): MessagesList
+
+  # Because different users can create group with the same name, so get message by Group ID
+  groupMessages(groupId: String!, nextCursor: Date, limit: Int): GroupMessageList
+
   rootField: ExampleType
-}
-
-type ExampleType {
-  newField: String
-  oldField: String @deprecated(reason: "Use 'newField'.")
-}
-
-enum Role {
-  Owner
-  Friend
-  Public
-}
-
-type MessagesList {
-  messages: [Message]!
-  count: Int!, # number of message to get in 1 query
-  nextCursor: Date! # id of last message in this query
 }
 
 type Mutation {
@@ -48,9 +35,33 @@ type Mutation {
     username: String!
   ): GroupChat
 
-  deleteMessage(username: String!, messageId: String!): Message
+  deleteMessage(messageId: String!): Message
 
+  deleteGroupMessage(messageId: String!): GroupMessage
   # addUserToFriendList(username: String!): [String!]!
+}
+
+type ExampleType {
+  newField: String
+  oldField: String @deprecated(reason: "Use 'newField'.")
+}
+
+enum Role {
+  Owner
+  Friend
+  Public
+}
+
+type MessagesList {
+  messages: [Message]!
+  count: Int!, # number of message to get in 1 query
+  nextCursor: Date! # id of last message in this query
+}
+
+type GroupMessageList {
+  messages: [GroupMessage]!
+  count: Int!, # number of message to get in 1 query
+  nextCursor: Date! # id of last message in this query
 }
 
 enum OperationStatus {

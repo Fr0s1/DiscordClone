@@ -1,3 +1,5 @@
-This server is used to retrieve user information
+This GraphQL server is used to retrieve information in json
+
+
 
 Create .env file env folder for required environments variables

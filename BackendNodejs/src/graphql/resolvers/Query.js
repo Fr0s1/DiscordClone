@@ -44,7 +44,7 @@ async function userMessages(parent, args, context) {
 
     const nextCursor = args.nextCursor
     const limit = args.limit
-    
+
     let firstUser = await User.findOne({
         username: args.firstUser
     })
@@ -55,7 +55,7 @@ async function userMessages(parent, args, context) {
 
     let messages = await Message.find(
         {
-            $and: [{ sentTime: {$lt: nextCursor} }, {
+            $and: [{ sentTime: { $lt: nextCursor } }, {
                 $or: [
                     {
                         $and: [
@@ -74,13 +74,38 @@ async function userMessages(parent, args, context) {
                 ]
             }]
         }
-    ).sort({sentTime: 'desc'}).limit(limit)
-    
+    ).sort({ sentTime: 'desc' }).limit(limit)
+
     let result = {
         messages,
         count: messages.length,
         get nextCursor() {
-            return this.count > 0 ? messages[messages.length-1].sentTime : ""
+            return this.count > 0 ? messages[messages.length - 1].sentTime : ""
+        }
+    }
+    return result
+}
+
+async function groupMessages(parent, args, context) {
+    const GroupMessage = context.mongo.GroupMessage
+    const nextCursor = args.nextCursor
+    const limit = args.limit
+
+    let messages = await GroupMessage.find({
+        $and: [{
+            group: args.groupId
+        },
+        {
+            sentTime: { $lt: nextCursor }
+        }
+        ]
+    }).sort({ sentTime: 'desc' }).limit(limit)
+
+    let result = {
+        messages,
+        count: messages.length,
+        get nextCursor() {
+            return this.count > 0 ? messages[messages.length - 1].sentTime : ""
         }
     }
     return result
@@ -91,4 +116,5 @@ module.exports = {
     group,
     groupsList,
     userMessages,
+    groupMessages
 }

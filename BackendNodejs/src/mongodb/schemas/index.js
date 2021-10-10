@@ -3,15 +3,18 @@ const mongoose = require('mongoose')
 const userSchema = require('./User')
 const groupSchema = require('./Group')
 const messageSchema = require('./Message')
+const groupMessageSchema = require('./GroupMessage')
 
 const User = mongoose.model('User', userSchema)
 const Group = mongoose.model('Group', groupSchema)
 const Message = mongoose.model('Message', messageSchema)
+const GroupMessage = mongoose.model('GroupMessage', groupMessageSchema)
 
-let user = 'm001-student'
-let password = 'm001-mongodb-basics'
-let database = 'discord'
-let host = 'localhost:27017'
+
+// let user = 'm001-student'
+// let password = 'm001-mongodb-basics'
+let database = process.env.database
+let host = process.env.host
 let connectionUri = `mongodb://${host}/${database}`
 
 main().catch(err => console.log(err));
@@ -49,7 +52,8 @@ async function main() {
 
     // let username = mongoose.Types.ObjectId('6151ad49dc7dc28f1ba1e0df')
 
-    // let messages = await Message.find({
+    // let messages = await GroupMessage.findOne({
+    //     _id: "6162562c56c700971810b04c"
     // }).sort({sentTime: 'desc'})
     // console.log(messages)
 
@@ -64,7 +68,8 @@ const mongo = {
     mongoose,
     User,
     Group,
-    Message
+    Message,
+    GroupMessage
 }
 
 module.exports = mongo
