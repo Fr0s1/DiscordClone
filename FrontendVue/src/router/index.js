@@ -1,5 +1,7 @@
 import { createRouter, createWebHistory } from "vue-router";
 import Home from "../views/Home.vue";
+import Chat from "../components/Chat.vue"
+import UserProfile from "../components/UserProfile.vue"
 
 const routes = [
   {
@@ -16,6 +18,16 @@ const routes = [
     component: () =>
       import(/* webpackChunkName: "about" */ "../views/About.vue"),
   },
+  {
+    path: "/chat",
+    name: "Chat",
+    component: Chat
+  },
+  {
+    path: "/user",
+    name: "UserProfile",
+    component: UserProfile
+  }
 ];
 
 const router = createRouter({

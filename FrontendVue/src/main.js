@@ -1,10 +1,9 @@
 import { createApp } from "vue";
 import App from "./App.vue";
 import router from "./router";
-import store from "./store";
-
 import Amplify from 'aws-amplify';
 import aws_exports from './aws-exports';
+
 import {
     applyPolyfills,
     defineCustomElements,
@@ -15,4 +14,12 @@ applyPolyfills().then(() => {
     defineCustomElements(window);
 });
 
-createApp(App).use(store).use(router).mount("#app");
+import VueSocketIO from 'vue-3-socket.io';
+
+createApp(App).use(router).use(new VueSocketIO({
+    debug: true,
+    connection: 'ws://localhost:3000/chat',
+    options: {
+        withCredentials: false
+    }
+})).mount("#app");
