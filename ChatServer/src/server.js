@@ -8,8 +8,8 @@ const path = require('path')
 require('dotenv').config({ path: path.join(process.cwd(), 'env/.env') })
 
 let corsOptions = {
-    origin: '*'
-};
+    origin: "*"
+}
 
 app.use(cors(corsOptions));
 
@@ -20,11 +20,13 @@ const io = require("socket.io")(server, {
     cors: {
         origin: "*",
         methods: ["GET", "POST"]
-    }
+    },
+    allowEIO3: true
 });
 
 const nsp = io.of('/chat')
 nsp.on('connection', (socket) => {
+    console.log('Client connected')
     socket.on('chat message', msg => {
         nsp.emit('chat message', msg);
     });
@@ -37,4 +39,4 @@ app.get('/chat/healthz', (req, res) => {
 const PORT = process.env.PORT || 3000
 const os = require("os")
 const hostname = os.hostname()
-server.listen(PORT, () => { console.log(`🚀 Server ready at ${hostname}/chat`) })
+server.listen(PORT, () => { console.log(`🚀 Server ready at ${hostname}:${PORT}/chat`) })
