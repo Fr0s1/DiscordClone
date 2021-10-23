@@ -111,10 +111,15 @@ async function groupMessages(parent, args, context) {
     return result
 }
 
+function test(parent, args, context) {
+    return "hello"
+}
+
 module.exports = {
     user,
     group,
     groupsList,
     userMessages,
-    groupMessages
+    groupMessages,
+    test
 }

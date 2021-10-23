@@ -1,6 +1,11 @@
 type Query {
+  # Get information like username, friendlist, ... of a specific user
   user(username: String): User
+
+  # Get information about a group chat
   group(admin: String!, groupName: String!): GroupChat
+
+  # Get a list of group
   groupsList(groupName: String!): [GroupChat]!
 
   # firstUserId is the user id of currently logged in user who makes request
@@ -10,7 +15,7 @@ type Query {
   # Because different users can create group with the same name, so get message by Group ID
   groupMessages(groupId: String!, nextCursor: Date, limit: Int): GroupMessageList
 
-  rootField: ExampleType
+  test: String
 }
 
 type Mutation {
@@ -39,6 +44,8 @@ type Mutation {
 
   deleteGroupMessage(messageId: String!): GroupMessage
   # addUserToFriendList(username: String!): [String!]!
+
+  # addToContactList(username: String!): 
 }
 
 type ExampleType {

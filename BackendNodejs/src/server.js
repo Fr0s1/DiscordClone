@@ -64,6 +64,7 @@ async function startApolloServer() {
     const httpServer = http.createServer(app)
     const server = new ApolloServer({
         schema,
+        introspection: true,
         context: async ({ req }) => {
             const cognitoExpress = new CognitoExpress({
                 region: process.env.region,

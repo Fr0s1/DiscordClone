@@ -11,57 +11,18 @@ const Message = mongoose.model('Message', messageSchema)
 const GroupMessage = mongoose.model('GroupMessage', groupMessageSchema)
 
 
-// let user = 'm001-student'
-// let password = 'm001-mongodb-basics'
+// let mongodb_user = process.env.mongodb_user
+// let mongodb_password = process.env.mongdb_password
 let database = process.env.database
 let host = process.env.host
 let connectionUri = `mongodb://${host}/${database}`
-
+// const uri = `mongodb+srv://${mongodb_user}:${mongodb_password}@sandbox.8g94t.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`
 main().catch(err => console.log(err));
 
 async function main() {
     await mongoose.connect(connectionUri);
 
     console.log('Connected to MongoDB')
-    // const result = await User.findOne({
-    //     username: 'hieudt223'
-    // }).populate('friendlist').populate('contactlist')
-
-    // console.log(result)
-    // const group = await Group.findOne({
-    //     groupName: 'tes',
-    //     admin: result._id
-    // })
-    // console.log(group)
-    // let adminFound = await User.findOne({
-    //     username: "hieudt223"
-    // })
-
-    // let result = await Group.findOne({
-    //     // admin: adminFound._id,
-    //     groupName: "tes"
-    // }).populate('groupMembers')
-
-    // console.log(result)
-    // Group.findOne({
-    //     // admin: adminFound._id,
-    //     groupName: "tes"
-    // }).populate('groupAdmin').exec((error, groupAdmin) => {
-    //     console.log(groupAdmin)
-    // })
-
-    // let username = mongoose.Types.ObjectId('6151ad49dc7dc28f1ba1e0df')
-
-    // let messages = await GroupMessage.findOne({
-    //     _id: "6162562c56c700971810b04c"
-    // }).sort({sentTime: 'desc'})
-    // console.log(messages)
-
-    // const axios = require('axios')
-
-    // let result = await axios.get('http://localhost:8080/file/users/avatar/hieudt223')
-
-    // console.log(result)
 }
 
 const mongo = {

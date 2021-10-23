@@ -4,7 +4,7 @@ const { User } = require("../../mongodb/schemas")
 // Just need to query to MongoDB instead of fetching using Cognito SDK
 async function addUser(parent, args, context) {
     const User = context.mongo.User
-
+    
     // Check if user already exists
     let userFound = await User.find({
         username: args.username
@@ -29,6 +29,11 @@ async function createGroup(parent, args, context) {
     let admin = args.username
     let Group = context.mongo.Group
 
+    try {
+        
+    } catch (e) {
+        throw new Error(e)
+    }
     // Fetch information of user who created this group
     let userFound = await User.findOne({
         username: admin
