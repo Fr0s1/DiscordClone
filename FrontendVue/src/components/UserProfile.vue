@@ -179,10 +179,40 @@
         </div>
       </div>
     </form>
+    <p>{{test}}</p>
   </div>
 </template>
 
-<script></script>
+<script>
+import gql from "graphql-tag";
+
+export default {
+  data() {
+    return {
+      // Initialize your apollo data
+      test: "test",
+    };
+  },
+  apollo: {
+    // Simple query that will update the 'test' vue property
+    test: gql`
+      query Query {
+        test
+      }
+    `,
+  },
+  methods: {
+    f() {
+      // console.log(this.test);
+      this.$apollo.queries.test;
+      console.log(this.test);
+    },
+  },
+  mounted() {
+    this.f();
+  },
+};
+</script>
 
 <style scoped>
 body {
