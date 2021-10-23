@@ -3,12 +3,12 @@ import App from "./App.vue";
 import router from "./router";
 import Amplify, { Auth } from 'aws-amplify';
 import aws_exports from './aws-exports';
+import config from './config'
 
 import {
     applyPolyfills,
     defineCustomElements,
 } from '@aws-amplify/ui-components/loader';
-
 
 import VueSocketIO from 'vue-3-socket.io';
 
@@ -30,7 +30,7 @@ applyPolyfills().then(() => {
 
     app.use(new VueSocketIO({
         debug: true,
-        connection: 'ws://localhost:3000/chat',
+        connection: config.socketIO_Endpoint,
         options: {
             withCredentials: false
         }
@@ -40,21 +40,27 @@ applyPolyfills().then(() => {
 
     const getHeaders = async () => {
 
-        let res = await Auth.currentSession()
-        let accessToken = res.getAccessToken()
-        let jwt = accessToken.getJwtToken()
-        //You can print them to see the full objects
-        console.log(`myAccessToken: ${JSON.stringify(accessToken)}`)
-        console.log(`myJwt: ${jwt}`)
+        try {
+            let res = await Auth.currentSession()
+            let accessToken = res.getAccessToken()
+            let jwt = accessToken.getJwtToken()
 
-        return {
-            authorization: `Bearer ${jwt}`
+            let user  = await Auth.currentUserInfo();
+            // console.log(user.username)
+            //You can print them to see the full objects
+            // console.log(`myAccessToken: ${JSON.stringify(accessToken)}`)
+            // console.log(`myJwt: ${jwt}`)
+            app.provide('currentUsername', user.username)
+            return {
+                authorization: `Bearer ${jwt}`
+            }
+        } catch (e) {
+            console.log(e)
         }
-
     };
 
     const apolloClient = new ApolloClient({
-        uri: 'http://localhost:4000/graphql',
+        uri: config.graphQL_Endpoint,
         cache,
         headers: await getHeaders()
     })

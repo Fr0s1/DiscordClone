@@ -13,75 +13,16 @@
               <input type="text" class="form-control" placeholder="Search..." />
             </div>
             <ul class="list-unstyled chat-list mt-2 mb-0">
-              <li class="clearfix">
-                <img
-                  src="https://bootdey.com/img/Content/avatar/avatar1.png"
-                  alt="avatar"
-                />
+              <li
+                class="clearfix"
+                v-for="(contact, index) in user.contactlist"
+                :key="index"
+              >
+                <img :src="contact.avatar" alt="avatar" />
                 <div class="about">
-                  <div class="name">Vincent Porter</div>
+                  <div class="name">{{ contact.name }}</div>
                   <div class="status">
                     <i class="fa fa-circle offline"></i> left 7 mins ago
-                  </div>
-                </div>
-              </li>
-              <li class="clearfix active">
-                <img
-                  src="https://bootdey.com/img/Content/avatar/avatar2.png"
-                  alt="avatar"
-                />
-                <div class="about">
-                  <div class="name">Aiden Chavez</div>
-                  <div class="status">
-                    <i class="fa fa-circle online"></i> online
-                  </div>
-                </div>
-              </li>
-              <li class="clearfix">
-                <img
-                  src="https://bootdey.com/img/Content/avatar/avatar3.png"
-                  alt="avatar"
-                />
-                <div class="about">
-                  <div class="name">Mike Thomas</div>
-                  <div class="status">
-                    <i class="fa fa-circle online"></i> online
-                  </div>
-                </div>
-              </li>
-              <li class="clearfix">
-                <img
-                  src="https://bootdey.com/img/Content/avatar/avatar7.png"
-                  alt="avatar"
-                />
-                <div class="about">
-                  <div class="name">Christian Kelly</div>
-                  <div class="status">
-                    <i class="fa fa-circle offline"></i> left 10 hours ago
-                  </div>
-                </div>
-              </li>
-              <li class="clearfix">
-                <img
-                  src="https://bootdey.com/img/Content/avatar/avatar8.png"
-                  alt="avatar"
-                />
-                <div class="about">
-                  <div class="name">Monica Ward</div>
-                  <div class="status">
-                    <i class="fa fa-circle online"></i> online
-                  </div>
-                </div>
-              </li>
-              <li class="clearfix">
-                <img
-                  src="https://bootdey.com/img/Content/avatar/avatar3.png"
-                  alt="avatar"
-                />
-                <div class="about">
-                  <div class="name">Dean Henry</div>
-                  <div class="status">
-                    <i class="fa fa-circle offline"></i> offline since Oct 28
                   </div>
                 </div>
               </li>
@@ -126,31 +67,42 @@
             </div>
             <div class="chat-history">
               <ul class="m-b-0">
-                <li class="clearfix">
-                  <div class="message-data text-right">
-                    <span class="message-data-time">10:10 AM, Today</span>
-                    <img
-                      src="https://bootdey.com/img/Content/avatar/avatar7.png"
-                      alt="avatar"
-                    />
+                <li
+                  class="clearfix"
+                  v-for="(message, index) in userMessages.messages
+                    .slice()
+                    .reverse()"
+                  :key="index"
+                >
+                  <div v-if="message.sender.username === currentUsername">
+                    <div class="message-data text-right">
+                      <span class="message-data-time">10:10 AM, Today</span>
+                      <img
+                        src="https://bootdey.com/img/Content/avatar/avatar7.png"
+                        alt="avatar"
+                      />
+                    </div>
+                    <div class="message other-message float-right">
+                      {{ message.content }}
+                      <div class="message-files">
+                        <img
+                          src="https://cdn.baogiaothong.vn/upload/images/2021-3/article_social_image/2021-07-04/img-bgt-2021-img-bgt-2021-twice-duoc-xay-dung-hinh-anh-khac-biet-voi-phong-cach-de-thuong-va-nhieu-mau-sac-anh-jype-1625393976-width1200height630-1625394266-width1200height630.jpg"
+                          width="200"
+                          style="display: inline-block, padding: 5px"
+                        />
+                        <img
+                          src="https://cdn.baogiaothong.vn/upload/images/2021-3/article_social_image/2021-07-04/img-bgt-2021-img-bgt-2021-twice-duoc-xay-dung-hinh-anh-khac-biet-voi-phong-cach-de-thuong-va-nhieu-mau-sac-anh-jype-1625393976-width1200height630-1625394266-width1200height630.jpg"
+                          width="200"
+                          style="display: inline-block"
+                        />
+                      </div>
+                    </div>
                   </div>
-                  <div class="message other-message float-right">
-                    Hi Aiden, how are you? How is the project coming along?
-                  </div>
-                </li>
-                <li class="clearfix">
-                  <div class="message-data">
-                    <span class="message-data-time">10:12 AM, Today</span>
-                  </div>
-                  <div class="message my-message">Are we meeting today?</div>
-                </li>
-                <li class="clearfix">
-                  <div class="message-data">
-                    <span class="message-data-time">10:15 AM, Today</span>
-                  </div>
-                  <div class="message my-message">
-                    Project has been already finished and I have results to show
-                    you.
+                  <div v-else>
+                    <div class="message-data">
+                      <span class="message-data-time">10:12 AM, Today</span>
+                    </div>
+                    <div class="message my-message">{{ message.content }}</div>
                   </div>
                 </li>
               </ul>
@@ -177,20 +129,94 @@
 </template>
 
 <script>
+import gql from "graphql-tag";
 
 export default {
-    data() {
-        return {
-
-        }
-    }
+  inject: ["currentUsername"],
+  data() {
+    return {
+      user: {},
+      userMessages: [],
+    };
+  },
+  apollo: {
+    user() {
+      return {
+        query: gql`
+          query Query($username: String) {
+            user(username: $username) {
+              contactlist {
+                name
+                avatar
+              }
+            }
+          }
+        `,
+        variables: {
+          username: this.currentUsername,
+        },
+      };
+    },
+    userMessages() {
+      return {
+        query: gql`
+          query Query(
+            $firstUser: String!
+            $secondUser: String!
+            $nextCursor: Date
+            $limit: Int
+          ) {
+            userMessages(
+              firstUser: $firstUser
+              secondUser: $secondUser
+              nextCursor: $nextCursor
+              limit: $limit
+            ) {
+              messages {
+                sender {
+                  username
+                }
+                receiver {
+                  username
+                }
+                sentTime
+                content
+                files {
+                  fileName
+                  fileType
+                  fileUrl
+                }
+              }
+              count
+              nextCursor
+            }
+          }
+        `,
+        variables: {
+          firstUser: "hieudt223",
+          secondUser: "tvanh",
+          limit: 3,
+          nextCursor: "2021-10-24T13:53:56.629+00:00",
+        },
+      };
+    },
+  },
+  methods: {
+    f() {
+      console.log(this.currentUsername);
+      console.log(this.user.contactlist);
+      console.log(this.userMessages.messages);
+    },
+  },
+  mounted() {
+    this.f();
+  },
 };
 </script>
 
 <style scoped>
-
 .container {
-    max-width: 100%;
+  max-width: 100%;
 }
 
 .card {

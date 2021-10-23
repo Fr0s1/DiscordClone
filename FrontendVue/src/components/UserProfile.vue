@@ -1,15 +1,10 @@
 <template>
-  <!------ Include the above in your HEAD tag ---------->
-
   <div class="container emp-profile">
     <form method="post">
       <div class="row">
         <div class="col-md-4">
           <div class="profile-img">
-            <img
-              src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS52y5aInsxSm31CvHOFHWujqUx_wWTS9iM6s7BAm21oEN_RiGoog"
-              alt=""
-            />
+            <img :src="user.avatar" alt="" />
             <div class="file btn btn-lg btn-primary">
               Change Photo
               <input type="file" name="file" />
@@ -18,7 +13,7 @@
         </div>
         <div class="col-md-6">
           <div class="profile-head">
-            <h5>Kshiti Ghelani</h5>
+            <h5>{{ user.name }}</h5>
             <h6>Web Developer and Designer</h6>
             <p class="proile-rating">RANKINGS : <span>8/10</span></p>
             <ul class="nav nav-tabs" id="myTab" role="tablist">
@@ -43,7 +38,7 @@
                   role="tab"
                   aria-controls="profile"
                   aria-selected="false"
-                  >Timeline</a
+                  >Friends</a
                 >
               </li>
             </ul>
@@ -83,18 +78,10 @@
             >
               <div class="row">
                 <div class="col-md-6">
-                  <label>User Id</label>
-                </div>
-                <div class="col-md-6">
-                  <p>Kshiti123</p>
-                </div>
-              </div>
-              <div class="row">
-                <div class="col-md-6">
                   <label>Name</label>
                 </div>
                 <div class="col-md-6">
-                  <p>Kshiti Ghelani</p>
+                  <p>{{ user.name }}</p>
                 </div>
               </div>
               <div class="row">
@@ -102,7 +89,7 @@
                   <label>Email</label>
                 </div>
                 <div class="col-md-6">
-                  <p>kshitighelani@gmail.com</p>
+                  <p>{{ user.email }}</p>
                 </div>
               </div>
               <div class="row">
@@ -110,7 +97,7 @@
                   <label>Phone</label>
                 </div>
                 <div class="col-md-6">
-                  <p>123 456 7890</p>
+                  <p>{{ user.phone_number }}</p>
                 </div>
               </div>
               <div class="row">
@@ -179,7 +166,6 @@
         </div>
       </div>
     </form>
-    <p>{{test}}</p>
   </div>
 </template>
 
@@ -187,27 +173,44 @@
 import gql from "graphql-tag";
 
 export default {
+  inject: ["currentUsername"],
   data() {
     return {
       // Initialize your apollo data
-      test: "test",
+      user: {},
     };
   },
   apollo: {
-    // Simple query that will update the 'test' vue property
-    test: gql`
-      query Query {
-        test
-      }
-    `,
+    user() {
+      return {
+        query: gql`
+          query Query($username: String) {
+            user(username: $username) {
+              username
+              email
+              name
+              phone_number
+              avatar
+              friendlist {
+                username
+                avatar
+              }
+            }
+          }
+        `,
+        variables: {
+          username: this.currentUsername,
+        },
+      };
+    },
   },
   methods: {
     f() {
-      // console.log(this.test);
-      this.$apollo.queries.test;
-      console.log(this.test);
+      console.log(this.currentUsername);
+      // console.log(this.user);
     },
   },
+  
   mounted() {
     this.f();
   },

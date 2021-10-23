@@ -1,9 +1,9 @@
 <template>
-  <amplify-authenticator>
+  <!-- <amplify-authenticator> -->
     <!-- The rest of your app code -->
 
     <router-view />
-  </amplify-authenticator>
+  <!-- </amplify-authenticator> -->
 </template>
 
 <script>
