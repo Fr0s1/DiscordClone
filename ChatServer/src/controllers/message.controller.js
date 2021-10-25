@@ -27,7 +27,7 @@ exports.saveMessage = async (req, res) => {
     const newMessage = {
         sender: sender._id,
         receiver: receiver._id,
-        content: req.body.content,
+        content: req.body.content
     }
 
     // Check if the message has any files
@@ -56,7 +56,7 @@ exports.saveMessage = async (req, res) => {
             ContentType: req.files[i].fileType,
             ContentEncoding: req.files[i].encoding
         };
-        
+
         const putResult = await s3.putObject(destparams).promise();
 
         const result = await s3.getSignedUrlPromise('getObject', {
@@ -82,12 +82,16 @@ exports.saveMessage = async (req, res) => {
 
     let messageReturnedToClient = {
         _id: savedMessage._id,
-        sender: savedMessage.sender,
-        receiver: savedMessage.receiver,
+        sender: {
+            username: req.body.sender
+        },
+        receiver: {
+            username: req.body.receiver
+        },
         content: savedMessage.content,
         markedDeletedByReceiver: savedMessage.markedDeletedByReceiver,
         markedDeletedBySender: savedMessage.markedDeletedBySender,
-        fileUrls,
+        files: fileUrls,
         sentTime: savedMessage.sentTime
     }
 

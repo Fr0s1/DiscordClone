@@ -21,14 +21,27 @@ const io = require("socket.io")(server, {
         origin: "*",
         methods: ["GET", "POST"]
     },
-    allowEIO3: true
+    allowEIO3: true,
 });
+
+const connectedUser = {}
 
 const nsp = io.of('/chat')
 nsp.on('connection', (socket) => {
-    console.log('Client connected')
-    socket.on('chat message', msg => {
-        nsp.emit('chat message', msg);
+    console.log(`Client ${socket.id} connected`)
+    console.log(socket.id)
+
+    socket.on('currentUser', data => {
+        console.log(data)
+        connectedUser[data.user] = data.id
+    })
+
+    socket.on("chatMessage", (msg) => {
+        let receiverSocketId = connectedUser[msg.receiver.username]
+
+        if (receiverSocketId) {
+            nsp.to(receiverSocketId).emit("chatMessage", msg)
+        }
     });
 });
 
@@ -37,6 +50,6 @@ app.get('/chat/healthz', (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000
-const os = require("os")
+const os = require("os");
 const hostname = os.hostname()
 server.listen(PORT, () => { console.log(`🚀 Server ready at ${hostname}:${PORT}/chat`) })
