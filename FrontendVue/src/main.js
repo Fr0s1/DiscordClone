@@ -16,6 +16,9 @@ import { ApolloClient, InMemoryCache } from '@apollo/client/core'
 
 import { createApolloProvider } from '@vue/apollo-option'
 
+import axios from 'axios'
+import VueAxios from 'vue-axios'
+
 Amplify.configure(aws_exports);
 applyPolyfills().then(() => {
     defineCustomElements(window);
@@ -25,15 +28,17 @@ applyPolyfills().then(() => {
     const app = createApp({
         render: () => h(App),
     })
-
+    app.use(VueAxios, axios)
     app.use(router)
-
+    app.provide('config', config)
+    
     app.use(new VueSocketIO({
         debug: true,
         connection: config.socketIO_Endpoint,
         options: {
             withCredentials: false
-        }
+        },
+        transports: [ "websocket" ]
     }))
 
     const cache = new InMemoryCache()

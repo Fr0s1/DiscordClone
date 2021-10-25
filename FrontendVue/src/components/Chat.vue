@@ -1,5 +1,6 @@
 <template>
   <div class="container">
+    <p v-for="(message, index) in array" :key="index" v-show="false">{{message.content}}</p>
     <div class="row clearfix">
       <div class="col-lg-12">
         <div class="card chat-app">
@@ -16,6 +17,8 @@
               <li
                 class="clearfix"
                 v-for="(contact, index) in user.contactlist"
+                :class="activeContactIndex === index ? 'active' : ''"
+                @click="setActiveContact(index)"
                 :key="index"
               >
                 <img :src="contact.avatar" alt="avatar" />
@@ -38,12 +41,12 @@
                     data-target="#view_info"
                   >
                     <img
-                      src="https://bootdey.com/img/Content/avatar/avatar2.png"
+                      :src="activeContactAvatar"
                       alt="avatar"
                     />
                   </a>
                   <div class="chat-about">
-                    <h6 class="m-b-0">Aiden Chavez</h6>
+                    <h6 class="m-b-0">{{activeContactUsername}}</h6>
                     <small>Last seen: 2 hours ago</small>
                   </div>
                 </div>
@@ -69,31 +72,26 @@
               <ul class="m-b-0">
                 <li
                   class="clearfix"
-                  v-for="(message, index) in userMessages.messages
-                    .slice()
-                    .reverse()"
+                  v-for="(message, index) in conversationMessages"
                   :key="index"
                 >
-                  <div v-if="message.sender.username === currentUsername">
+                  <div v-if="currentUsername === message.sender.username">
                     <div class="message-data text-right">
                       <span class="message-data-time">10:10 AM, Today</span>
-                      <img
-                        src="https://bootdey.com/img/Content/avatar/avatar7.png"
-                        alt="avatar"
-                      />
+                      <img :src="user.avatar" alt="avatar" />
                     </div>
                     <div class="message other-message float-right">
                       {{ message.content }}
-                      <div class="message-files">
+                      <div
+                        class="message-files"
+                        v-if="message.files && message.files.length > 0"
+                      >
                         <img
-                          src="https://cdn.baogiaothong.vn/upload/images/2021-3/article_social_image/2021-07-04/img-bgt-2021-img-bgt-2021-twice-duoc-xay-dung-hinh-anh-khac-biet-voi-phong-cach-de-thuong-va-nhieu-mau-sac-anh-jype-1625393976-width1200height630-1625394266-width1200height630.jpg"
-                          width="200"
-                          style="display: inline-block, padding: 5px"
-                        />
-                        <img
-                          src="https://cdn.baogiaothong.vn/upload/images/2021-3/article_social_image/2021-07-04/img-bgt-2021-img-bgt-2021-twice-duoc-xay-dung-hinh-anh-khac-biet-voi-phong-cach-de-thuong-va-nhieu-mau-sac-anh-jype-1625393976-width1200height630-1625394266-width1200height630.jpg"
-                          width="200"
-                          style="display: inline-block"
+                          v-for="(file, index) in message.files"
+                          :key="index"
+                          :src="file.fileUrl"
+                          width="100"
+                          style="display: inline-block, marginRight: 5px"
                         />
                       </div>
                     </div>
@@ -102,23 +100,64 @@
                     <div class="message-data">
                       <span class="message-data-time">10:12 AM, Today</span>
                     </div>
-                    <div class="message my-message">{{ message.content }}</div>
+                    <div class="message my-message">
+                      {{ message.content }}
+                      <div
+                        class="message-files"
+                        v-if="message.files && message.files.length > 0"
+                      >
+                        <img
+                          v-for="(file, index) in message.files"
+                          :key="index"
+                          :src="file.fileUrl"
+                          width="100"
+                          style="display: inline-block, marginRight: 5px"
+                        />
+                      </div>
+                    </div>
                   </div>
                 </li>
               </ul>
             </div>
             <div class="chat-message clearfix">
               <div class="input-group mb-0">
-                <div class="input-group-prepend">
-                  <span class="input-group-text"
-                    ><i class="fa fa-send"></i
-                  ></span>
+                <div class="message-input">
+                  <form
+                    enctype="multipart/form-data"
+                    @submit.prevent="sendMessage()"
+                  >
+                    <div class="input-group-prepend">
+                      <button class="input-group-text btn">
+                        <i class="fa fa-send"></i>
+                      </button>
+                    </div>
+                    <input
+                      type="text"
+                      class="form-control"
+                      placeholder="Enter text here..."
+                      name="content"
+                      id="content"
+                      v-model="messageContent"
+                    />
+                    <input
+                      type="file"
+                      class="form-control-file"
+                      id="files"
+                      name="files"
+                      multiple
+                      @change="filesChange($event.target.files)"
+                    />
+                  </form>
                 </div>
-                <input
-                  type="text"
-                  class="form-control"
-                  placeholder="Enter text here..."
-                />
+
+                <div class="message-files-preview">
+                  <img
+                    v-for="(src, index) in messagesFilePreviewUrls"
+                    :key="index"
+                    :src="src"
+                    style="width: 200px"
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -132,12 +171,24 @@
 import gql from "graphql-tag";
 
 export default {
-  inject: ["currentUsername"],
+  inject: ["currentUsername", "config"],
   data() {
     return {
-      user: {},
-      userMessages: [],
+      user: {}, // User information fetched from GraphQL Server
+      activeContactIndex: 0, // Default index of current contact in contactlist
+      userMessages: {
+        messages: [],
+      },
+      messageContent: "", // Message input field
+      messagesFilePreviewUrls: [], // An array contain img's src when user upload image for previewing
+      messageFiles: [], // // An array contain user uploaded message to send in form
+      array: [],
     };
+  },
+  sockets: {
+    connect: function () {
+      console.log("socket to notification channel connected");
+    },
   },
   apollo: {
     user() {
@@ -145,7 +196,9 @@ export default {
         query: gql`
           query Query($username: String) {
             user(username: $username) {
+              avatar
               contactlist {
+                username
                 name
                 avatar
               }
@@ -192,33 +245,121 @@ export default {
             }
           }
         `,
-        variables: {
-          firstUser: "hieudt223",
-          secondUser: "tvanh",
-          limit: 3,
-          nextCursor: "2021-10-24T13:53:56.629+00:00",
+        variables() {
+          return {
+            firstUser: this.currentUsername,
+            secondUser: this.activeContactUsername,
+            limit: 3,
+            nextCursor: new Date().toISOString(),
+          };
+        },
+        skip() {
+          return !this.user.contactlist;
         },
       };
     },
   },
   methods: {
-    f() {
-      console.log(this.currentUsername);
-      console.log(this.user.contactlist);
+    setActiveContact(index) {
+      this.activeContactIndex = index;
+      console.log(this.activeContactUsername);
       console.log(this.userMessages.messages);
     },
+    sendMessage() {
+      let message = {
+        sender: {
+          username: this.currentUsername,
+        },
+        receiver: {
+          username: this.activeContactUsername,
+        },
+        content: this.messageContent,
+        files: [],
+      };
+
+      if (this.messagesFilePreviewUrls.length > 0) {
+        this.messagesFilePreviewUrls.forEach((fileUrl) => {
+          message.files.push({
+            fileUrl,
+          });
+        });
+      }
+
+      this.conversationMessages.push(message);
+
+      let sentMessage = new FormData();
+
+      sentMessage.append("sender", this.currentUsername);
+      sentMessage.append("receiver", this.activeContactUsername);
+      sentMessage.append("content", this.messageContent);
+
+      if (this.messageFiles.length > 0) {
+        for (let fileIndex in this.messageFiles) {
+          sentMessage.append(`f${fileIndex}`, this.messageFiles[fileIndex]);
+        }
+
+        this.axios
+          .post(`${this.config.socketIO_HTTP}/message`, sentMessage)
+          .then((res) => {
+            this.$socket.emit("chatMessage", res.data);
+          })
+          .catch((e) => {
+            console.log(e);
+          });
+      } else {
+        this.axios
+          .post(`${this.config.socketIO_HTTP}/message`, sentMessage)
+          .then((res) => {
+            console.log(res);
+          });
+
+        this.$socket.emit("chatMessage", message);
+      }
+      this.messageContent = "";
+
+      this.messageFiles = [];
+      this.messagesFilePreviewUrls = [];
+    },
+    filesChange(files) {
+      this.messageFiles = files;
+      this.messagesFilePreviewUrls = [];
+      for (let fileIndex in files) {
+        let file = files[fileIndex];
+
+        this.messagesFilePreviewUrls.push(URL.createObjectURL(file));
+      }
+    },
   },
-  mounted() {
-    this.f();
+  computed: {
+    activeContactUsername() {
+      return this.user.contactlist[this.activeContactIndex].username;
+    },
+    activeContactAvatar() {
+      return this.user.contactlist[this.activeContactIndex].avatar;
+    },
+    conversationMessages() {
+      return this.userMessages.messages.slice().reverse();
+    },
+  },
+  created() {
+    this.$socket.emit("currentUser", {
+      user: this.currentUsername,
+      id: this.$socket.id,
+    });
+
+    this.sockets.subscribe("chatMessage", function (data) {
+      console.log(data);
+      this.array.push(data)
+      this.conversationMessages.push(data);
+    });
   },
 };
 </script>
-
 <style scoped>
-.container {
-  max-width: 100%;
+body {
+  background-color: #f4f7f6;
+  margin-top: 20px;
 }
-
 .card {
   background: #fff;
   transition: 0.5s;
