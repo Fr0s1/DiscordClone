@@ -1,6 +1,5 @@
 <template>
   <div class="container">
-    <p v-for="(message, index) in array" :key="index" v-show="false">{{message.content}}</p>
     <div class="row clearfix">
       <div class="col-lg-12">
         <div class="card chat-app">
@@ -40,13 +39,10 @@
                     data-toggle="modal"
                     data-target="#view_info"
                   >
-                    <img
-                      :src="activeContactAvatar"
-                      alt="avatar"
-                    />
+                    <img :src="activeContactAvatar" alt="avatar" />
                   </a>
                   <div class="chat-about">
-                    <h6 class="m-b-0">{{activeContactUsername}}</h6>
+                    <h6 class="m-b-0">{{ activeContactUsername }}</h6>
                     <small>Last seen: 2 hours ago</small>
                   </div>
                 </div>
@@ -70,14 +66,17 @@
             </div>
             <div class="chat-history">
               <ul class="m-b-0">
+                <!-- This section is to display messages fetch from graphql -->
                 <li
                   class="clearfix"
-                  v-for="(message, index) in conversationMessages"
+                  v-for="(message, index) in graphqlMessages"
                   :key="index"
                 >
                   <div v-if="currentUsername === message.sender.username">
                     <div class="message-data text-right">
-                      <span class="message-data-time">10:10 AM, Today</span>
+                      <span class="message-data-time">{{
+                        message.sentTime
+                      }}</span>
                       <img :src="user.avatar" alt="avatar" />
                     </div>
                     <div class="message other-message float-right">
@@ -98,7 +97,65 @@
                   </div>
                   <div v-else>
                     <div class="message-data">
-                      <span class="message-data-time">10:12 AM, Today</span>
+                      <span class="message-data-time">{{
+                        message.sentTime
+                      }}</span>
+                    </div>
+                    <div class="message my-message">
+                      {{ message.content }}
+                      <div
+                        class="message-files"
+                        v-if="message.files && message.files.length > 0"
+                      >
+                        <img
+                          v-for="(file, index) in message.files"
+                          :key="index"
+                          :src="file.fileUrl"
+                          width="100"
+                          style="display: inline-block, marginRight: 5px"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </li>
+
+                <!-- This section is to display realtime sent message -->
+                <!-- The reason this v-for li element is duplicated because then userMessages fetched from graphql can't be dynamically changed -->
+                <li
+                  class="clearfix"
+                  v-for="(message, index) in realtimeFetchedMessages[
+                    activeContactUsername
+                  ]"
+                  :key="index"
+                >
+                  <div v-if="currentUsername === message.sender.username">
+                    <div class="message-data text-right">
+                      <span class="message-data-time">{{
+                        message.sentTime
+                      }}</span>
+                      <img :src="user.avatar" alt="avatar" />
+                    </div>
+                    <div class="message other-message float-right">
+                      {{ message.content }}
+                      <div
+                        class="message-files"
+                        v-if="message.files && message.files.length > 0"
+                      >
+                        <img
+                          v-for="(file, index) in message.files"
+                          :key="index"
+                          :src="file.fileUrl"
+                          width="100"
+                          style="display: inline-block, marginRight: 5px"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <div v-else>
+                    <div class="message-data">
+                      <span class="message-data-time">{{
+                        message.sentTime
+                      }}</span>
                     </div>
                     <div class="message my-message">
                       {{ message.content }}
@@ -127,18 +184,21 @@
                     @submit.prevent="sendMessage()"
                   >
                     <div class="input-group-prepend">
-                      <button class="input-group-text btn">
+                      <button
+                        class="input-group-text btn"
+                        style="display: inline"
+                      >
                         <i class="fa fa-send"></i>
                       </button>
+                      <input
+                        type="text"
+                        class="form-control"
+                        placeholder="Enter text here..."
+                        name="content"
+                        id="content"
+                        v-model="messageContent"
+                      />
                     </div>
-                    <input
-                      type="text"
-                      class="form-control"
-                      placeholder="Enter text here..."
-                      name="content"
-                      id="content"
-                      v-model="messageContent"
-                    />
                     <input
                       type="file"
                       class="form-control-file"
@@ -174,7 +234,9 @@ export default {
   inject: ["currentUsername", "config"],
   data() {
     return {
-      user: {}, // User information fetched from GraphQL Server
+      user: {
+        contactlist: [],
+      }, // User information fetched from GraphQL Server
       activeContactIndex: 0, // Default index of current contact in contactlist
       userMessages: {
         messages: [],
@@ -182,7 +244,7 @@ export default {
       messageContent: "", // Message input field
       messagesFilePreviewUrls: [], // An array contain img's src when user upload image for previewing
       messageFiles: [], // // An array contain user uploaded message to send in form
-      array: [],
+      realtimeFetchedMessages: {},
     };
   },
   sockets: {
@@ -285,7 +347,10 @@ export default {
         });
       }
 
-      this.conversationMessages.push(message);
+      if (!this.realtimeFetchedMessages[this.activeContactUsername]) {
+        this.realtimeFetchedMessages[this.activeContactUsername] = [];
+      }
+      this.realtimeFetchedMessages[this.activeContactUsername].push(message);
 
       let sentMessage = new FormData();
 
@@ -332,13 +397,13 @@ export default {
   },
   computed: {
     activeContactUsername() {
-      return this.user.contactlist[this.activeContactIndex].username;
+      return this.user.contactlist[this.activeContactIndex]?.username;
     },
     activeContactAvatar() {
-      return this.user.contactlist[this.activeContactIndex].avatar;
+      return this.user.contactlist[this.activeContactIndex]?.avatar;
     },
-    conversationMessages() {
-      return this.userMessages.messages.slice().reverse();
+    graphqlMessages() {
+      return this.userMessages.messages.slice().reverse(); // Reverse messages fetched from GraphQL to earliest to latest
     },
   },
   created() {
@@ -348,18 +413,16 @@ export default {
     });
 
     this.sockets.subscribe("chatMessage", function (data) {
-      console.log(data);
-      this.array.push(data)
-      this.conversationMessages.push(data);
+      let sender = data.sender.username;
+      if (!this.realtimeFetchedMessages[sender]) {
+        this.realtimeFetchedMessages[sender] = [];
+      }
+      this.realtimeFetchedMessages[sender].push(data);
     });
   },
 };
 </script>
 <style scoped>
-body {
-  background-color: #f4f7f6;
-  margin-top: 20px;
-}
 .card {
   background: #fff;
   transition: 0.5s;
