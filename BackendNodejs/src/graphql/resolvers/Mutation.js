@@ -4,7 +4,7 @@ const { User } = require("../../mongodb/schemas")
 // Just need to query to MongoDB instead of fetching using Cognito SDK
 async function addUser(parent, args, context) {
     const User = context.mongo.User
-    
+
     // Check if user already exists
     let userFound = await User.find({
         username: args.username
@@ -30,7 +30,7 @@ async function createGroup(parent, args, context) {
     let Group = context.mongo.Group
 
     try {
-        
+
     } catch (e) {
         throw new Error(e)
     }
@@ -237,7 +237,7 @@ async function deleteGroupMessage(parent, args, context) {
         if (!foundMessage) {
             throw new Error(`Message with id ${messageId} does not exists`)
         }
-        
+
         if (username == foundMessage.sender.username) {
             let Bucket = process.env.BUCKET_NAME
             let Key = `groupmessage/${foundMessage._id}/`
@@ -255,9 +255,61 @@ async function deleteGroupMessage(parent, args, context) {
     }
 }
 
-// async function addUserToFriendList(parent, args, context, info) {
-//     let username = context.tokenPayload.
-// }
+async function updateUserInfo(parent, args, context) {
+    let username = context.tokenPayload.username
+    let phone_number = args.phone_number
+    let name = args.name
+    let email = args.email
+    let User = context.mongo.User
+
+    let UserAttributes = []
+    let updatedInfo = {}
+    if (phone_number) {
+        UserAttributes.push({
+            Name: "phone_number",
+            Value: phone_number
+        })
+
+        updatedInfo.phone_number = phone_number
+    }
+    if (name) {
+        UserAttributes.push({
+            Name: "name",
+            Value: name
+        })
+
+        updatedInfo.name = name
+    }
+    if (email) {
+        UserAttributes.push({
+            Name: "email",
+            Value: email
+        })
+
+        updatedInfo.email = email
+    }
+
+    let cognitoClient = context.aws.cognitoClient
+    var params = {
+        UserAttributes,
+        UserPoolId: process.env.cognitoUserPoolId, /* required */
+        Username: username, /* required */
+    };
+
+    try {
+        let updatedUser = await User.findOneAndUpdate({
+            username
+        }, updatedInfo, {
+            returnDocument: "after"
+        })
+
+        let data = await cognitoClient.adminUpdateUserAttributes(params).promise()
+
+        return updatedUser
+    } catch (e) {
+        throw new Error(e)
+    }
+}
 
 module.exports = {
     addUser,
@@ -265,5 +317,7 @@ module.exports = {
     addUserToGroup,
     removeUserFromGroup,
     deleteMessage,
-    deleteGroupMessage
+    deleteGroupMessage,
+    updateUserInfo
+
 }

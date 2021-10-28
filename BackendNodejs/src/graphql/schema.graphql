@@ -10,10 +10,19 @@ type Query {
 
   # firstUserId is the user id of currently logged in user who makes request
   # secondUserId is the id of user to whom the logged in user is chatting
-  userMessages(firstUser: String!, secondUser: String!, nextCursor: Date, limit: Int): MessagesList
+  userMessages(
+    firstUser: String!
+    secondUser: String!
+    nextCursor: Date
+    limit: Int
+  ): MessagesList
 
   # Because different users can create group with the same name, so get message by Group ID
-  groupMessages(groupId: String!, nextCursor: Date, limit: Int): GroupMessageList
+  groupMessages(
+    groupId: String!
+    nextCursor: Date
+    limit: Int
+  ): GroupMessageList
 
   test: String
 }
@@ -43,9 +52,11 @@ type Mutation {
   deleteMessage(messageId: String!): Message
 
   deleteGroupMessage(messageId: String!): GroupMessage
+
+  updateUserInfo(email: String, name: String, phone_number: String): User!
   # addUserToFriendList(username: String!): [String!]!
 
-  # addToContactList(username: String!): 
+  # addToContactList(username: String!):
 }
 
 type ExampleType {
@@ -61,13 +72,13 @@ enum Role {
 
 type MessagesList {
   messages: [Message]!
-  count: Int!, # number of message to get in 1 query
+  count: Int! # number of message to get in 1 query
   nextCursor: Date! # id of last message in this query
 }
 
 type GroupMessageList {
   messages: [GroupMessage]!
-  count: Int!, # number of message to get in 1 query
+  count: Int! # number of message to get in 1 query
   nextCursor: Date! # id of last message in this query
 }
 
