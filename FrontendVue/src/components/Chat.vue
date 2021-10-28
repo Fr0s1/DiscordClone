@@ -50,6 +50,11 @@
                   <a
                     href="javascript:void(0);"
                     class="btn btn-outline-secondary"
+                    ><i class="fa fa-phone"></i
+                  ></a>
+                  <a
+                    href="javascript:void(0);"
+                    class="btn btn-outline-secondary"
                     ><i class="fa fa-camera"></i
                   ></a>
                   <a href="javascript:void(0);" class="btn btn-outline-primary"
@@ -90,8 +95,25 @@
                           :key="index"
                           :src="file.fileUrl"
                           width="100"
-                          style="display: inline-block, marginRight: 5px"
+                          style="display: inline-block"
+                          @click="zoomImage($event.target)"
                         />
+                        <div id="myModal" class="modal" ref="modal">
+                          <!-- The Close Button -->
+                          <span
+                            class="close"
+                            ref="closeImageButton"
+                            @click="closeZoomImage"
+                            >&times;</span
+                          >
+
+                          <!-- Modal Content (The Image) -->
+                          <img
+                            class="modal-content"
+                            id="img01"
+                            ref="zoomImage"
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -112,8 +134,25 @@
                           :key="index"
                           :src="file.fileUrl"
                           width="100"
-                          style="display: inline-block, marginRight: 5px"
+                          style="display: inline-block"
+                          @click="zoomImage($event.target)"
                         />
+                        <div id="myModal" class="modal" ref="modal">
+                          <!-- The Close Button -->
+                          <span
+                            class="close"
+                            ref="closeImageButton"
+                            @click="closeZoomImage"
+                            >&times;</span
+                          >
+
+                          <!-- Modal Content (The Image) -->
+                          <img
+                            class="modal-content"
+                            id="img01"
+                            ref="zoomImage"
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -146,8 +185,25 @@
                           :key="index"
                           :src="file.fileUrl"
                           width="100"
-                          style="display: inline-block, marginRight: 5px"
+                          style="display: inline-block"
+                          @click="zoomImage($event.target)"
                         />
+                        <div id="myModal" class="modal" ref="modal">
+                          <!-- The Close Button -->
+                          <span
+                            class="close"
+                            ref="closeImageButton"
+                            @click="closeZoomImage"
+                            >&times;</span
+                          >
+
+                          <!-- Modal Content (The Image) -->
+                          <img
+                            class="modal-content"
+                            id="img01"
+                            ref="zoomImage"
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -168,8 +224,25 @@
                           :key="index"
                           :src="file.fileUrl"
                           width="100"
-                          style="display: inline-block, marginRight: 5px"
+                          style="display: inline-block"
+                          @click="zoomImage($event.target)"
                         />
+                        <div id="myModal" class="modal" ref="modal">
+                          <!-- The Close Button -->
+                          <span
+                            class="close"
+                            ref="closeImageButton"
+                            @click="closeZoomImage"
+                            >&times;</span
+                          >
+
+                          <!-- Modal Content (The Image) -->
+                          <img
+                            class="modal-content"
+                            id="img01"
+                            ref="zoomImage"
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -229,9 +302,10 @@
 
 <script>
 import gql from "graphql-tag";
+import Peer from "peerjs";
 
 export default {
-  inject: ["currentUsername", "config"],
+  inject: ["currentUsername", "config", "Peer"],
   data() {
     return {
       user: {
@@ -323,6 +397,9 @@ export default {
   },
   methods: {
     setActiveContact(index) {
+      // Set realtime message array of current contact to empty because when switching back to this current contact
+      // graphql will make a new query to get latest messages
+      this.realtimeFetchedMessages[this.activeContactUsername] = [];
       this.activeContactIndex = index;
       console.log(this.activeContactUsername);
       console.log(this.userMessages.messages);
@@ -394,6 +471,16 @@ export default {
         this.messagesFilePreviewUrls.push(URL.createObjectURL(file));
       }
     },
+    zoomImage(img) {
+      let modal = this.$refs.modal;
+      modal.style.display = "block";
+      let zoomImg = this.$refs.zoomImage;
+      zoomImg.src = img.src;
+    },
+    closeZoomImage() {
+      let modal = this.$refs.modal;
+      modal.style.display = "none";
+    },
   },
   computed: {
     activeContactUsername() {
@@ -418,6 +505,13 @@ export default {
         this.realtimeFetchedMessages[sender] = [];
       }
       this.realtimeFetchedMessages[sender].push(data);
+    });
+  },
+  mounted() {
+    let peer = new Peer();
+
+    peer.on("open", function (id) {
+      console.log("My peer ID is: " + id);
     });
   },
 };
@@ -673,6 +767,92 @@ export default {
   .chat-app .chat-history {
     height: calc(100vh - 350px);
     overflow-x: auto;
+  }
+}
+
+#myImg {
+  border-radius: 5px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+#myImg:hover {
+  opacity: 0.7;
+}
+
+/* The Modal (background) */
+.modal {
+  display: none; /* Hidden by default */
+  position: fixed; /* Stay in place */
+  z-index: 1; /* Sit on top */
+  padding-top: 100px; /* Location of the box */
+  left: 0;
+  top: 0;
+  width: 100%; /* Full width */
+  height: 100%; /* Full height */
+  overflow: auto; /* Enable scroll if needed */
+  background-color: rgb(0, 0, 0); /* Fallback color */
+  background-color: rgba(0, 0, 0, 0.9); /* Black w/ opacity */
+}
+
+/* Modal Content (Image) */
+.modal-content {
+  margin: auto;
+  display: block;
+  width: 80%;
+  max-width: 700px;
+}
+
+/* Caption of Modal Image (Image Text) - Same Width as the Image */
+#caption {
+  margin: auto;
+  display: block;
+  width: 80%;
+  max-width: 700px;
+  text-align: center;
+  color: #ccc;
+  padding: 10px 0;
+  height: 150px;
+}
+
+/* Add Animation - Zoom in the Modal */
+.modal-content,
+#caption {
+  animation-name: zoom;
+  animation-duration: 0.6s;
+}
+
+@keyframes zoom {
+  from {
+    transform: scale(0);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+/* The Close Button */
+.close {
+  position: absolute;
+  top: 15px;
+  right: 35px;
+  color: #f1f1f1;
+  font-size: 40px;
+  font-weight: bold;
+  transition: 0.3s;
+}
+
+.close:hover,
+.close:focus {
+  color: #bbb;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+/* 100% Image Width on Smaller Screens */
+@media only screen and (max-width: 700px) {
+  .modal-content {
+    width: 100%;
   }
 }
 </style>

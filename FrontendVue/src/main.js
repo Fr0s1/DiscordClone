@@ -24,21 +24,24 @@ applyPolyfills().then(() => {
     defineCustomElements(window);
 });
 
+import Peer from 'peerjs';
+
 (async () => {
     const app = createApp({
         render: () => h(App),
     })
+
     app.use(VueAxios, axios)
     app.use(router)
     app.provide('config', config)
-    
+    app.provide('Peer', Peer)
     app.use(new VueSocketIO({
         debug: true,
         connection: config.socketIO_Endpoint,
         options: {
             withCredentials: false
         },
-        transports: [ "websocket" ]
+        transports: ["websocket"]
     }))
 
     const cache = new InMemoryCache()
@@ -50,7 +53,7 @@ applyPolyfills().then(() => {
             let accessToken = res.getAccessToken()
             let jwt = accessToken.getJwtToken()
 
-            let user  = await Auth.currentUserInfo();
+            let user = await Auth.currentUserInfo();
             // console.log(user.username)
             //You can print them to see the full objects
             // console.log(`myAccessToken: ${JSON.stringify(accessToken)}`)
