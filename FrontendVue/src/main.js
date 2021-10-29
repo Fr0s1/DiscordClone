@@ -24,7 +24,6 @@ applyPolyfills().then(() => {
     defineCustomElements(window);
 });
 
-import Peer from 'peerjs';
 
 (async () => {
     const app = createApp({
@@ -34,7 +33,7 @@ import Peer from 'peerjs';
     app.use(VueAxios, axios)
     app.use(router)
     app.provide('config', config)
-    app.provide('Peer', Peer)
+
     app.use(new VueSocketIO({
         debug: true,
         connection: config.socketIO_Endpoint,
