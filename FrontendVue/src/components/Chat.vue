@@ -47,25 +47,24 @@
                   </div>
                 </div>
                 <div class="col-lg-6 hidden-sm text-right">
-                  <a
-                    href="javascript:void(0);"
+                  <button
                     class="btn btn-outline-secondary"
-                    ><i class="fa fa-phone"></i
-                  ></a>
-                  <a
-                    href="javascript:void(0);"
-                    class="btn btn-outline-secondary"
-                    ><i class="fa fa-camera"></i
-                  ></a>
-                  <a href="javascript:void(0);" class="btn btn-outline-primary"
-                    ><i class="fa fa-image"></i
-                  ></a>
-                  <a href="javascript:void(0);" class="btn btn-outline-info"
-                    ><i class="fa fa-cogs"></i
-                  ></a>
-                  <a href="javascript:void(0);" class="btn btn-outline-warning"
-                    ><i class="fa fa-question"></i
-                  ></a>
+                    @click="videoChat()"
+                  >
+                    <i class="fa fa-phone"></i>
+                  </button>
+                  <button class="btn btn-outline-secondary">
+                    <i class="fa fa-camera"></i>
+                  </button>
+                  <button class="btn btn-outline-primary">
+                    <i class="fa fa-image"></i>
+                  </button>
+                  <button class="btn btn-outline-info">
+                    <i class="fa fa-cogs"></i>
+                  </button>
+                  <button class="btn btn-outline-warning">
+                    <i class="fa fa-question"></i>
+                  </button>
                 </div>
               </div>
             </div>
@@ -271,15 +270,17 @@
                         id="content"
                         v-model="messageContent"
                       />
+
+                      <input
+                        type="file"
+                        class="form-control-file"
+                        id="files"
+                        name="files"
+                        multiple
+                        @change="filesChange($event.target.files)"
+                        ref="messageFiles"
+                      />
                     </div>
-                    <input
-                      type="file"
-                      class="form-control-file"
-                      id="files"
-                      name="files"
-                      multiple
-                      @change="filesChange($event.target.files)"
-                    />
                   </form>
                 </div>
 
@@ -297,6 +298,9 @@
         </div>
       </div>
     </div>
+
+    <video ref="srcVideo" autoplay="true" muted id="userWebcam"></video>
+    <video ref="contactVideo" autoplay="true" id="contactWebcam"></video>
   </div>
 </template>
 
@@ -318,7 +322,9 @@ export default {
       messageContent: "", // Message input field
       messagesFilePreviewUrls: [], // An array contain img's src when user upload image for previewing
       messageFiles: [], // // An array contain user uploaded message to send in form
-      realtimeFetchedMessages: {},
+      realtimeFetchedMessages: {}, // Messages received by socket.io events
+      peer: null, // PeerJS object for current logged in user
+      contactListPeerIds: [], // List of user contact list peer
     };
   },
   sockets: {
@@ -397,12 +403,10 @@ export default {
   },
   methods: {
     setActiveContact(index) {
-      // Set realtime message array of current contact to empty because when switching back to this current contact
-      // graphql will make a new query to get latest messages
+      // Set realtime message array of current contact to empty to prevent duplicate because when switching back to this current contact
+      // graphql will make a new query to get latest 3 messages
       this.realtimeFetchedMessages[this.activeContactUsername] = [];
       this.activeContactIndex = index;
-      console.log(this.activeContactUsername);
-      console.log(this.userMessages.messages);
     },
     sendMessage() {
       let message = {
@@ -461,6 +465,7 @@ export default {
 
       this.messageFiles = [];
       this.messagesFilePreviewUrls = [];
+      this.$refs.messageFiles.value = null;
     },
     filesChange(files) {
       this.messageFiles = files;
@@ -481,6 +486,45 @@ export default {
       let modal = this.$refs.modal;
       modal.style.display = "none";
     },
+    async videoChat() {
+      let peerId = await this.getActiveContactPeerId()
+      this.contactListPeerIds.push({
+        username: this.activeContactUsername,
+        peerId
+      });
+
+      let userWebcam = this.$refs.srcVideo;
+      let peer = this.peer;
+      let contactWebcam = this.$refs.contactVideo;
+      let activeContactPeerId = this.contactListPeerIds.find(
+        (contact) => contact.username === this.activeContactUsername
+      ).peerId;
+
+      navigator.mediaDevices
+        .getUserMedia({ video: true, audio: true })
+        .then(function (stream) {
+          userWebcam.srcObject = stream;
+          userWebcam.play();
+
+          var call = peer.call(activeContactPeerId, stream);
+          console.log("Called");
+          call.on("stream", function (remoteStream) {
+            // Show stream in some video/canvas element.
+            contactWebcam.srcObject = remoteStream;
+            contactWebcam.play();
+          });
+        })
+        .catch(function (err) {
+          console.log("An error occurred: " + err);
+        });
+    },
+    async getActiveContactPeerId() {
+      let res = await this.axios.get(
+        `${this.config.socketIO_HTTP}/session/${this.activeContactUsername}/peerId`
+      );
+
+      return res.data;
+    },
   },
   computed: {
     activeContactUsername() {
@@ -491,6 +535,9 @@ export default {
     },
     graphqlMessages() {
       return this.userMessages.messages.slice().reverse(); // Reverse messages fetched from GraphQL to earliest to latest
+    },
+    activeContactPeerId() {
+      return this.contactListPeerIds[this.activeContactUsername];
     },
   },
   created() {
@@ -506,17 +553,47 @@ export default {
       }
       this.realtimeFetchedMessages[sender].push(data);
     });
+
+    this.peer = new Peer();
+
+    this.peer.on("open", (id) => {
+      console.log("My peer ID is: " + id);
+      // Save user peerId to backend
+      this.axios.post(
+        `${this.config.socketIO_HTTP}/session/${this.currentUsername}/peerId`,
+        {
+          peerId: id,
+        }
+      );
+      this.userPeerId = id;
+    });
   },
   mounted() {
-    let peer = new Peer();
+    let peer = this.peer;
+    let contactWebcam = this.$refs.contactVideo;
+    peer.on("call", function (call) {
+      console.log("Call received");
 
-    peer.on("open", function (id) {
-      console.log("My peer ID is: " + id);
+      call.answer(); // Answer the call with an A/V stream.
+      call.on("stream", function (remoteStream) {
+        // Show stream in some video/canvas element.
+        contactWebcam.srcObject = remoteStream;
+        contactWebcam.play();
+      });
     });
   },
 };
 </script>
+
 <style scoped>
+.container {
+  max-width: 100vw;
+}
+
+.message-input {
+  width: 100%;
+}
+
 .card {
   background: #fff;
   transition: 0.5s;
