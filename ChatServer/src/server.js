@@ -4,6 +4,7 @@ const http = require('http');
 const server = http.createServer(app);
 const cors = require('cors')
 const path = require('path')
+const bodyParser = require('body-parser')
 
 require('dotenv').config({ path: path.join(process.cwd(), 'env/.env') })
 
@@ -12,9 +13,13 @@ let corsOptions = {
 }
 
 app.use(cors(corsOptions));
+app.use(bodyParser.json())
 
 require('./routes/message.route')(app)
 require('./routes/groupmessage.route')(app)
+require('./routes/user-session.route')(app)
+
+let userSessionController = require('./controllers/user-session.controller')
 
 const io = require("socket.io")(server, {
     cors: {
@@ -24,20 +29,17 @@ const io = require("socket.io")(server, {
     allowEIO3: true,
 });
 
-const connectedUser = {}
-
 const nsp = io.of('/chat')
 nsp.on('connection', (socket) => {
     console.log(`Client ${socket.id} connected`)
-    console.log(socket.id)
 
+    // Save socket id which connect to server
     socket.on('currentUser', data => {
-        console.log(data)
-        connectedUser[data.user] = data.id
+        userSessionController.saveSocketID(data)
     })
 
-    socket.on("chatMessage", (msg) => {
-        let receiverSocketId = connectedUser[msg.receiver.username]
+    socket.on("chatMessage", async (msg) => {
+        let receiverSocketId = await userSessionController.getSocketId(msg.receiver.username)
 
         if (receiverSocketId) {
             nsp.to(receiverSocketId).emit("chatMessage", msg)
