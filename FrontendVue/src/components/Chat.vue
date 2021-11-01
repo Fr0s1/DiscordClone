@@ -686,7 +686,11 @@ export default {
 }
 
 .chat .chat-history ul {
-  padding: 0;
+  width: auto;
+  height: 450px;
+  padding: 20px;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .chat .chat-history ul li {
