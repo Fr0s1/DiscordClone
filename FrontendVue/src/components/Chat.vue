@@ -24,7 +24,7 @@
                 <div class="about">
                   <div class="name">{{ contact.name }}</div>
                   <div class="status">
-                    <i class="fa fa-circle offline"></i> left 7 mins ago
+                    <i class="fa fa-circle online"></i> Online
                   </div>
                 </div>
               </li>
@@ -79,7 +79,7 @@
                   <div v-if="currentUsername === message.sender.username">
                     <div class="message-data text-right">
                       <span class="message-data-time">{{
-                        message.sentTime
+                        formatTime(message.sentTime)
                       }}</span>
                       <img :src="user.avatar" alt="avatar" />
                     </div>
@@ -119,7 +119,7 @@
                   <div v-else>
                     <div class="message-data">
                       <span class="message-data-time">{{
-                        message.sentTime
+                        formatTime(message.sentTime)
                       }}</span>
                     </div>
                     <div class="message my-message">
@@ -169,7 +169,7 @@
                   <div v-if="currentUsername === message.sender.username">
                     <div class="message-data text-right">
                       <span class="message-data-time">{{
-                        message.sentTime
+                        formatTime(message.sentTime)
                       }}</span>
                       <img :src="user.avatar" alt="avatar" />
                     </div>
@@ -209,7 +209,7 @@
                   <div v-else>
                     <div class="message-data">
                       <span class="message-data-time">{{
-                        message.sentTime
+                        formatTime(message.sentTime)
                       }}</span>
                     </div>
                     <div class="message my-message">
@@ -299,17 +299,34 @@
       </div>
     </div>
 
-    <video ref="srcVideo" autoplay="true" muted id="userWebcam"></video>
-    <video ref="contactVideo" autoplay="true" id="contactWebcam"></video>
+    <div class="video-chat">
+      <video ref="srcVideo" autoplay="true" muted id="userWebcam"></video>
+      <video ref="contactVideo" autoplay="true" id="contactWebcam"></video>
+      <button
+        type="button"
+        class="btn btn-light endCallButton"
+        @click="endVideoCall"
+      >
+        End Call
+      </button>
+    </div>
   </div>
 </template>
 
 <script>
 import gql from "graphql-tag";
 import Peer from "peerjs";
+import moment from "moment";
 
 export default {
   inject: ["currentUsername", "config", "Peer"],
+  filters: {
+    formatTime: function (value) {
+      if (value) {
+        return moment(value).format("DD/MM/YYYY hh:mm");
+      }
+    },
+  },
   data() {
     return {
       user: {
@@ -325,6 +342,7 @@ export default {
       realtimeFetchedMessages: {}, // Messages received by socket.io events
       peer: null, // PeerJS object for current logged in user
       contactListPeerIds: [], // List of user contact list peer
+      currentCall: null, // Current video call PeerJS MediaConnection Object
     };
   },
   sockets: {
@@ -418,6 +436,7 @@ export default {
         },
         content: this.messageContent,
         files: [],
+        sentTime: new Date().toISOString,
       };
 
       if (this.messagesFilePreviewUrls.length > 0) {
@@ -487,10 +506,10 @@ export default {
       modal.style.display = "none";
     },
     async videoChat() {
-      let peerId = await this.getActiveContactPeerId()
+      let peerId = await this.getActiveContactPeerId();
       this.contactListPeerIds.push({
         username: this.activeContactUsername,
-        peerId
+        peerId,
       });
 
       let userWebcam = this.$refs.srcVideo;
@@ -499,16 +518,15 @@ export default {
       let activeContactPeerId = this.contactListPeerIds.find(
         (contact) => contact.username === this.activeContactUsername
       ).peerId;
-
       navigator.mediaDevices
         .getUserMedia({ video: true, audio: true })
-        .then(function (stream) {
+        .then((stream) => {
           userWebcam.srcObject = stream;
           userWebcam.play();
 
-          var call = peer.call(activeContactPeerId, stream);
-          console.log("Called");
-          call.on("stream", function (remoteStream) {
+          this.currentCall = peer.call(activeContactPeerId, stream);
+
+          this.currentCall.on("stream", function (remoteStream) {
             // Show stream in some video/canvas element.
             contactWebcam.srcObject = remoteStream;
             contactWebcam.play();
@@ -524,6 +542,12 @@ export default {
       );
 
       return res.data;
+    },
+    endVideoCall() {
+      this.currentCall.close();
+    },
+    formatTime(value) {
+      return moment(String(value)).format("MM/DD/YYYY hh:mm");
     },
   },
   computed: {
@@ -571,15 +595,24 @@ export default {
   mounted() {
     let peer = this.peer;
     let contactWebcam = this.$refs.contactVideo;
+    let currentCall = this.currentCall;
     peer.on("call", function (call) {
       console.log("Call received");
+      currentCall = call;
+      navigator.mediaDevices
+        .getUserMedia({ video: true, audio: true })
+        .then((stream) => {
+          currentCall.answer(stream); // Answer the call with an A/V stream.
+          currentCall.on("stream", function (remoteStream) {
+            // Show stream in some video/canvas element.
+            contactWebcam.srcObject = remoteStream;
+            contactWebcam.play();
+          });
 
-      call.answer(); // Answer the call with an A/V stream.
-      call.on("stream", function (remoteStream) {
-        // Show stream in some video/canvas element.
-        contactWebcam.srcObject = remoteStream;
-        contactWebcam.play();
-      });
+          currentCall.on("close", () => {
+            console.log("Call ended");
+          });
+        });
     });
   },
 };
