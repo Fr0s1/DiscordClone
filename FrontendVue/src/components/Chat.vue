@@ -69,11 +69,11 @@
               </div>
             </div>
             <div class="chat-history">
-              <ul class="m-b-0">
-                <!-- This section is to display messages fetch from graphql -->
+              <ul class="m-b-0" ref="chatHistory" @scroll="fetchedMessage">
+                <!-- This section is to display messages fetch from graphql or websocket -->
                 <li
                   class="clearfix"
-                  v-for="(message, index) in graphqlMessages"
+                  v-for="(message, index) in messages"
                   :key="index"
                 >
                   <div v-if="currentUsername === message.sender.username">
@@ -270,17 +270,16 @@
                         id="content"
                         v-model="messageContent"
                       />
-
-                      <input
-                        type="file"
-                        class="form-control-file"
-                        id="files"
-                        name="files"
-                        multiple
-                        @change="filesChange($event.target.files)"
-                        ref="messageFiles"
-                      />
                     </div>
+                    <input
+                      type="file"
+                      class="form-control-file"
+                      id="files"
+                      name="files"
+                      multiple
+                      @change="filesChange($event.target.files)"
+                      ref="messageFiles"
+                    />
                   </form>
                 </div>
 
@@ -333,9 +332,11 @@ export default {
         contactlist: [],
       }, // User information fetched from GraphQL Server
       activeContactIndex: 0, // Default index of current contact in contactlist
+      // Messages fetched from graphql
       userMessages: {
         messages: [],
       },
+      messages: [],
       messageContent: "", // Message input field
       messagesFilePreviewUrls: [], // An array contain img's src when user upload image for previewing
       messageFiles: [], // // An array contain user uploaded message to send in form
@@ -343,6 +344,9 @@ export default {
       peer: null, // PeerJS object for current logged in user
       contactListPeerIds: [], // List of user contact list peer
       currentCall: null, // Current video call PeerJS MediaConnection Object
+      currentTime: new Date().toISOString(), // When the chat page is opened for the first time, messages whose sentTime before currentTime will be fetch
+      shouldScrollDown: true, // When scroll up to get older messages, do not automatically scroll to the bottom
+      messagesToFetch: 10,
     };
   },
   sockets: {
@@ -409,8 +413,8 @@ export default {
           return {
             firstUser: this.currentUsername,
             secondUser: this.activeContactUsername,
-            limit: 3,
-            nextCursor: new Date().toISOString(),
+            limit: this.messagesToFetch,
+            nextCursor: this.currentTime,
           };
         },
         skip() {
@@ -420,6 +424,28 @@ export default {
     },
   },
   methods: {
+   
+    scrollDown() {
+      if (this.shouldScrollDown) {
+        let chatHistory = this.$refs.chatHistory;
+
+        chatHistory.scrollTop = chatHistory.scrollHeight;
+      }
+    },
+    fetchedMessage() {
+      let chatHistory = this.$refs.chatHistory;
+
+      if (this.shouldScrollDown) {
+        this.shouldScrollDown = false;
+      }
+
+      if (chatHistory.scrollTop == 0) {
+        this.currentTime =
+          this.userMessages.messages[
+            this.userMessages.messages.length - 1
+          ].sentTime;
+      }
+    },
     setActiveContact(index) {
       // Set realtime message array of current contact to empty to prevent duplicate because when switching back to this current contact
       // graphql will make a new query to get latest 3 messages
@@ -436,7 +462,7 @@ export default {
         },
         content: this.messageContent,
         files: [],
-        sentTime: new Date().toISOString,
+        sentTime: new Date().toISOString(),
       };
 
       if (this.messagesFilePreviewUrls.length > 0) {
@@ -451,6 +477,8 @@ export default {
         this.realtimeFetchedMessages[this.activeContactUsername] = [];
       }
       this.realtimeFetchedMessages[this.activeContactUsername].push(message);
+
+      this.shouldScrollDown = true; // Scroll to the bottom of messages list
 
       let sentMessage = new FormData();
 
@@ -476,6 +504,9 @@ export default {
           .post(`${this.config.socketIO_HTTP}/message`, sentMessage)
           .then((res) => {
             console.log(res);
+          })
+          .catch((e) => {
+            console.log(e);
           });
 
         this.$socket.emit("chatMessage", message);
@@ -557,11 +588,14 @@ export default {
     activeContactAvatar() {
       return this.user.contactlist[this.activeContactIndex]?.avatar;
     },
-    graphqlMessages() {
-      return this.userMessages.messages.slice().reverse(); // Reverse messages fetched from GraphQL to earliest to latest
-    },
     activeContactPeerId() {
       return this.contactListPeerIds[this.activeContactUsername];
+    },
+  },
+  watch: {
+    userMessages(val, oldVal) {
+      console.log(oldVal);
+      this.messages = val.messages.slice().reverse().concat(this.messages);
     },
   },
   created() {
@@ -576,6 +610,7 @@ export default {
         this.realtimeFetchedMessages[sender] = [];
       }
       this.realtimeFetchedMessages[sender].push(data);
+      this.shouldScrollDown = true;
     });
 
     this.peer = new Peer();
@@ -614,6 +649,9 @@ export default {
           });
         });
     });
+  },
+  updated() {
+    this.$nextTick(this.scrollDown());
   },
 };
 </script>
@@ -719,7 +757,11 @@ export default {
 }
 
 .chat .chat-history ul {
-  padding: 0;
+  width: auto;
+  height: 450px;
+  padding: 20px;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .chat .chat-history ul li {
