@@ -48,10 +48,10 @@
                 </div>
                 <div class="col-lg-6 hidden-sm text-right">
                   <button
-                    class="btn btn-circle"
+                    class="btn btn-outline-secondary"
                     @click="videoChat()"
                   >
-                    <img src="./Img/call.png" width>
+                    <i class="fa fa-phone"></i>
                   </button>
                   <button class="btn btn-outline-secondary">
                     <i class="fa fa-camera"></i>
@@ -260,7 +260,7 @@
                         class="input-group-text btn"
                         style="display: inline"
                       >
-                        <img src="./Img/send.png" width="20">
+                        <i class="fa fa-send"></i>
                       </button>
                       <input
                         type="text"
@@ -901,12 +901,6 @@ export default {
 #caption {
   animation-name: zoom;
   animation-duration: 0.6s;
-}
-
-.btn {
-    padding: 10px;
-    border: 0;
-    margin: 2px;
 }
 
 @keyframes zoom {
