@@ -299,15 +299,37 @@
     </div>
 
     <div class="video-chat">
-      <video ref="srcVideo" autoplay="true" muted id="userWebcam"></video>
-      <video ref="contactVideo" autoplay="true" id="contactWebcam"></video>
-      <button
-        type="button"
-        class="btn btn-light endCallButton"
-        @click="endVideoCall"
-      >
-        End Call
-      </button>
+      <div class="video">
+        <video ref="srcVideo" autoplay="true" muted id="userWebcam"></video>
+        <video ref="contactVideo" autoplay="true" id="contactWebcam"></video>
+      </div>
+
+      <div class="control-buttons">
+        <button
+          type="button"
+          class="btn btn-light endCallButton"
+          @click="endVideoCall"
+        >
+          End Call
+        </button>
+
+        <button
+          type="button"
+          class="btn btn-light endCallButton"
+          @click="
+            hasMuted ? startAudioOnly(srcStream) : stopAudioOnly(srcStream)
+          "
+        >
+          {{ hasMuted ? "Unmute" : "Mute" }}
+        </button>
+        <button
+          type="button"
+          class="btn btn-light endCallButton"
+          @click="stopVideoOnly(srcStream)"
+        >
+          Turn Off Camera
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -329,24 +351,47 @@ export default {
   data() {
     return {
       user: {
+        // User information fetched from GraphQL Server
         contactlist: [],
-      }, // User information fetched from GraphQL Server
+      },
+
       activeContactIndex: 0, // Default index of current contact in contactlist
-      // Messages fetched from graphql
+
       userMessages: {
+        // Messages fetched from graphql
         messages: [],
       },
-      messages: [],
+
+      messages: [], // Messages array used to display in DOM
+
       messageContent: "", // Message input field
+
       messagesFilePreviewUrls: [], // An array contain img's src when user upload image for previewing
+
       messageFiles: [], // // An array contain user uploaded message to send in form
+
       realtimeFetchedMessages: {}, // Messages received by socket.io events
+
       peer: null, // PeerJS object for current logged in user
-      contactListPeerIds: [], // List of user contact list peer
+
+      contactListPeerIds: [], // List of user contact list peerId
+
       currentCall: null, // Current video call PeerJS MediaConnection Object
+
       currentTime: new Date().toISOString(), // When the chat page is opened for the first time, messages whose sentTime before currentTime will be fetch
+
       shouldScrollDown: true, // When scroll up to get older messages, do not automatically scroll to the bottom
-      messagesToFetch: 10,
+
+      shouldScrollDownMax: true,
+
+      messagesToFetch: 10, // Number of messages to be fetch from GraphQL in one query
+
+      hasVideoCallStarted: false,
+
+      srcStream: null,
+      contactStream: null,
+
+      hasMuted: false,
     };
   },
   sockets: {
@@ -424,15 +469,20 @@ export default {
     },
   },
   methods: {
-   
     scrollDown() {
       if (this.shouldScrollDown) {
         let chatHistory = this.$refs.chatHistory;
 
-        chatHistory.scrollTop = chatHistory.scrollHeight;
+        if (this.shouldScrollDownMax) {
+          chatHistory.scrollTop = chatHistory.scrollHeight;
+        } else {
+          chatHistory.scrollTop = chatHistory.scrollHeight / 4;
+        }
       }
     },
     fetchedMessage() {
+      // Because graphql query is reactive, query will be automatically run again when
+      // query variable change, in this case is fetching message before a specific time
       let chatHistory = this.$refs.chatHistory;
 
       if (this.shouldScrollDown) {
@@ -444,6 +494,8 @@ export default {
           this.userMessages.messages[
             this.userMessages.messages.length - 1
           ].sentTime;
+        this.shouldScrollDown = true;
+        this.shouldScrollDownMax = false;
       }
     },
     setActiveContact(index) {
@@ -476,9 +528,11 @@ export default {
       if (!this.realtimeFetchedMessages[this.activeContactUsername]) {
         this.realtimeFetchedMessages[this.activeContactUsername] = [];
       }
-      this.realtimeFetchedMessages[this.activeContactUsername].push(message);
 
       this.shouldScrollDown = true; // Scroll to the bottom of messages list
+      this.shouldScrollDownMax = true;
+
+      this.realtimeFetchedMessages[this.activeContactUsername].push(message);
 
       let sentMessage = new FormData();
 
@@ -537,6 +591,7 @@ export default {
       modal.style.display = "none";
     },
     async videoChat() {
+      this.hasVideoCallStarted = true;
       let peerId = await this.getActiveContactPeerId();
       this.contactListPeerIds.push({
         username: this.activeContactUsername,
@@ -546,12 +601,15 @@ export default {
       let userWebcam = this.$refs.srcVideo;
       let peer = this.peer;
       let contactWebcam = this.$refs.contactVideo;
+
       let activeContactPeerId = this.contactListPeerIds.find(
         (contact) => contact.username === this.activeContactUsername
       ).peerId;
+
       navigator.mediaDevices
         .getUserMedia({ video: true, audio: true })
         .then((stream) => {
+          this.srcStream = stream;
           userWebcam.srcObject = stream;
           userWebcam.play();
 
@@ -577,6 +635,41 @@ export default {
     endVideoCall() {
       this.currentCall.close();
     },
+    // stop both mic and camera
+    stopBothVideoAndAudio(stream) {
+      stream.getTracks().forEach(function (track) {
+        if (track.readyState == "live") {
+          track.stop();
+        }
+      });
+    },
+
+    // stop only camera
+    stopVideoOnly(stream) {
+      stream.getTracks().forEach(function (track) {
+        if (track.readyState == "live" && track.kind === "video") {
+          track.stop();
+        }
+      });
+    },
+
+    // stop only mic
+    stopAudioOnly(stream) {
+      this.hasMuted = true
+      stream.getTracks().forEach(function (track) {
+        if (track.readyState == "live" && track.kind === "audio") {
+          track.stop();
+        }
+      });
+    },
+    startAudioOnly(stream) {
+      this.hasMuted = false
+      stream.getTracks().forEach(function (track) {
+        if (track.readyState == "live" && track.kind === "audio") {
+          track.play();
+        }
+      });
+    },
     formatTime(value) {
       return moment(String(value)).format("MM/DD/YYYY hh:mm");
     },
@@ -595,7 +688,9 @@ export default {
   watch: {
     userMessages(val, oldVal) {
       console.log(oldVal);
-      this.messages = val.messages.slice().reverse().concat(this.messages);
+      if (val.messages.length > 0) {
+        this.messages = val.messages.slice().reverse().concat(this.messages);
+      }
     },
   },
   created() {
@@ -631,12 +726,21 @@ export default {
     let peer = this.peer;
     let contactWebcam = this.$refs.contactVideo;
     let currentCall = this.currentCall;
+    let userWebcam = this.$refs.srcVideo;
+    let userStream = this.srcStream;
+
     peer.on("call", function (call) {
       console.log("Call received");
+      let hasVideoCallStarted = this.hasVideoCallStarted;
+      hasVideoCallStarted = true;
+
       currentCall = call;
       navigator.mediaDevices
         .getUserMedia({ video: true, audio: true })
         .then((stream) => {
+          userWebcam.srcObject = stream;
+          userWebcam.play();
+          userStream = stream;
           currentCall.answer(stream); // Answer the call with an A/V stream.
           currentCall.on("stream", function (remoteStream) {
             // Show stream in some video/canvas element.
@@ -658,6 +762,21 @@ export default {
 
 <style scoped>
 .container {
+  max-width: 100vw;
+}
+
+.control-buttons,
+.video {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.video {
+  margin-bottom: 10px;
+}
+
+.video .container {
   max-width: 100vw;
 }
 
