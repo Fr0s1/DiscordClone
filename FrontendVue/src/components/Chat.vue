@@ -518,8 +518,9 @@ export default {
     setActiveContact(index) {
       // Set realtime message array of current contact to empty to prevent duplicate because when switching back to this current contact
       // graphql will make a new query to get latest 3 messages
-      this.realtimeFetchedMessages[this.activeContactUsername] = [];
       this.activeContactIndex = index;
+      this.realtimeFetchedMessages[this.activeContactUsername] = [];
+
       this.$apollo.queries.userMessages.skip = false;
       this.$apollo.queries.userMessages.setVariables({
         firstUser: this.currentUsername,
