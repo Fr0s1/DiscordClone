@@ -1,5 +1,6 @@
 const { User } = require("../../mongodb/schemas")
-
+const { RedisPubSub } = require('graphql-redis-subscriptions')
+const pubsub = new RedisPubSub();
 // Add AWS Cognito user information to MongoDB to make it easier to write resolvers 
 // Just need to query to MongoDB instead of fetching using Cognito SDK
 async function addUser(parent, args, context) {
@@ -262,6 +263,9 @@ async function updateUserInfo(parent, args, context) {
     let email = args.email
     let User = context.mongo.User
 
+    let accountStatus = args.accountStatus
+    let lastOnlineTime = args.lastOnlineTime
+
     let UserAttributes = []
     let updatedInfo = {}
     if (phone_number) {
@@ -289,7 +293,16 @@ async function updateUserInfo(parent, args, context) {
         updatedInfo.email = email
     }
 
+    if (accountStatus) {
+        updatedInfo.accountStatus = accountStatus
+    }
+
+    if (lastOnlineTime) {
+        updatedInfo.lastOnlineTime = lastOnlineTime
+    }
+
     let cognitoClient = context.aws.cognitoClient
+
     var params = {
         UserAttributes,
         UserPoolId: process.env.cognitoUserPoolId, /* required */
@@ -303,6 +316,13 @@ async function updateUserInfo(parent, args, context) {
             returnDocument: "after"
         })
 
+        if (updatedInfo.accountStatus) {
+            pubsub.publish("ACCOUNT_STATUS_CHANGED", {
+                username,
+                accountStatus: updatedInfo.accountStatus
+            })
+        }
+
         let data = await cognitoClient.adminUpdateUserAttributes(params).promise()
 
         return updatedUser
@@ -311,6 +331,33 @@ async function updateUserInfo(parent, args, context) {
     }
 }
 
+async function addUserToContactList(parent, args, context) {
+    let username = args.username
+    let currentUser = context.tokenPayload.username
+    let User = context.mongo.User
+
+    try {
+        let addedUser = await User.findOne({
+            username
+        })
+
+        if (addedUser) {
+            let result = await User.findOneAndUpdate({
+                username: currentUser
+            }, {
+                $push: { contactlist: addedUser._id }
+            })
+
+            console.log(result)
+            return result
+        } else {
+            throw new Error(`User with username ${username} does not exist`)
+        }
+    } catch (e) {
+        throw new Error(e)
+    }
+
+}
 module.exports = {
     addUser,
     createGroup,
@@ -318,6 +365,6 @@ module.exports = {
     removeUserFromGroup,
     deleteMessage,
     deleteGroupMessage,
-    updateUserInfo
-
+    updateUserInfo,
+    addUserToContactList
 }

@@ -21,6 +21,7 @@ const User = require('./graphql/resolvers/User')
 const Message = require('./graphql/resolvers/Message')
 const GroupChat = require('./graphql/resolvers/GroupChat')
 const GroupMessage = require('./graphql/resolvers/GroupMessage')
+const Subscription = require('./graphql/resolvers/Subscription')
 
 const dateScalar = require('./graphql/scalars/Date')
 
@@ -34,6 +35,10 @@ const CognitoExpress = require("cognito-express")
 const { loadSchema } = require('@graphql-tools/load')
 const { GraphQLFileLoader } = require('@graphql-tools/graphql-file-loader')
 
+const { execute, subscribe } = require('graphql')
+const { SubscriptionServer } = require('subscriptions-transport-ws')
+
+
 async function startApolloServer() {
     const resolvers = {
         Date: dateScalar,
@@ -42,7 +47,8 @@ async function startApolloServer() {
         User,
         Message,
         GroupChat,
-        GroupMessage
+        GroupMessage,
+        Subscription
     }
 
     const graphqlSchema = await loadSchema(path.join(__dirname, "graphql/schema.graphql"), {
@@ -50,6 +56,7 @@ async function startApolloServer() {
             new GraphQLFileLoader()
         ]
     })
+
     let schema = makeExecutableSchema({
         typeDefs: [
             deprecatedDirectiveTypeDefs,
@@ -62,6 +69,7 @@ async function startApolloServer() {
 
     const app = express()
     const httpServer = http.createServer(app)
+
     const server = new ApolloServer({
         schema,
         context: async ({ req }) => {
@@ -93,8 +101,30 @@ async function startApolloServer() {
                 throw new Error('Not authenticated')
             }
         },
-        plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
+        plugins: [ApolloServerPluginDrainHttpServer({ httpServer }), {
+            async serverWillStart() {
+                return {
+                    async drainServer() {
+                        subscriptionServer.close();
+                    }
+                };
+            }
+        }],
     })
+
+    const subscriptionServer = SubscriptionServer.create({
+        // This is the `schema` we just created.
+        schema,
+        // These are imported from `graphql`.
+        execute,
+        subscribe,
+    }, {
+        // This is the `httpServer` we created in a previous step.
+        server: httpServer,
+        // This `server` is the instance returned from `new ApolloServer`.
+        path: server.graphqlPath,
+    });
+
     await server.start()
 
     let corsOptions = {
@@ -113,7 +143,6 @@ async function startApolloServer() {
     const os = require("os")
     const hostname = os.hostname()
 
-    
     console.log(`🚀 Server ready at ${hostname}${server.graphqlPath}`)
 }
 
