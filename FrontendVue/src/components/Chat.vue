@@ -7,7 +7,7 @@
             <div class="input-group">
               <div class="input-group-prepend">
                 <span class="input-group-text"
-                  ><i class="fa fa-search"></i
+                  ><i class="fas fa-search" style="color:#007bff"></i
                 ></span>
               </div>
               <input type="text" class="form-control" placeholder="Search..." />
@@ -48,22 +48,25 @@
                 </div>
                 <div class="col-lg-6 hidden-sm text-right">
                   <button
-                    class="btn btn-outline-secondary"
+                    class="btn btn-outline-primary"
                     @click="videoChat()"
                   >
-                    <i class="fa fa-phone"></i>
-                  </button>
-                  <button class="btn btn-outline-secondary">
-                    <i class="fa fa-camera"></i>
+                    <i class="fa fa-phone" data-toggle="tooltip" data-placement="auto" title="Call"></i>
                   </button>
                   <button class="btn btn-outline-primary">
-                    <i class="fa fa-image"></i>
+                    <i class="fas fa-camera" data-toggle="tooltip" data-placement="auto" title="Video call"></i>
                   </button>
-                  <button class="btn btn-outline-info">
-                    <i class="fa fa-cogs"></i>
+                  <button class="btn btn-outline-primary">
+                    <i class="fas fa-image" data-toggle="tooltip" data-placement="auto" title="Ảnh"></i>
                   </button>
-                  <button class="btn btn-outline-warning">
-                    <i class="fa fa-question"></i>
+                  <button class="btn btn-outline-primary">
+                    <i class="fas fa-cogs" data-toggle="tooltip" data-placement="auto" title="Cài đặt"></i>
+                  </button>
+                  <button class="btn btn-outline-primary">
+                    <i class="fas fa-question" data-toggle="tooltip" data-placement="auto" title="Trợ giúp"></i>
+                  </button>
+                  <button class="btn btn-outline-primary">
+                    <i class="fas fa-camera" data-toggle="tooltip" data-placement="auto" title="Đăng xuất"></i>
                   </button>
                 </div>
               </div>
@@ -257,14 +260,14 @@
                   >
                     <div class="input-group-prepend">
                       <button
-                        class="input-group-text btn"
-                        style="display: inline"
+                        class="btn-outline-primary btn"
                       >
-                        <i class="fa fa-send"></i>
+                        <i class="fas fa-paper-plane" data-toggle="tooltip" data-placement="auto" title="Gửi" style="color:#oo7bff"></i>
                       </button>
                       <input
                         type="text"
                         class="form-control"
+                        style="border-color:#007bff"
                         placeholder="Enter text here..."
                         name="content"
                         id="content"
@@ -274,6 +277,7 @@
                     <input
                       type="file"
                       class="form-control-file"
+                      style="margin-top:5px"
                       id="files"
                       name="files"
                       multiple
@@ -304,30 +308,31 @@
         <video ref="contactVideo" autoplay="true" id="contactWebcam"></video>
       </div>
 
-      <div class="control-buttons">
+      <div class="control-buttons" style="margin-bottom:20px">
         <button
           type="button"
-          class="btn btn-light endCallButton"
+          class="btn btn-outline-primary"
           @click="endVideoCall"
         >
-          End Call
+          <i class="fas fa-phone-slash" style="color:red"></i>
         </button>
 
         <button
           type="button"
-          class="btn btn-light endCallButton"
+          class="btn btn-outline-primary"
           @click="
             hasMuted ? startAudioOnly(srcStream) : stopAudioOnly(srcStream)
           "
         >
-          {{ hasMuted ? "Unmute" : "Mute" }}
+          <i v-if="hasMuted" class="fas fa-microphone-slash" style="color:red"></i> 
+          <i v-else class="fas fa-microphone"></i> 
         </button>
         <button
           type="button"
-          class="btn btn-light endCallButton"
+          class="btn btn-outline-primary"
           @click="stopVideoOnly(srcStream)"
         >
-          Turn Off Camera
+          <i class="fas fa-video" style="color:red"></i>
         </button>
       </div>
     </div>
@@ -761,6 +766,12 @@ export default {
 </script>
 
 <style scoped>
+.btn{
+  text-align: center;
+  margin-right: 5px;
+  width: 40px;
+  height: 40px;
+}
 .container {
   max-width: 100vw;
 }
