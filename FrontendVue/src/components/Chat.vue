@@ -70,10 +70,12 @@
             </div>
             <div class="chat-history">
               <ul class="m-b-0" ref="chatHistory" @scroll="fetchedMessage">
+                <!-- <div class="loader"></div> -->
+
                 <!-- This section is to display messages fetch from graphql or websocket -->
                 <li
                   class="clearfix"
-                  v-for="(message, index) in messages"
+                  v-for="(message, index) in messages[activeContactUsername]"
                   :key="index"
                 >
                   <div v-if="currentUsername === message.sender.username">
@@ -362,7 +364,7 @@ export default {
         messages: [],
       },
 
-      messages: [], // Messages array used to display in DOM
+      messages: {}, // Messages array used to display in DOM
 
       messageContent: "", // Message input field
 
@@ -454,17 +456,13 @@ export default {
             }
           }
         `,
-        variables() {
-          return {
-            firstUser: this.currentUsername,
-            secondUser: this.activeContactUsername,
-            limit: this.messagesToFetch,
-            nextCursor: this.currentTime,
-          };
+        variables: {
+          firstUser: this.currentUsername,
+          secondUser: this.activeContactUsername,
+          limit: this.messagesToFetch,
+          nextCursor: this.currentTime,
         },
-        skip() {
-          return !this.user.contactlist;
-        },
+        skip: true,
       };
     },
   },
@@ -496,6 +494,12 @@ export default {
           ].sentTime;
         this.shouldScrollDown = true;
         this.shouldScrollDownMax = false;
+        this.$apollo.queries.userMessages.setVariables({
+          firstUser: this.currentUsername,
+          secondUser: this.activeContactUsername,
+          limit: this.messagesToFetch,
+          nextCursor: this.currentTime,
+        });
       }
     },
     setActiveContact(index) {
@@ -503,6 +507,16 @@ export default {
       // graphql will make a new query to get latest 3 messages
       this.realtimeFetchedMessages[this.activeContactUsername] = [];
       this.activeContactIndex = index;
+      this.currentTime = new Date().toISOString();
+      this.messages[this.activeContactUsername] = [];
+      this.$apollo.queries.userMessages.skip = false;
+      this.$apollo.queries.userMessages.refetch({
+        firstUser: this.currentUsername,
+        secondUser: this.activeContactUsername,
+        limit: this.messagesToFetch,
+        nextCursor: this.currentTime,
+      });
+      this.shouldScrollDownMax = true;
     },
     sendMessage() {
       let message = {
@@ -655,7 +669,7 @@ export default {
 
     // stop only mic
     stopAudioOnly(stream) {
-      this.hasMuted = true
+      this.hasMuted = true;
       stream.getTracks().forEach(function (track) {
         if (track.readyState == "live" && track.kind === "audio") {
           track.stop();
@@ -663,7 +677,7 @@ export default {
       });
     },
     startAudioOnly(stream) {
-      this.hasMuted = false
+      this.hasMuted = false;
       stream.getTracks().forEach(function (track) {
         if (track.readyState == "live" && track.kind === "audio") {
           track.play();
@@ -688,8 +702,29 @@ export default {
   watch: {
     userMessages(val, oldVal) {
       console.log(oldVal);
+      let activeContactUsername = this.activeContactUsername;
       if (val.messages.length > 0) {
-        this.messages = val.messages.slice().reverse().concat(this.messages);
+        if (this.messages[activeContactUsername]) {
+          this.messages[this.activeContactUsername] = val.messages
+            .slice()
+            .reverse()
+            .concat(this.messages[this.activeContactUsername]);
+        } else {
+          this.messages[activeContactUsername] = val.messages.slice().reverse();
+        }
+      }
+    },
+    activeContactUsername(newUsername, oldUsername) {
+      console.log(newUsername);
+      console.log(oldUsername);
+      if (!oldUsername) {
+        this.$apollo.queries.userMessages.skip = false;
+        this.$apollo.queries.userMessages.setVariables({
+          firstUser: this.currentUsername,
+          secondUser: newUsername,
+          limit: this.messagesToFetch,
+          nextCursor: this.currentTime,
+        });
       }
     },
   },
@@ -704,8 +739,10 @@ export default {
       if (!this.realtimeFetchedMessages[sender]) {
         this.realtimeFetchedMessages[sender] = [];
       }
-      this.realtimeFetchedMessages[sender].push(data);
-      this.shouldScrollDown = true;
+      if (sender === this.activeContactUsername) {
+        this.realtimeFetchedMessages[sender].push(data);
+        this.shouldScrollDown = true;
+      }
     });
 
     this.peer = new Peer();
@@ -765,6 +802,9 @@ export default {
   max-width: 100vw;
 }
 
+.chat-history ul {
+  scroll-behavior: smooth;
+}
 .control-buttons,
 .video {
   display: flex;
@@ -1124,6 +1164,24 @@ export default {
 @media only screen and (max-width: 700px) {
   .modal-content {
     width: 100%;
+  }
+}
+
+.loader {
+  border: 16px solid #f3f3f3; /* Light grey */
+  border-top: 16px solid #3498db; /* Blue */
+  border-radius: 50%;
+  width: 120px;
+  height: 120px;
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
   }
 }
 </style>
