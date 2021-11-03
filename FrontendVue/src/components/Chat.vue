@@ -27,6 +27,16 @@
                     <i class="fa fa-circle online"></i> Online
                   </div>
                 </div>
+                <div
+                  class="badge bg-success float-right"
+                  v-if="
+                    contact.username !== activeContactUsername &&
+                    realtimeFetchedMessages[contact.username] &&
+                    realtimeFetchedMessages[contact.username].length > 0
+                  "
+                >
+                  {{ realtimeFetchedMessages[contact.username].length }}
+                </div>
               </li>
             </ul>
           </div>
@@ -75,7 +85,7 @@
                 <!-- This section is to display messages fetch from graphql or websocket -->
                 <li
                   class="clearfix"
-                  v-for="(message, index) in messages[activeContactUsername]"
+                  v-for="(message, index) in messages"
                   :key="index"
                 >
                   <div v-if="currentUsername === message.sender.username">
@@ -342,7 +352,7 @@ import Peer from "peerjs";
 import moment from "moment";
 
 export default {
-  inject: ["currentUsername", "config", "Peer"],
+  inject: ["currentUsername", "config"],
   filters: {
     formatTime: function (value) {
       if (value) {
@@ -360,11 +370,8 @@ export default {
       activeContactIndex: 0, // Default index of current contact in contactlist
 
       userMessages: {
-        // Messages fetched from graphql
         messages: [],
-      },
-
-      messages: {}, // Messages array used to display in DOM
+      }, // Messages fetch from GraphQL
 
       messageContent: "", // Message input field
 
@@ -380,12 +387,6 @@ export default {
 
       currentCall: null, // Current video call PeerJS MediaConnection Object
 
-      currentTime: new Date().toISOString(), // When the chat page is opened for the first time, messages whose sentTime before currentTime will be fetch
-
-      shouldScrollDown: true, // When scroll up to get older messages, do not automatically scroll to the bottom
-
-      shouldScrollDownMax: true,
-
       messagesToFetch: 10, // Number of messages to be fetch from GraphQL in one query
 
       hasVideoCallStarted: false,
@@ -394,6 +395,10 @@ export default {
       contactStream: null,
 
       hasMuted: false,
+
+      scrollHeight: null,
+
+      shouldScroll: false,
     };
   },
   sockets: {
@@ -467,38 +472,46 @@ export default {
     },
   },
   methods: {
-    scrollDown() {
-      if (this.shouldScrollDown) {
-        let chatHistory = this.$refs.chatHistory;
-
-        if (this.shouldScrollDownMax) {
-          chatHistory.scrollTop = chatHistory.scrollHeight;
-        } else {
-          chatHistory.scrollTop = chatHistory.scrollHeight / 4;
-        }
-      }
+    scrollDown(scrollHeight) {
+      let chatHistory = this.$refs.chatHistory;
+      chatHistory.scrollTop = scrollHeight;
     },
     fetchedMessage() {
       // Because graphql query is reactive, query will be automatically run again when
       // query variable change, in this case is fetching message before a specific time
       let chatHistory = this.$refs.chatHistory;
 
-      if (this.shouldScrollDown) {
-        this.shouldScrollDown = false;
-      }
-
       if (chatHistory.scrollTop == 0) {
-        this.currentTime =
-          this.userMessages.messages[
-            this.userMessages.messages.length - 1
-          ].sentTime;
-        this.shouldScrollDown = true;
-        this.shouldScrollDownMax = false;
-        this.$apollo.queries.userMessages.setVariables({
-          firstUser: this.currentUsername,
-          secondUser: this.activeContactUsername,
-          limit: this.messagesToFetch,
-          nextCursor: this.currentTime,
+        this.scrollHeight = chatHistory.scrollHeight;
+        this.shouldScroll = true;
+
+        this.$apollo.queries.userMessages.skip = false;
+        this.$apollo.queries.userMessages.fetchMore({
+          variables: {
+            firstUser: this.currentUsername,
+            secondUser: this.activeContactUsername,
+            limit: this.messagesToFetch,
+            nextCursor: this.userMessages.nextCursor,
+          },
+          updateQuery: (previousResult, { fetchMoreResult }) => {
+            console.log(previousResult);
+            console.log(fetchMoreResult);
+            const newMessages = fetchMoreResult.userMessages.messages;
+            return {
+              userMessages: {
+                __typename: previousResult.userMessages.__typename,
+                // Merging the tag list
+                messages: [
+                  ...previousResult.userMessages.messages,
+                  ...newMessages,
+                ],
+                count:
+                  previousResult.userMessages.count +
+                  fetchMoreResult.userMessages.count,
+                nextCursor: fetchMoreResult.userMessages.nextCursor,
+              },
+            };
+          },
         });
       }
     },
@@ -507,16 +520,14 @@ export default {
       // graphql will make a new query to get latest 3 messages
       this.realtimeFetchedMessages[this.activeContactUsername] = [];
       this.activeContactIndex = index;
-      this.currentTime = new Date().toISOString();
-      this.messages[this.activeContactUsername] = [];
       this.$apollo.queries.userMessages.skip = false;
-      this.$apollo.queries.userMessages.refetch({
+      this.$apollo.queries.userMessages.setVariables({
         firstUser: this.currentUsername,
         secondUser: this.activeContactUsername,
         limit: this.messagesToFetch,
-        nextCursor: this.currentTime,
+        nextCursor: new Date().toISOString(),
       });
-      this.shouldScrollDownMax = true;
+      this.$apollo.queries.userMessages.refetch();
     },
     sendMessage() {
       let message = {
@@ -543,10 +554,9 @@ export default {
         this.realtimeFetchedMessages[this.activeContactUsername] = [];
       }
 
-      this.shouldScrollDown = true; // Scroll to the bottom of messages list
-      this.shouldScrollDownMax = true;
-
       this.realtimeFetchedMessages[this.activeContactUsername].push(message);
+      this.scrollHeight = 0;
+      this.shouldScroll = true;
 
       let sentMessage = new FormData();
 
@@ -698,34 +708,8 @@ export default {
     activeContactPeerId() {
       return this.contactListPeerIds[this.activeContactUsername];
     },
-  },
-  watch: {
-    userMessages(val, oldVal) {
-      console.log(oldVal);
-      let activeContactUsername = this.activeContactUsername;
-      if (val.messages.length > 0) {
-        if (this.messages[activeContactUsername]) {
-          this.messages[this.activeContactUsername] = val.messages
-            .slice()
-            .reverse()
-            .concat(this.messages[this.activeContactUsername]);
-        } else {
-          this.messages[activeContactUsername] = val.messages.slice().reverse();
-        }
-      }
-    },
-    activeContactUsername(newUsername, oldUsername) {
-      console.log(newUsername);
-      console.log(oldUsername);
-      if (!oldUsername) {
-        this.$apollo.queries.userMessages.skip = false;
-        this.$apollo.queries.userMessages.setVariables({
-          firstUser: this.currentUsername,
-          secondUser: newUsername,
-          limit: this.messagesToFetch,
-          nextCursor: this.currentTime,
-        });
-      }
+    messages() {
+      return this.userMessages.messages.slice().reverse();
     },
   },
   created() {
@@ -739,10 +723,9 @@ export default {
       if (!this.realtimeFetchedMessages[sender]) {
         this.realtimeFetchedMessages[sender] = [];
       }
-      if (sender === this.activeContactUsername) {
-        this.realtimeFetchedMessages[sender].push(data);
-        this.shouldScrollDown = true;
-      }
+      this.realtimeFetchedMessages[sender].push(data);
+
+      this.shouldScroll = false;
     });
 
     this.peer = new Peer();
@@ -758,6 +741,21 @@ export default {
       );
       this.userPeerId = id;
     });
+  },
+  watch: {
+    activeContactUsername(newUsername, oldUsername) {
+      console.log(newUsername, oldUsername);
+      this.currentTime = new Date().toISOString();
+      this.$apollo.queries.userMessages.skip = false;
+      this.$apollo.queries.userMessages.setVariables({
+        firstUser: this.currentUsername,
+        secondUser: newUsername,
+        limit: this.messagesToFetch,
+        nextCursor: this.currentTime,
+      });
+      this.$apollo.queries.userMessages.refetch();
+      this.shouldScroll = true;
+    },
   },
   mounted() {
     let peer = this.peer;
@@ -792,7 +790,13 @@ export default {
     });
   },
   updated() {
-    this.$nextTick(this.scrollDown());
+    if (this.shouldScroll) {
+      if (!this.$apollo.queries.userMessages.loading) {
+        let chatHistory = this.$refs.chatHistory;
+        this.scrollDown(chatHistory.scrollHeight - this.scrollHeight);
+        this.shouldScroll = false;
+      }
+    }
   },
 };
 </script>
@@ -802,9 +806,6 @@ export default {
   max-width: 100vw;
 }
 
-.chat-history ul {
-  scroll-behavior: smooth;
-}
 .control-buttons,
 .video {
   display: flex;
