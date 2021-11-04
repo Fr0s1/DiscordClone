@@ -377,7 +377,12 @@
           class="btn btn-outline-primary"
           @click="changeWebcamStatus(srcStream)"
         >
-          <i class="fas fa-video" style="color: red"></i>
+          <i
+            v-if="hasTurnedOffWebcam"
+            class="fas fa-video-slash"
+            style="color: red"
+          ></i>
+          <i v-else class="fas fa-video"></i>
         </button>
       </div>
     </div>
