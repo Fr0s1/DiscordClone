@@ -7,7 +7,7 @@
             <div class="input-group">
               <div class="input-group-prepend">
                 <span class="input-group-text"
-                  ><i class="fas fa-search" style="color:#007bff"></i
+                  ><i class="fas fa-search" style="color: #007bff"></i
                 ></span>
               </div>
               <input type="text" class="form-control" placeholder="Search..." />
@@ -57,26 +57,53 @@
                   </div>
                 </div>
                 <div class="col-lg-6 hidden-sm text-right">
-                  <button
-                    class="btn btn-outline-primary"
-                    @click="videoChat()"
-                  >
-                    <i class="fa fa-phone" data-toggle="tooltip" data-placement="auto" title="Call"></i>
+                  <button class="btn btn-outline-primary" @click="videoChat()">
+                    <i
+                      class="fa fa-phone"
+                      data-toggle="tooltip"
+                      data-placement="auto"
+                      title="Call"
+                    ></i>
                   </button>
                   <button class="btn btn-outline-primary">
-                    <i class="fas fa-camera" data-toggle="tooltip" data-placement="auto" title="Video call"></i>
+                    <i
+                      class="fas fa-camera"
+                      data-toggle="tooltip"
+                      data-placement="auto"
+                      title="Video call"
+                    ></i>
                   </button>
                   <button class="btn btn-outline-primary">
-                    <i class="fas fa-image" data-toggle="tooltip" data-placement="auto" title="Ảnh"></i>
+                    <i
+                      class="fas fa-image"
+                      data-toggle="tooltip"
+                      data-placement="auto"
+                      title="Ảnh"
+                    ></i>
                   </button>
                   <button class="btn btn-outline-primary">
-                    <i class="fas fa-cogs" data-toggle="tooltip" data-placement="auto" title="Cài đặt"></i>
+                    <i
+                      class="fas fa-cogs"
+                      data-toggle="tooltip"
+                      data-placement="auto"
+                      title="Cài đặt"
+                    ></i>
                   </button>
                   <button class="btn btn-outline-primary">
-                    <i class="fas fa-question" data-toggle="tooltip" data-placement="auto" title="Trợ giúp"></i>
+                    <i
+                      class="fas fa-question"
+                      data-toggle="tooltip"
+                      data-placement="auto"
+                      title="Trợ giúp"
+                    ></i>
                   </button>
                   <button class="btn btn-outline-primary">
-                    <i class="fas fa-camera" data-toggle="tooltip" data-placement="auto" title="Đăng xuất"></i>
+                    <i
+                      class="fas fa-camera"
+                      data-toggle="tooltip"
+                      data-placement="auto"
+                      title="Đăng xuất"
+                    ></i>
                   </button>
                 </div>
               </div>
@@ -271,15 +298,19 @@
                     @submit.prevent="sendMessage()"
                   >
                     <div class="input-group-prepend">
-                      <button
-                        class="btn-outline-primary btn"
-                      >
-                        <i class="fas fa-paper-plane" data-toggle="tooltip" data-placement="auto" title="Gửi" style="color:#oo7bff"></i>
+                      <button class="btn-outline-primary btn">
+                        <i
+                          class="fas fa-paper-plane"
+                          data-toggle="tooltip"
+                          data-placement="auto"
+                          title="Gửi"
+                          style="color: #oo7bff"
+                        ></i>
                       </button>
                       <input
                         type="text"
                         class="form-control"
-                        style="border-color:#007bff"
+                        style="border-color: #007bff"
                         placeholder="Enter text here..."
                         name="content"
                         id="content"
@@ -289,7 +320,7 @@
                     <input
                       type="file"
                       class="form-control-file"
-                      style="margin-top:5px"
+                      style="margin-top: 5px"
                       id="files"
                       name="files"
                       multiple
@@ -314,37 +345,39 @@
       </div>
     </div>
 
-    <div class="video-chat">
+    <div class="video-chat" v-if="hasVideoCallStarted">
       <div class="video">
         <video ref="srcVideo" autoplay="true" muted id="userWebcam"></video>
         <video ref="contactVideo" autoplay="true" id="contactWebcam"></video>
       </div>
 
-      <div class="control-buttons" style="margin-bottom:20px">
+      <div class="control-buttons" style="margin-bottom: 20px">
         <button
           type="button"
           class="btn btn-outline-primary"
           @click="endVideoCall"
         >
-          <i class="fas fa-phone-slash" style="color:red"></i>
+          <i class="fas fa-phone-slash" style="color: red"></i>
         </button>
 
         <button
           type="button"
           class="btn btn-outline-primary"
-          @click="
-            hasMuted ? startAudioOnly(srcStream) : stopAudioOnly(srcStream)
-          "
+          @click="changeMicrophoneStatus(srcStream)"
         >
-          <i v-if="hasMuted" class="fas fa-microphone-slash" style="color:red"></i> 
-          <i v-else class="fas fa-microphone"></i> 
+          <i
+            v-if="hasTurnedOffMicrophone"
+            class="fas fa-microphone-slash"
+            style="color: red"
+          ></i>
+          <i v-else class="fas fa-microphone"></i>
         </button>
         <button
           type="button"
           class="btn btn-outline-primary"
-          @click="stopVideoOnly(srcStream)"
+          @click="changeWebcamStatus(srcStream)"
         >
-          <i class="fas fa-video" style="color:red"></i>
+          <i class="fas fa-video" style="color: red"></i>
         </button>
       </div>
     </div>
@@ -394,12 +427,12 @@ export default {
 
       messagesToFetch: 10, // Number of messages to be fetch from GraphQL in one query
 
-      hasVideoCallStarted: false,
+      hasTurnedOffMicrophone: false,
+      hasTurnedOffWebcam: false,
 
+      hasVideoCallStarted: false,
       srcStream: null,
       contactStream: null,
-
-      hasMuted: false,
 
       scrollHeight: null,
 
@@ -627,10 +660,6 @@ export default {
         peerId,
       });
 
-      let userWebcam = this.$refs.srcVideo;
-      let peer = this.peer;
-      let contactWebcam = this.$refs.contactVideo;
-
       let activeContactPeerId = this.contactListPeerIds.find(
         (contact) => contact.username === this.activeContactUsername
       ).peerId;
@@ -638,6 +667,9 @@ export default {
       navigator.mediaDevices
         .getUserMedia({ video: true, audio: true })
         .then((stream) => {
+          let userWebcam = this.$refs.srcVideo;
+          let peer = this.peer;
+          let contactWebcam = this.$refs.contactVideo;
           this.srcStream = stream;
           userWebcam.srcObject = stream;
           userWebcam.play();
@@ -664,40 +696,18 @@ export default {
     endVideoCall() {
       this.currentCall.close();
     },
-    // stop both mic and camera
-    stopBothVideoAndAudio(stream) {
-      stream.getTracks().forEach(function (track) {
-        if (track.readyState == "live") {
-          track.stop();
-        }
-      });
-    },
-
-    // stop only camera
-    stopVideoOnly(stream) {
-      stream.getTracks().forEach(function (track) {
-        if (track.readyState == "live" && track.kind === "video") {
-          track.stop();
-        }
-      });
-    },
 
     // stop only mic
-    stopAudioOnly(stream) {
-      this.hasMuted = true;
-      stream.getTracks().forEach(function (track) {
-        if (track.readyState == "live" && track.kind === "audio") {
-          track.stop();
-        }
-      });
+    changeWebcamStatus(stream) {
+      this.hasTurnedOffWebcam = !this.hasTurnedOffWebcam;
+
+      stream.getVideoTracks()[0].enabled = !this.hasTurnedOffWebcam;
     },
-    startAudioOnly(stream) {
-      this.hasMuted = false;
-      stream.getTracks().forEach(function (track) {
-        if (track.readyState == "live" && track.kind === "audio") {
-          track.play();
-        }
-      });
+
+    changeMicrophoneStatus(stream) {
+      this.hasTurnedOffMicrophone = !this.hasTurnedOffMicrophone;
+
+      stream.getAudioTracks()[0].enabled = !this.hasTurnedOffMicrophone;
     },
     formatTime(value) {
       return moment(String(value)).format("MM/DD/YYYY hh:mm");
@@ -764,23 +774,23 @@ export default {
   },
   mounted() {
     let peer = this.peer;
-    let contactWebcam = this.$refs.contactVideo;
-    let currentCall = this.currentCall;
-    let userWebcam = this.$refs.srcVideo;
-    let userStream = this.srcStream;
 
-    peer.on("call", function (call) {
+    peer.on("call", (call) => {
       console.log("Call received");
-      let hasVideoCallStarted = this.hasVideoCallStarted;
-      hasVideoCallStarted = true;
+
+      this.hasVideoCallStarted = true;
+      let currentCall = this.currentCall;
 
       currentCall = call;
+
       navigator.mediaDevices
         .getUserMedia({ video: true, audio: true })
         .then((stream) => {
+          let contactWebcam = this.$refs.contactVideo;
+          let userWebcam = this.$refs.srcVideo;
+          this.srcStream = stream;
           userWebcam.srcObject = stream;
           userWebcam.play();
-          userStream = stream;
           currentCall.answer(stream); // Answer the call with an A/V stream.
           currentCall.on("stream", function (remoteStream) {
             // Show stream in some video/canvas element.
@@ -807,7 +817,7 @@ export default {
 </script>
 
 <style scoped>
-.btn{
+.btn {
   text-align: center;
   margin-right: 5px;
   width: 40px;
@@ -1146,9 +1156,9 @@ export default {
 }
 
 .btn {
-    padding: 10px;
-    border: 0;
-    margin: 2px;
+  padding: 10px;
+  border: 0;
+  margin: 2px;
 }
 
 @keyframes zoom {
