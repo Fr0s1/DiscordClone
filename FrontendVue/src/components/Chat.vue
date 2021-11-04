@@ -494,8 +494,6 @@ export default {
             nextCursor: this.userMessages.nextCursor,
           },
           updateQuery: (previousResult, { fetchMoreResult }) => {
-            console.log(previousResult);
-            console.log(fetchMoreResult);
             const newMessages = fetchMoreResult.userMessages.messages;
             return {
               userMessages: {
@@ -520,7 +518,8 @@ export default {
       // graphql will make a new query to get latest 3 messages
       this.activeContactIndex = index;
       this.realtimeFetchedMessages[this.activeContactUsername] = [];
-
+      this.scrollHeight = 0;
+      this.shouldScroll = true;
       this.$apollo.queries.userMessages.skip = false;
       this.$apollo.queries.userMessages.setVariables({
         firstUser: this.currentUsername,
@@ -791,8 +790,8 @@ export default {
     });
   },
   updated() {
-    if (this.shouldScroll) {
-      if (!this.$apollo.queries.userMessages.loading) {
+    if (!this.$apollo.queries.userMessages.loading) {
+      if (this.shouldScroll) {
         let chatHistory = this.$refs.chatHistory;
         this.scrollDown(chatHistory.scrollHeight - this.scrollHeight);
         this.shouldScroll = false;
