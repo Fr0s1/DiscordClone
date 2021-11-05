@@ -104,10 +104,16 @@
 
 <script>
 export default {
+  inject: ["currentUsername"],
   name: "HelloWorld",
   props: {
     msg: String,
   },
+
+  mounted() {
+    // console.log(this.currentUsername);
+    this.$router.push('/user/'+this.currentUsername);
+  }
 };
 </script>
 
