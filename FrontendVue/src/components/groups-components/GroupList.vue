@@ -27,6 +27,8 @@ export default {
   data() {
     return {
       activeGroupIndex: null,
+      nextCursor: new Date().toISOString(),
+      limit: 10,
     };
   },
   methods: {
@@ -40,8 +42,23 @@ export default {
         return this.groups[this.activeGroupIndex].groupName;
       }
     },
+    activeGroupId() {
+      if (this.groups.length > 0 && this.activeGroupIndex) {
+        return this.groups[this.activeGroupIndex]._id;
+      }
+    },
   },
-  watch() {},
+  watch: {
+    activeGroupId(newGroupId, oldGroupName) {
+      this.$emit("fetch-group-messages", {
+        limit: this.limit,
+        nextCursor: this.nextCursor,
+        groupId: newGroupId,
+        firstFetch: true,
+        activeContactIndex: this.activeContactIndex,
+      });
+    },
+  },
 };
 </script>
 <style scoped>

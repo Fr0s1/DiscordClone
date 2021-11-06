@@ -115,6 +115,9 @@
           <private-video-chat
             v-if="hasVideoCallStarted"
             :activeContactPeerId="activeContactPeerId"
+            :peer="peer"
+            :isCaller="isCaller"
+            :answeringCall="answeringCall"
           ></private-video-chat>
         </div>
       </div>
@@ -165,11 +168,13 @@ export default {
 
       contactListPeerIds: [], // List of user contact list peerId
 
-      currentCall: null, // Current video call PeerJS MediaConnection Object
-
       hasVideoCallStarted: false,
-      srcStream: null,
-      contactStream: null,
+
+      activeContactPeerId: null,
+
+      isCaller: null,
+
+      answeringCall: null,
     };
   },
   sockets: {
@@ -259,7 +264,6 @@ export default {
     },
     fetchMessages(data) {
       if (data.firstFetch) {
-        console.log(data);
         this.activeContactUsername = data.username;
         this.$apollo.queries.userMessages.skip = false;
         this.$apollo.queries.userMessages.setVariables({
@@ -298,16 +302,25 @@ export default {
         });
       }
     },
+    fetchGroupMessages(data) {},
     sendMessage(data) {
       this.$socket.emit("chatMessage", data);
     },
     async startVideoCall() {
       this.hasVideoCallStarted = true;
-      let peerId = await this.getActiveContactPeerId();
-      this.contactListPeerIds.push({
-        username: this.activeContactUsername,
-        peerId,
-      });
+      this.isCaller = true;
+
+      if (!this.contactListPeerIds[this.activeContactUsername]) {
+        let peerId = await this.getActiveContactPeerId();
+        this.activeContactPeerId = peerId;
+        this.contactListPeerIds.push({
+          username: this.activeContactUsername,
+          peerId,
+        });
+      } else {
+        this.activeContactPeerId =
+          this.contactListPeerIds[this.activeContactUsername];
+      }
     },
 
     async getActiveContactPeerId() {
@@ -323,9 +336,6 @@ export default {
     },
   },
   computed: {
-    activeContactPeerId() {
-      return this.contactListPeerIds[this.activeContactUsername];
-    },
     activeContactIndex() {
       return this.user.contactlist.findIndex(
         (contact) => contact.username == this.activeContactUsername
@@ -355,41 +365,19 @@ export default {
           peerId: id,
         }
       );
-      this.userPeerId = id;
     });
   },
 
   mounted() {
     let peer = this.peer;
 
-    // peer.on("call", (call) => {
-    //   console.log("Call received");
+    peer.on("call", (answeringCall) => {
+      this.isCaller = false;
 
-    //   this.hasVideoCallStarted = true;
-    //   let currentCall = this.currentCall;
+      this.hasVideoCallStarted = true;
 
-    //   currentCall = call;
-
-    //   navigator.mediaDevices
-    //     .getUserMedia({ video: true, audio: true })
-    //     .then((stream) => {
-    //       let contactWebcam = this.$refs.contactVideo;
-    //       let userWebcam = this.$refs.srcVideo;
-    //       this.srcStream = stream;
-    //       userWebcam.srcObject = stream;
-    //       userWebcam.play();
-    //       currentCall.answer(stream); // Answer the call with an A/V stream.
-    //       currentCall.on("stream", function (remoteStream) {
-    //         // Show stream in some video/canvas element.
-    //         contactWebcam.srcObject = remoteStream;
-    //         contactWebcam.play();
-    //       });
-
-    //       currentCall.on("close", () => {
-    //         console.log("Call ended");
-    //       });
-    //     });
-    // });
+      this.answeringCall = answeringCall;
+    });
 
     this.sockets.subscribe("chatMessage", function (data) {
       this.addToRealtimeMessagesList(data);

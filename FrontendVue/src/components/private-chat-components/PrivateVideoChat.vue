@@ -48,15 +48,24 @@ export default {
     activeContactPeerId: {
       type: String,
     },
+    isCaller: {
+      type: Boolean,
+    },
+    peer: {
+      default: null,
+    },
+    answeringCall: {
+      default: null,
+    },
   },
 
   data() {
     return {
-      currentCall: null, // Current video call PeerJS MediaConnection Object
       hasTurnedOffMicrophone: false,
       hasTurnedOffWebcam: false,
       srcStream: null,
       contactStream: null,
+      call: null,
     };
   },
   methods: {
@@ -70,8 +79,15 @@ export default {
           this.srcStream = stream;
           userWebcam.srcObject = stream;
           userWebcam.play();
-          this.currentCall = peer.call(this.activeContactPeerId, stream);
-          this.currentCall.on("stream", function (remoteStream) {
+
+          if (this.isCaller) {
+            this.call = peer.call(this.activeContactPeerId, stream);
+          } else {
+            this.call = this.answeringCall;
+            this.call.answer(stream); // Answer the call with an A/V stream.
+          }
+
+          this.call.on("stream", function (remoteStream) {
             // Show stream in some video/canvas element.
             contactWebcam.srcObject = remoteStream;
             contactWebcam.play();

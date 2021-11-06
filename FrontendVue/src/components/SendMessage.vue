@@ -54,7 +54,9 @@ export default {
   props: {
     activeContactUsername: {
       type: String,
-      required: true,
+    },
+    activeGroupId: {
+      type: String,
     },
   },
   data() {
@@ -136,6 +138,7 @@ export default {
       }
     },
   },
+  sendGroupMessage() {},
 };
 </script>
 <style scoped>
