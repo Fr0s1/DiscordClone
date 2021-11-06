@@ -12,33 +12,12 @@
               </div>
               <input type="text" class="form-control" placeholder="Search..." />
             </div>
-            <ul class="list-unstyled chat-list mt-2 mb-0">
-              <li
-                class="clearfix"
-                v-for="(contact, index) in user.contactlist"
-                :class="activeContactIndex === index ? 'active' : ''"
-                @click="setActiveContact(index)"
-                :key="index"
-              >
-                <img :src="contact.avatar" alt="avatar" />
-                <div class="about">
-                  <div class="name">{{ contact.name }}</div>
-                  <div class="status">
-                    <i class="fa fa-circle online"></i> Online
-                  </div>
-                </div>
-                <div
-                  class="badge bg-success float-right"
-                  v-if="
-                    contact.username !== activeContactUsername &&
-                    realtimeFetchedMessages[contact.username] &&
-                    realtimeFetchedMessages[contact.username].length > 0
-                  "
-                >
-                  {{ realtimeFetchedMessages[contact.username].length }}
-                </div>
-              </li>
-            </ul>
+            <contact-list
+              :contactlist="user.contactlist"
+              @fetch-messages="fetchMessages"
+            ></contact-list>
+
+            <group-list :groups="user.groups"></group-list>
           </div>
           <div class="chat">
             <div class="chat-header clearfix">
@@ -49,7 +28,10 @@
                     data-toggle="modal"
                     data-target="#view_info"
                   >
-                    <img :src="activeContactAvatar" alt="avatar" />
+                    <img
+                      :src="user.contactlist[activeContactIndex]?.avatar"
+                      alt="avatar"
+                    />
                   </a>
                   <div class="chat-about">
                     <h6 class="m-b-0">{{ activeContactUsername }}</h6>
@@ -57,7 +39,10 @@
                   </div>
                 </div>
                 <div class="col-lg-6 hidden-sm text-right">
-                  <button class="btn btn-outline-primary" @click="videoChat()">
+                  <button
+                    class="btn btn-outline-primary"
+                    @click="startVideoCall()"
+                  >
                     <i
                       class="fa fa-phone"
                       data-toggle="tooltip"
@@ -108,282 +93,30 @@
                 </div>
               </div>
             </div>
-            <div class="chat-history">
-              <ul class="m-b-0" ref="chatHistory" @scroll="fetchedMessage">
-                <!-- <div class="loader"></div> -->
 
-                <!-- This section is to display messages fetch from graphql or websocket -->
-                <li
-                  class="clearfix"
-                  v-for="(message, index) in messages"
-                  :key="index"
-                >
-                  <div v-if="currentUsername === message.sender.username">
-                    <div class="message-data text-right">
-                      <span class="message-data-time">{{
-                        formatTime(message.sentTime)
-                      }}</span>
-                      <img :src="user.avatar" alt="avatar" />
-                    </div>
-                    <div class="message other-message float-right">
-                      {{ message.content }}
-                      <div
-                        class="message-files"
-                        v-if="message.files && message.files.length > 0"
-                      >
-                        <img
-                          v-for="(file, index) in message.files"
-                          :key="index"
-                          :src="file.fileUrl"
-                          width="100"
-                          style="display: inline-block"
-                          @click="zoomImage($event.target)"
-                        />
-                        <div id="myModal" class="modal" ref="modal">
-                          <!-- The Close Button -->
-                          <span
-                            class="close"
-                            ref="closeImageButton"
-                            @click="closeZoomImage"
-                            >&times;</span
-                          >
+            <chat-history
+              :userMessages="userMessages"
+              :activeContactUsername="activeContactUsername"
+              :currentUsername="currentUsername"
+              :userAvatarUrl="user.avatar"
+              :hasFinishedLoadingMessages="hasFinishedLoadingMessages"
+              :realtimeFetchedMessages="realtimeFetchedMessages"
+              @fetch-messages="fetchMessages"
+              v-if="activeContactUsername"
+            ></chat-history>
 
-                          <!-- Modal Content (The Image) -->
-                          <img
-                            class="modal-content"
-                            id="img01"
-                            ref="zoomImage"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div v-else>
-                    <div class="message-data">
-                      <span class="message-data-time">{{
-                        formatTime(message.sentTime)
-                      }}</span>
-                    </div>
-                    <div class="message my-message">
-                      {{ message.content }}
-                      <div
-                        class="message-files"
-                        v-if="message.files && message.files.length > 0"
-                      >
-                        <img
-                          v-for="(file, index) in message.files"
-                          :key="index"
-                          :src="file.fileUrl"
-                          width="100"
-                          style="display: inline-block"
-                          @click="zoomImage($event.target)"
-                        />
-                        <div id="myModal" class="modal" ref="modal">
-                          <!-- The Close Button -->
-                          <span
-                            class="close"
-                            ref="closeImageButton"
-                            @click="closeZoomImage"
-                            >&times;</span
-                          >
-
-                          <!-- Modal Content (The Image) -->
-                          <img
-                            class="modal-content"
-                            id="img01"
-                            ref="zoomImage"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </li>
-
-                <!-- This section is to display realtime sent message -->
-                <!-- The reason this v-for li element is duplicated because then userMessages fetched from graphql can't be dynamically changed -->
-                <li
-                  class="clearfix"
-                  v-for="(message, index) in realtimeFetchedMessages[
-                    activeContactUsername
-                  ]"
-                  :key="index"
-                >
-                  <div v-if="currentUsername === message.sender.username">
-                    <div class="message-data text-right">
-                      <span class="message-data-time">{{
-                        formatTime(message.sentTime)
-                      }}</span>
-                      <img :src="user.avatar" alt="avatar" />
-                    </div>
-                    <div class="message other-message float-right">
-                      {{ message.content }}
-                      <div
-                        class="message-files"
-                        v-if="message.files && message.files.length > 0"
-                      >
-                        <img
-                          v-for="(file, index) in message.files"
-                          :key="index"
-                          :src="file.fileUrl"
-                          width="100"
-                          style="display: inline-block"
-                          @click="zoomImage($event.target)"
-                        />
-                        <div id="myModal" class="modal" ref="modal">
-                          <!-- The Close Button -->
-                          <span
-                            class="close"
-                            ref="closeImageButton"
-                            @click="closeZoomImage"
-                            >&times;</span
-                          >
-
-                          <!-- Modal Content (The Image) -->
-                          <img
-                            class="modal-content"
-                            id="img01"
-                            ref="zoomImage"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div v-else>
-                    <div class="message-data">
-                      <span class="message-data-time">{{
-                        formatTime(message.sentTime)
-                      }}</span>
-                    </div>
-                    <div class="message my-message">
-                      {{ message.content }}
-                      <div
-                        class="message-files"
-                        v-if="message.files && message.files.length > 0"
-                      >
-                        <img
-                          v-for="(file, index) in message.files"
-                          :key="index"
-                          :src="file.fileUrl"
-                          width="100"
-                          style="display: inline-block"
-                          @click="zoomImage($event.target)"
-                        />
-                        <div id="myModal" class="modal" ref="modal">
-                          <!-- The Close Button -->
-                          <span
-                            class="close"
-                            ref="closeImageButton"
-                            @click="closeZoomImage"
-                            >&times;</span
-                          >
-
-                          <!-- Modal Content (The Image) -->
-                          <img
-                            class="modal-content"
-                            id="img01"
-                            ref="zoomImage"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </li>
-              </ul>
-            </div>
-            <div class="chat-message clearfix">
-              <div class="input-group mb-0">
-                <div class="message-input">
-                  <form
-                    enctype="multipart/form-data"
-                    @submit.prevent="sendMessage()"
-                  >
-                    <div class="input-group-prepend">
-                      <button class="btn-outline-primary btn">
-                        <i
-                          class="fas fa-paper-plane"
-                          data-toggle="tooltip"
-                          data-placement="auto"
-                          title="Gửi"
-                          style="color: #oo7bff"
-                        ></i>
-                      </button>
-                      <input
-                        type="text"
-                        class="form-control"
-                        style="border-color: #007bff"
-                        placeholder="Enter text here..."
-                        name="content"
-                        id="content"
-                        v-model="messageContent"
-                      />
-                    </div>
-                    <input
-                      type="file"
-                      class="form-control-file"
-                      style="margin-top: 5px"
-                      id="files"
-                      name="files"
-                      multiple
-                      @change="filesChange($event.target.files)"
-                      ref="messageFiles"
-                    />
-                  </form>
-                </div>
-
-                <div class="message-files-preview">
-                  <img
-                    v-for="(src, index) in messagesFilePreviewUrls"
-                    :key="index"
-                    :src="src"
-                    style="width: 200px"
-                  />
-                </div>
-              </div>
-            </div>
+            <send-message
+              :activeContactUsername="activeContactUsername"
+              @chatMessage="sendMessage"
+              @realtime-message="addToRealtimeMessagesList"
+            ></send-message>
           </div>
+
+          <private-video-chat
+            v-if="hasVideoCallStarted"
+            :activeContactPeerId="activeContactPeerId"
+          ></private-video-chat>
         </div>
-      </div>
-    </div>
-
-    <div class="video-chat" v-if="hasVideoCallStarted">
-      <div class="video">
-        <video ref="srcVideo" autoplay="true" muted id="userWebcam"></video>
-        <video ref="contactVideo" autoplay="true" id="contactWebcam"></video>
-      </div>
-
-      <div class="control-buttons" style="margin-bottom: 20px">
-        <button
-          type="button"
-          class="btn btn-outline-primary"
-          @click="endVideoCall"
-        >
-          <i class="fas fa-phone-slash" style="color: red"></i>
-        </button>
-
-        <button
-          type="button"
-          class="btn btn-outline-primary"
-          @click="changeMicrophoneStatus(srcStream)"
-        >
-          <i
-            v-if="hasTurnedOffMicrophone"
-            class="fas fa-microphone-slash"
-            style="color: red"
-          ></i>
-          <i v-else class="fas fa-microphone"></i>
-        </button>
-        <button
-          type="button"
-          class="btn btn-outline-primary"
-          @click="changeWebcamStatus(srcStream)"
-        >
-          <i
-            v-if="hasTurnedOffWebcam"
-            class="fas fa-video-slash"
-            style="color: red"
-          ></i>
-          <i v-else class="fas fa-video"></i>
-        </button>
       </div>
     </div>
   </div>
@@ -394,35 +127,39 @@ import gql from "graphql-tag";
 import Peer from "peerjs";
 import moment from "moment";
 
+import GroupList from "./groups-components/GroupList.vue";
+import ContactList from "./private-chat-components/ContactList.vue";
+import ChatHistory from "./private-chat-components/ChatHistory.vue";
+import PrivateVideoChat from "./private-chat-components/PrivateVideoChat.vue";
+
+import SendMessage from "./SendMessage.vue";
+
 export default {
   inject: ["currentUsername", "config"],
-  filters: {
-    formatTime: function (value) {
-      if (value) {
-        return moment(value).format("DD/MM/YYYY hh:mm");
-      }
-    },
+  components: {
+    GroupList,
+    ContactList,
+    ChatHistory,
+    SendMessage,
+    PrivateVideoChat,
   },
   data() {
     return {
       user: {
         // User information fetched from GraphQL Server
         contactlist: [],
+        groups: [],
       },
 
-      activeContactIndex: 0, // Default index of current contact in contactlist
+      activeContactUsername: null,
+      activeGroupGroupname: null,
+      activeContactIndex: null,
 
       userMessages: {
         messages: [],
       }, // Messages fetch from GraphQL
 
-      messageContent: "", // Message input field
-
-      messagesFilePreviewUrls: [], // An array contain img's src when user upload image for previewing
-
-      messageFiles: [], // // An array contain user uploaded message to send in form
-
-      realtimeFetchedMessages: {}, // Messages received by socket.io events
+      realtimeFetchedMessages: {},
 
       peer: null, // PeerJS object for current logged in user
 
@@ -430,18 +167,9 @@ export default {
 
       currentCall: null, // Current video call PeerJS MediaConnection Object
 
-      messagesToFetch: 10, // Number of messages to be fetch from GraphQL in one query
-
-      hasTurnedOffMicrophone: false,
-      hasTurnedOffWebcam: false,
-
       hasVideoCallStarted: false,
       srcStream: null,
       contactStream: null,
-
-      scrollHeight: null,
-
-      shouldScroll: false,
     };
   },
   sockets: {
@@ -460,6 +188,11 @@ export default {
                 username
                 name
                 avatar
+              }
+              groups {
+                _id
+                groupName
+                groupAvatar
               }
             }
           }
@@ -513,28 +246,37 @@ export default {
         skip: true,
       };
     },
+    // groupMessages() {
+
+    // }
   },
   methods: {
-    scrollDown(scrollHeight) {
-      let chatHistory = this.$refs.chatHistory;
-      chatHistory.scrollTop = scrollHeight;
+    addToRealtimeMessagesList(message) {
+      if (!this.realtimeFetchedMessages[this.activeContactUsername]) {
+        this.realtimeFetchedMessages[this.activeContactUsername] = [];
+      }
+      this.realtimeFetchedMessages[this.activeContactUsername].push(message);
     },
-    fetchedMessage() {
-      // Because graphql query is reactive, query will be automatically run again when
-      // query variable change, in this case is fetching message before a specific time
-      let chatHistory = this.$refs.chatHistory;
-
-      if (chatHistory.scrollTop == 0) {
-        this.scrollHeight = chatHistory.scrollHeight;
-        this.shouldScroll = true;
-
+    fetchMessages(data) {
+      if (data.firstFetch) {
+        console.log(data);
+        this.activeContactUsername = data.username;
+        this.$apollo.queries.userMessages.skip = false;
+        this.$apollo.queries.userMessages.setVariables({
+          firstUser: this.currentUsername,
+          secondUser: data.username,
+          limit: data.limit,
+          nextCursor: data.nextCursor,
+        });
+        this.$apollo.queries.userMessages.refetch();
+      } else {
         this.$apollo.queries.userMessages.skip = false;
         this.$apollo.queries.userMessages.fetchMore({
           variables: {
             firstUser: this.currentUsername,
-            secondUser: this.activeContactUsername,
-            limit: this.messagesToFetch,
-            nextCursor: this.userMessages.nextCursor,
+            secondUser: data.username,
+            limit: data.limit,
+            nextCursor: data.nextCursor,
           },
           updateQuery: (previousResult, { fetchMoreResult }) => {
             const newMessages = fetchMoreResult.userMessages.messages;
@@ -556,141 +298,18 @@ export default {
         });
       }
     },
-    setActiveContact(index) {
-      // Set realtime message array of current contact to empty to prevent duplicate because when switching back to this current contact
-      // graphql will make a new query to get latest 3 messages
-      this.activeContactIndex = index;
-      this.realtimeFetchedMessages[this.activeContactUsername] = [];
-      this.scrollHeight = 0;
-      this.shouldScroll = true;
-      this.$apollo.queries.userMessages.skip = false;
-      this.$apollo.queries.userMessages.setVariables({
-        firstUser: this.currentUsername,
-        secondUser: this.activeContactUsername,
-        limit: this.messagesToFetch,
-        nextCursor: new Date().toISOString(),
-      });
-      this.$apollo.queries.userMessages.refetch();
+    sendMessage(data) {
+      this.$socket.emit("chatMessage", data);
     },
-    sendMessage() {
-      let message = {
-        sender: {
-          username: this.currentUsername,
-        },
-        receiver: {
-          username: this.activeContactUsername,
-        },
-        content: this.messageContent,
-        files: [],
-        sentTime: new Date().toISOString(),
-      };
-
-      if (this.messagesFilePreviewUrls.length > 0) {
-        this.messagesFilePreviewUrls.forEach((fileUrl) => {
-          message.files.push({
-            fileUrl,
-          });
-        });
-      }
-
-      if (!this.realtimeFetchedMessages[this.activeContactUsername]) {
-        this.realtimeFetchedMessages[this.activeContactUsername] = [];
-      }
-
-      this.realtimeFetchedMessages[this.activeContactUsername].push(message);
-      this.scrollHeight = 0;
-      this.shouldScroll = true;
-
-      let sentMessage = new FormData();
-
-      sentMessage.append("sender", this.currentUsername);
-      sentMessage.append("receiver", this.activeContactUsername);
-      sentMessage.append("content", this.messageContent);
-
-      if (this.messageFiles.length > 0) {
-        for (let fileIndex in this.messageFiles) {
-          sentMessage.append(`f${fileIndex}`, this.messageFiles[fileIndex]);
-        }
-
-        this.axios
-          .post(`${this.config.socketIO_HTTP}/message`, sentMessage)
-          .then((res) => {
-            this.$socket.emit("chatMessage", res.data);
-          })
-          .catch((e) => {
-            console.log(e);
-          });
-      } else {
-        this.axios
-          .post(`${this.config.socketIO_HTTP}/message`, sentMessage)
-          .then((res) => {
-            console.log(res);
-          })
-          .catch((e) => {
-            console.log(e);
-          });
-
-        this.$socket.emit("chatMessage", message);
-      }
-      this.messageContent = "";
-
-      this.messageFiles = [];
-      this.messagesFilePreviewUrls = [];
-      this.$refs.messageFiles.value = null;
-    },
-    filesChange(files) {
-      this.messageFiles = files;
-      this.messagesFilePreviewUrls = [];
-      for (let fileIndex in files) {
-        let file = files[fileIndex];
-
-        this.messagesFilePreviewUrls.push(URL.createObjectURL(file));
-      }
-    },
-    zoomImage(img) {
-      let modal = this.$refs.modal;
-      modal.style.display = "block";
-      let zoomImg = this.$refs.zoomImage;
-      zoomImg.src = img.src;
-    },
-    closeZoomImage() {
-      let modal = this.$refs.modal;
-      modal.style.display = "none";
-    },
-    async videoChat() {
+    async startVideoCall() {
       this.hasVideoCallStarted = true;
       let peerId = await this.getActiveContactPeerId();
       this.contactListPeerIds.push({
         username: this.activeContactUsername,
         peerId,
       });
-
-      let activeContactPeerId = this.contactListPeerIds.find(
-        (contact) => contact.username === this.activeContactUsername
-      ).peerId;
-
-      navigator.mediaDevices
-        .getUserMedia({ video: true, audio: true })
-        .then((stream) => {
-          let userWebcam = this.$refs.srcVideo;
-          let peer = this.peer;
-          let contactWebcam = this.$refs.contactVideo;
-          this.srcStream = stream;
-          userWebcam.srcObject = stream;
-          userWebcam.play();
-
-          this.currentCall = peer.call(activeContactPeerId, stream);
-
-          this.currentCall.on("stream", function (remoteStream) {
-            // Show stream in some video/canvas element.
-            contactWebcam.srcObject = remoteStream;
-            contactWebcam.play();
-          });
-        })
-        .catch(function (err) {
-          console.log("An error occurred: " + err);
-        });
     },
+
     async getActiveContactPeerId() {
       let res = await this.axios.get(
         `${this.config.socketIO_HTTP}/session/${this.activeContactUsername}/peerId`
@@ -698,54 +317,31 @@ export default {
 
       return res.data;
     },
-    endVideoCall() {
-      this.currentCall.close();
-    },
 
-    // stop only mic
-    changeWebcamStatus(stream) {
-      this.hasTurnedOffWebcam = !this.hasTurnedOffWebcam;
-
-      stream.getVideoTracks()[0].enabled = !this.hasTurnedOffWebcam;
-    },
-
-    changeMicrophoneStatus(stream) {
-      this.hasTurnedOffMicrophone = !this.hasTurnedOffMicrophone;
-
-      stream.getAudioTracks()[0].enabled = !this.hasTurnedOffMicrophone;
-    },
     formatTime(value) {
       return moment(String(value)).format("MM/DD/YYYY hh:mm");
     },
   },
   computed: {
-    activeContactUsername() {
-      return this.user.contactlist[this.activeContactIndex]?.username;
-    },
-    activeContactAvatar() {
-      return this.user.contactlist[this.activeContactIndex]?.avatar;
-    },
     activeContactPeerId() {
       return this.contactListPeerIds[this.activeContactUsername];
     },
+    activeContactIndex() {
+      return this.user.contactlist.findIndex(
+        (contact) => contact.username == this.activeContactUsername
+      );
+    },
     messages() {
       return this.userMessages.messages.slice().reverse();
+    },
+    hasFinishedLoadingMessages() {
+      return !this.$apollo.queries.userMessages.loading;
     },
   },
   created() {
     this.$socket.emit("currentUser", {
       user: this.currentUsername,
       id: this.$socket.id,
-    });
-
-    this.sockets.subscribe("chatMessage", function (data) {
-      let sender = data.sender.username;
-      if (!this.realtimeFetchedMessages[sender]) {
-        this.realtimeFetchedMessages[sender] = [];
-      }
-      this.realtimeFetchedMessages[sender].push(data);
-
-      this.shouldScroll = false;
     });
 
     this.peer = new Peer();
@@ -762,61 +358,42 @@ export default {
       this.userPeerId = id;
     });
   },
-  watch: {
-    activeContactUsername(newUsername, oldUsername) {
-      console.log(newUsername, oldUsername);
-      this.currentTime = new Date().toISOString();
-      this.$apollo.queries.userMessages.skip = false;
-      this.$apollo.queries.userMessages.setVariables({
-        firstUser: this.currentUsername,
-        secondUser: newUsername,
-        limit: this.messagesToFetch,
-        nextCursor: this.currentTime,
-      });
-      this.$apollo.queries.userMessages.refetch();
-      this.shouldScroll = true;
-    },
-  },
+
   mounted() {
     let peer = this.peer;
 
-    peer.on("call", (call) => {
-      console.log("Call received");
+    // peer.on("call", (call) => {
+    //   console.log("Call received");
 
-      this.hasVideoCallStarted = true;
-      let currentCall = this.currentCall;
+    //   this.hasVideoCallStarted = true;
+    //   let currentCall = this.currentCall;
 
-      currentCall = call;
+    //   currentCall = call;
 
-      navigator.mediaDevices
-        .getUserMedia({ video: true, audio: true })
-        .then((stream) => {
-          let contactWebcam = this.$refs.contactVideo;
-          let userWebcam = this.$refs.srcVideo;
-          this.srcStream = stream;
-          userWebcam.srcObject = stream;
-          userWebcam.play();
-          currentCall.answer(stream); // Answer the call with an A/V stream.
-          currentCall.on("stream", function (remoteStream) {
-            // Show stream in some video/canvas element.
-            contactWebcam.srcObject = remoteStream;
-            contactWebcam.play();
-          });
+    //   navigator.mediaDevices
+    //     .getUserMedia({ video: true, audio: true })
+    //     .then((stream) => {
+    //       let contactWebcam = this.$refs.contactVideo;
+    //       let userWebcam = this.$refs.srcVideo;
+    //       this.srcStream = stream;
+    //       userWebcam.srcObject = stream;
+    //       userWebcam.play();
+    //       currentCall.answer(stream); // Answer the call with an A/V stream.
+    //       currentCall.on("stream", function (remoteStream) {
+    //         // Show stream in some video/canvas element.
+    //         contactWebcam.srcObject = remoteStream;
+    //         contactWebcam.play();
+    //       });
 
-          currentCall.on("close", () => {
-            console.log("Call ended");
-          });
-        });
+    //       currentCall.on("close", () => {
+    //         console.log("Call ended");
+    //       });
+    //     });
+    // });
+
+    this.sockets.subscribe("chatMessage", function (data) {
+      this.addToRealtimeMessagesList(data);
     });
-  },
-  updated() {
-    if (!this.$apollo.queries.userMessages.loading) {
-      if (this.shouldScroll) {
-        let chatHistory = this.$refs.chatHistory;
-        this.scrollDown(chatHistory.scrollHeight - this.scrollHeight);
-        this.shouldScroll = false;
-      }
-    }
   },
 };
 </script>
