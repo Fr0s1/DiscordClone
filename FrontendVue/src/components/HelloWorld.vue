@@ -1,70 +1,28 @@
 <template>
   <div class="hello">
     <h1>{{ msg }}</h1>
-    <p>
-      For a guide and recipes on how to configure / customize this project,<br />
-      check out the
+    <p> <font size="20px">
+      Đây là sản phẩm môn Dự Án INT 3509-1</font>
       <a href="https://cli.vuejs.org" target="_blank" rel="noopener"
-        >vue-cli documentation</a
+        ></a
       >.
     </p>
-    <h3>Installed CLI Plugins</h3>
+    <h3>Nhóm thực hiện</h3>
     <ul>
       <li>
-        <a
-          href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-babel"
-          target="_blank"
-          rel="noopener"
-          >babel</a
-        >
+        <a>Đinh Trọng Hiếu<br>18020xxx</a>
       </li>
       <li>
-        <a
-          href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-router"
-          target="_blank"
-          rel="noopener"
-          >router</a
-        >
+        <a>Phạm Văn Hoàng<br>18020564</a>
       </li>
       <li>
-        <a
-          href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-vuex"
-          target="_blank"
-          rel="noopener"
-          >vuex</a
-        >
-      </li>
-      <li>
-        <a
-          href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-eslint"
-          target="_blank"
-          rel="noopener"
-          >eslint</a
-        >
+        <a>Nguyễn Chương Đức<br>18020353</a>
       </li>
     </ul>
-    <h3>Essential Links</h3>
+    <h3>Mã nguồn</h3>
     <ul>
       <li>
-        <a href="https://vuejs.org" target="_blank" rel="noopener">Core Docs</a>
-      </li>
-      <li>
-        <a href="https://forum.vuejs.org" target="_blank" rel="noopener"
-          >Forum</a
-        >
-      </li>
-      <li>
-        <a href="https://chat.vuejs.org" target="_blank" rel="noopener"
-          >Community Chat</a
-        >
-      </li>
-      <li>
-        <a href="https://twitter.com/vuejs" target="_blank" rel="noopener"
-          >Twitter</a
-        >
-      </li>
-      <li>
-        <a href="https://news.vuejs.org" target="_blank" rel="noopener">News</a>
+        <a href="https://github.com/Fr0s1/DiscordClone" target="_blank" rel="noopener">GitHub</a>
       </li>
     </ul>
     <h3>Ecosystem</h3>
@@ -104,7 +62,7 @@
 
 <script>
 export default {
-  name: "HelloWorld",
+  name: "Discord Clone",
   props: {
     msg: String,
   },
@@ -114,7 +72,7 @@ export default {
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
 h3 {
-  margin: 40px 0 0;
+  margin: 60px 0 0;
 }
 ul {
   list-style-type: none;
@@ -122,7 +80,7 @@ ul {
 }
 li {
   display: inline-block;
-  margin: 0 10px;
+  margin: 0 20px;
 }
 a {
   color: #42b983;

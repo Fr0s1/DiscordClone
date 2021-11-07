@@ -7,7 +7,7 @@
             <div class="input-group">
               <div class="input-group-prepend">
                 <span class="input-group-text"
-                  ><i class="fas fa-search" style="color:#007bff"></i
+                  ><i class="fas fa-search" style="color: #007bff"></i
                 ></span>
               </div>
               <input type="text" class="form-control" placeholder="Search..." />
@@ -26,6 +26,16 @@
                   <div class="status">
                     <i class="fa fa-circle online"></i> Online
                   </div>
+                </div>
+                <div
+                  class="badge bg-success float-right"
+                  v-if="
+                    contact.username !== activeContactUsername &&
+                    realtimeFetchedMessages[contact.username] &&
+                    realtimeFetchedMessages[contact.username].length > 0
+                  "
+                >
+                  {{ realtimeFetchedMessages[contact.username].length }}
                 </div>
               </li>
             </ul>
@@ -47,32 +57,61 @@
                   </div>
                 </div>
                 <div class="col-lg-6 hidden-sm text-right">
-                  <button
-                    class="btn btn-outline-primary"
-                    @click="videoChat()"
-                  >
-                    <i class="fa fa-phone" data-toggle="tooltip" data-placement="auto" title="Call"></i>
+                  <button class="btn btn-outline-primary">
+                    <i
+                      class="fa fa-phone"
+                      data-toggle="tooltip"
+                      data-placement="auto"
+                      title="Call"
+                    ></i>
+                  </button>
+                  <button class="btn btn-outline-primary"  @click="videoChat()">
+                    <i
+                      class="fas fa-camera"
+                      data-toggle="tooltip"
+                      data-placement="auto"
+                      title="Video call"
+                    ></i>
                   </button>
                   <button class="btn btn-outline-primary">
-                    <i class="fas fa-camera" data-toggle="tooltip" data-placement="auto" title="Video call"></i>
+                    <i
+                      class="fas fa-image"
+                      data-toggle="tooltip"
+                      data-placement="auto"
+                      title="Ảnh"
+                    ></i>
                   </button>
                   <button class="btn btn-outline-primary">
-                    <i class="fas fa-image" data-toggle="tooltip" data-placement="auto" title="Ảnh"></i>
+                    <i
+                      class="fas fa-cogs"
+                      data-toggle="tooltip"
+                      data-placement="auto"
+                      title="Cài đặt"
+                    ></i>
                   </button>
                   <button class="btn btn-outline-primary">
-                    <i class="fas fa-cogs" data-toggle="tooltip" data-placement="auto" title="Cài đặt"></i>
+                    <i
+                      class="fas fa-question"
+                      data-toggle="tooltip"
+                      data-placement="auto"
+                      title="Trợ giúp"
+                    ></i>
                   </button>
-                  <button class="btn btn-outline-primary">
-                    <i class="fas fa-question" data-toggle="tooltip" data-placement="auto" title="Trợ giúp"></i>
-                  </button>
-                  <button class="btn btn-outline-primary">
-                    <i class="fas fa-camera" data-toggle="tooltip" data-placement="auto" title="Đăng xuất"></i>
+                  <button class="btn btn-outline-primary" @click="info()">
+                    <i
+                      class="fas fa-info"
+                      data-toggle="tooltip"
+                      data-placement="auto"
+                      title="About"
+                    ></i>
                   </button>
                 </div>
               </div>
             </div>
             <div class="chat-history">
               <ul class="m-b-0" ref="chatHistory" @scroll="fetchedMessage">
+                <!-- <div class="loader"></div> -->
+
                 <!-- This section is to display messages fetch from graphql or websocket -->
                 <li
                   class="clearfix"
@@ -259,15 +298,19 @@
                     @submit.prevent="sendMessage()"
                   >
                     <div class="input-group-prepend">
-                      <button
-                        class="btn-outline-primary btn"
-                      >
-                        <i class="fas fa-paper-plane" data-toggle="tooltip" data-placement="auto" title="Gửi" style="color:#oo7bff"></i>
+                      <button class="btn-outline-primary btn">
+                        <i
+                          class="fas fa-paper-plane"
+                          data-toggle="tooltip"
+                          data-placement="auto"
+                          title="Gửi"
+                          style="color: #oo7bff"
+                        ></i>
                       </button>
                       <input
                         type="text"
                         class="form-control"
-                        style="border-color:#007bff"
+                        style="border-color: #007bff"
                         placeholder="Enter text here..."
                         name="content"
                         id="content"
@@ -277,7 +320,7 @@
                     <input
                       type="file"
                       class="form-control-file"
-                      style="margin-top:5px"
+                      style="margin-top: 5px"
                       id="files"
                       name="files"
                       multiple
@@ -302,37 +345,50 @@
       </div>
     </div>
 
-    <div class="video-chat">
+    <div class="video-chat" v-if="hasVideoCallStarted">
       <div class="video">
         <video ref="srcVideo" autoplay="true" muted id="userWebcam"></video>
         <video ref="contactVideo" autoplay="true" id="contactWebcam"></video>
       </div>
 
-      <div class="control-buttons" style="margin-bottom:20px">
+      <div class="control-buttons" style="margin-bottom: 20px">
         <button
           type="button"
           class="btn btn-outline-primary"
+          data-toggle="tooltip"
+          data-placement="auto"
+          title="End Call"
           @click="endVideoCall"
         >
-          <i class="fas fa-phone-slash" style="color:red"></i>
+          <i class="fas fa-phone-slash" style="color:red; margin-left: -2.5px"></i>
         </button>
 
         <button
           type="button"
           class="btn btn-outline-primary"
-          @click="
-            hasMuted ? startAudioOnly(srcStream) : stopAudioOnly(srcStream)
-          "
+          data-toggle="tooltip"
+          data-placement="auto"
+          @click="changeMicrophoneStatus(srcStream)"
         >
-          <i v-if="hasMuted" class="fas fa-microphone-slash" style="color:red"></i> 
-          <i v-else class="fas fa-microphone"></i> 
+          <i
+            v-if="hasTurnedOffMicrophone"
+            class="fas fa-microphone-slash"
+            style="color:red; margin-left: -2.5px"
+            title="Mute"
+          ></i>
+          <i v-else title="Unmute" class="fas fa-microphone"></i>
         </button>
         <button
           type="button"
           class="btn btn-outline-primary"
-          @click="stopVideoOnly(srcStream)"
+          @click="changeWebcamStatus(srcStream)"
         >
-          <i class="fas fa-video" style="color:red"></i>
+          <i
+            v-if="hasTurnedOffWebcam"
+            class="fas fa-video-slash"
+            style="color: red"
+          ></i>
+          <i v-else class="fas fa-video"></i>
         </button>
       </div>
     </div>
@@ -343,13 +399,12 @@
 import gql from "graphql-tag";
 import Peer from "peerjs";
 import moment from "moment";
-
 export default {
-  inject: ["currentUsername", "config", "Peer"],
+  inject: ["currentUsername", "config"],
   filters: {
     formatTime: function (value) {
       if (value) {
-        return moment(value).format("DD/MM/YYYY hh:mm");
+        return moment(value).format("DD/MM/YYYY HH:mm");
       }
     },
   },
@@ -359,44 +414,25 @@ export default {
         // User information fetched from GraphQL Server
         contactlist: [],
       },
-
       activeContactIndex: 0, // Default index of current contact in contactlist
-
       userMessages: {
-        // Messages fetched from graphql
         messages: [],
-      },
-
-      messages: [], // Messages array used to display in DOM
-
+      }, // Messages fetch from GraphQL
       messageContent: "", // Message input field
-
       messagesFilePreviewUrls: [], // An array contain img's src when user upload image for previewing
-
       messageFiles: [], // // An array contain user uploaded message to send in form
-
       realtimeFetchedMessages: {}, // Messages received by socket.io events
-
       peer: null, // PeerJS object for current logged in user
-
       contactListPeerIds: [], // List of user contact list peerId
-
       currentCall: null, // Current video call PeerJS MediaConnection Object
-
-      currentTime: new Date().toISOString(), // When the chat page is opened for the first time, messages whose sentTime before currentTime will be fetch
-
-      shouldScrollDown: true, // When scroll up to get older messages, do not automatically scroll to the bottom
-
-      shouldScrollDownMax: true,
-
       messagesToFetch: 10, // Number of messages to be fetch from GraphQL in one query
-
+      hasTurnedOffMicrophone: false,
+      hasTurnedOffWebcam: false,
       hasVideoCallStarted: false,
-
       srcStream: null,
       contactStream: null,
-
-      hasMuted: false,
+      scrollHeight: null,
+      shouldScroll: false,
     };
   },
   sockets: {
@@ -459,55 +495,74 @@ export default {
             }
           }
         `,
-        variables() {
-          return {
-            firstUser: this.currentUsername,
-            secondUser: this.activeContactUsername,
-            limit: this.messagesToFetch,
-            nextCursor: this.currentTime,
-          };
+        variables: {
+          firstUser: this.currentUsername,
+          secondUser: this.activeContactUsername,
+          limit: this.messagesToFetch,
+          nextCursor: this.currentTime,
         },
-        skip() {
-          return !this.user.contactlist;
-        },
+        skip: true,
       };
     },
   },
   methods: {
-    scrollDown() {
-      if (this.shouldScrollDown) {
-        let chatHistory = this.$refs.chatHistory;
-
-        if (this.shouldScrollDownMax) {
-          chatHistory.scrollTop = chatHistory.scrollHeight;
-        } else {
-          chatHistory.scrollTop = chatHistory.scrollHeight / 4;
-        }
-      }
+    scrollDown(scrollHeight) {
+      let chatHistory = this.$refs.chatHistory;
+      chatHistory.scrollTop = scrollHeight;
+    },
+    info(){
+      this.$router.push('/');
     },
     fetchedMessage() {
       // Because graphql query is reactive, query will be automatically run again when
       // query variable change, in this case is fetching message before a specific time
       let chatHistory = this.$refs.chatHistory;
-
-      if (this.shouldScrollDown) {
-        this.shouldScrollDown = false;
-      }
-
       if (chatHistory.scrollTop == 0) {
-        this.currentTime =
-          this.userMessages.messages[
-            this.userMessages.messages.length - 1
-          ].sentTime;
-        this.shouldScrollDown = true;
-        this.shouldScrollDownMax = false;
+        this.scrollHeight = chatHistory.scrollHeight;
+        this.shouldScroll = true;
+        this.$apollo.queries.userMessages.skip = false;
+        this.$apollo.queries.userMessages.fetchMore({
+          variables: {
+            firstUser: this.currentUsername,
+            secondUser: this.activeContactUsername,
+            limit: this.messagesToFetch,
+            nextCursor: this.userMessages.nextCursor,
+          },
+          updateQuery: (previousResult, { fetchMoreResult }) => {
+            const newMessages = fetchMoreResult.userMessages.messages;
+            return {
+              userMessages: {
+                __typename: previousResult.userMessages.__typename,
+                // Merging the tag list
+                messages: [
+                  ...previousResult.userMessages.messages,
+                  ...newMessages,
+                ],
+                count:
+                  previousResult.userMessages.count +
+                  fetchMoreResult.userMessages.count,
+                nextCursor: fetchMoreResult.userMessages.nextCursor,
+              },
+            };
+          },
+        });
       }
     },
     setActiveContact(index) {
       // Set realtime message array of current contact to empty to prevent duplicate because when switching back to this current contact
       // graphql will make a new query to get latest 3 messages
-      this.realtimeFetchedMessages[this.activeContactUsername] = [];
       this.activeContactIndex = index;
+      this.realtimeFetchedMessages[this.activeContactUsername] = [];
+      this.scrollHeight = 0;
+      this.shouldScroll = true;
+      this.$apollo.queries.userMessages.skip = false;
+      this.$apollo.queries.userMessages.setVariables({
+        firstUser: this.currentUsername,
+        secondUser: this.activeContactUsername,
+        limit: this.messagesToFetch,
+        nextCursor: new Date().toISOString(),
+      });
+      this.$apollo.queries.userMessages.refetch();
     },
     sendMessage() {
       let message = {
@@ -521,7 +576,6 @@ export default {
         files: [],
         sentTime: new Date().toISOString(),
       };
-
       if (this.messagesFilePreviewUrls.length > 0) {
         this.messagesFilePreviewUrls.forEach((fileUrl) => {
           message.files.push({
@@ -529,27 +583,20 @@ export default {
           });
         });
       }
-
       if (!this.realtimeFetchedMessages[this.activeContactUsername]) {
         this.realtimeFetchedMessages[this.activeContactUsername] = [];
       }
-
-      this.shouldScrollDown = true; // Scroll to the bottom of messages list
-      this.shouldScrollDownMax = true;
-
       this.realtimeFetchedMessages[this.activeContactUsername].push(message);
-
+      this.scrollHeight = 0;
+      this.shouldScroll = true;
       let sentMessage = new FormData();
-
       sentMessage.append("sender", this.currentUsername);
       sentMessage.append("receiver", this.activeContactUsername);
       sentMessage.append("content", this.messageContent);
-
       if (this.messageFiles.length > 0) {
         for (let fileIndex in this.messageFiles) {
           sentMessage.append(`f${fileIndex}`, this.messageFiles[fileIndex]);
         }
-
         this.axios
           .post(`${this.config.socketIO_HTTP}/message`, sentMessage)
           .then((res) => {
@@ -567,11 +614,9 @@ export default {
           .catch((e) => {
             console.log(e);
           });
-
         this.$socket.emit("chatMessage", message);
       }
       this.messageContent = "";
-
       this.messageFiles = [];
       this.messagesFilePreviewUrls = [];
       this.$refs.messageFiles.value = null;
@@ -581,7 +626,6 @@ export default {
       this.messagesFilePreviewUrls = [];
       for (let fileIndex in files) {
         let file = files[fileIndex];
-
         this.messagesFilePreviewUrls.push(URL.createObjectURL(file));
       }
     },
@@ -602,24 +646,19 @@ export default {
         username: this.activeContactUsername,
         peerId,
       });
-
-      let userWebcam = this.$refs.srcVideo;
-      let peer = this.peer;
-      let contactWebcam = this.$refs.contactVideo;
-
       let activeContactPeerId = this.contactListPeerIds.find(
         (contact) => contact.username === this.activeContactUsername
       ).peerId;
-
       navigator.mediaDevices
         .getUserMedia({ video: true, audio: true })
         .then((stream) => {
+          let userWebcam = this.$refs.srcVideo;
+          let peer = this.peer;
+          let contactWebcam = this.$refs.contactVideo;
           this.srcStream = stream;
           userWebcam.srcObject = stream;
           userWebcam.play();
-
           this.currentCall = peer.call(activeContactPeerId, stream);
-
           this.currentCall.on("stream", function (remoteStream) {
             // Show stream in some video/canvas element.
             contactWebcam.srcObject = remoteStream;
@@ -634,49 +673,22 @@ export default {
       let res = await this.axios.get(
         `${this.config.socketIO_HTTP}/session/${this.activeContactUsername}/peerId`
       );
-
       return res.data;
     },
     endVideoCall() {
       this.currentCall.close();
     },
-    // stop both mic and camera
-    stopBothVideoAndAudio(stream) {
-      stream.getTracks().forEach(function (track) {
-        if (track.readyState == "live") {
-          track.stop();
-        }
-      });
-    },
-
-    // stop only camera
-    stopVideoOnly(stream) {
-      stream.getTracks().forEach(function (track) {
-        if (track.readyState == "live" && track.kind === "video") {
-          track.stop();
-        }
-      });
-    },
-
     // stop only mic
-    stopAudioOnly(stream) {
-      this.hasMuted = true
-      stream.getTracks().forEach(function (track) {
-        if (track.readyState == "live" && track.kind === "audio") {
-          track.stop();
-        }
-      });
+    changeWebcamStatus(stream) {
+      this.hasTurnedOffWebcam = !this.hasTurnedOffWebcam;
+      stream.getVideoTracks()[0].enabled = !this.hasTurnedOffWebcam;
     },
-    startAudioOnly(stream) {
-      this.hasMuted = false
-      stream.getTracks().forEach(function (track) {
-        if (track.readyState == "live" && track.kind === "audio") {
-          track.play();
-        }
-      });
+    changeMicrophoneStatus(stream) {
+      this.hasTurnedOffMicrophone = !this.hasTurnedOffMicrophone;
+      stream.getAudioTracks()[0].enabled = !this.hasTurnedOffMicrophone;
     },
     formatTime(value) {
-      return moment(String(value)).format("MM/DD/YYYY hh:mm");
+      return moment(String(value)).format("MM/DD/YYYY HH:mm");
     },
   },
   computed: {
@@ -689,13 +701,8 @@ export default {
     activeContactPeerId() {
       return this.contactListPeerIds[this.activeContactUsername];
     },
-  },
-  watch: {
-    userMessages(val, oldVal) {
-      console.log(oldVal);
-      if (val.messages.length > 0) {
-        this.messages = val.messages.slice().reverse().concat(this.messages);
-      }
+    messages() {
+      return this.userMessages.messages.slice().reverse();
     },
   },
   created() {
@@ -703,18 +710,15 @@ export default {
       user: this.currentUsername,
       id: this.$socket.id,
     });
-
     this.sockets.subscribe("chatMessage", function (data) {
       let sender = data.sender.username;
       if (!this.realtimeFetchedMessages[sender]) {
         this.realtimeFetchedMessages[sender] = [];
       }
       this.realtimeFetchedMessages[sender].push(data);
-      this.shouldScrollDown = true;
+      this.shouldScroll = false;
     });
-
     this.peer = new Peer();
-
     this.peer.on("open", (id) => {
       console.log("My peer ID is: " + id);
       // Save user peerId to backend
@@ -727,32 +731,42 @@ export default {
       this.userPeerId = id;
     });
   },
+  watch: {
+    activeContactUsername(newUsername, oldUsername) {
+      console.log(newUsername, oldUsername);
+      this.currentTime = new Date().toISOString();
+      this.$apollo.queries.userMessages.skip = false;
+      this.$apollo.queries.userMessages.setVariables({
+        firstUser: this.currentUsername,
+        secondUser: newUsername,
+        limit: this.messagesToFetch,
+        nextCursor: this.currentTime,
+      });
+      this.$apollo.queries.userMessages.refetch();
+      this.shouldScroll = true;
+    },
+  },
   mounted() {
     let peer = this.peer;
-    let contactWebcam = this.$refs.contactVideo;
-    let currentCall = this.currentCall;
-    let userWebcam = this.$refs.srcVideo;
-    let userStream = this.srcStream;
-
-    peer.on("call", function (call) {
+    peer.on("call", (call) => {
       console.log("Call received");
-      let hasVideoCallStarted = this.hasVideoCallStarted;
-      hasVideoCallStarted = true;
-
+      this.hasVideoCallStarted = true;
+      let currentCall = this.currentCall;
       currentCall = call;
       navigator.mediaDevices
         .getUserMedia({ video: true, audio: true })
         .then((stream) => {
+          let contactWebcam = this.$refs.contactVideo;
+          let userWebcam = this.$refs.srcVideo;
+          this.srcStream = stream;
           userWebcam.srcObject = stream;
           userWebcam.play();
-          userStream = stream;
           currentCall.answer(stream); // Answer the call with an A/V stream.
           currentCall.on("stream", function (remoteStream) {
             // Show stream in some video/canvas element.
             contactWebcam.srcObject = remoteStream;
             contactWebcam.play();
           });
-
           currentCall.on("close", () => {
             console.log("Call ended");
           });
@@ -760,14 +774,57 @@ export default {
     });
   },
   updated() {
-    this.$nextTick(this.scrollDown());
+    if (!this.$apollo.queries.userMessages.loading) {
+      if (this.shouldScroll) {
+        let chatHistory = this.$refs.chatHistory;
+        this.scrollDown(chatHistory.scrollHeight - this.scrollHeight);
+        this.shouldScroll = false;
+      }
+    }
   },
 };
 </script>
 
 <style scoped>
+#menu .ul {
+  padding: 0;
+  list-style: none;
+  background: #f01f1f;
+}
+#menu.ul li {
+  display: inline-block;
+  position: relative;
+  line-height: 21px;
+  text-align: left;
+  list-style: none;
+}
+#menu ul li a {
+        display: block;
+        padding: 8px 25px;
+        color: rgb(0, 0, 0);
+        text-decoration: none;
+        list-style: none;
+}
+#menu ul li a:hover {
+        color: #fff;
+        background: #fcf700;
+}
+#menu ul.dropdown {
+        min-width: 100%; /* Set width of the dropdown */
+        background: #f2f2f2;
+        display: none;
+        position: absolute;
+        z-index: 999;
+        left: 0;
+        list-style: none;
+    }
+#menu ul:hover .ul.dropdown {
+        display: block; /* Display the dropdown */
+    }
+#menu ul.dropdown li {
+        display: block;
+    }
 .btn{
-  text-align: center;
   margin-right: 5px;
   width: 40px;
   height: 40px;
@@ -847,6 +904,7 @@ export default {
 
 .people-list .chat-list img {
   width: 45px;
+  height: 45px;
   border-radius: 50%;
 }
 
@@ -888,12 +946,23 @@ export default {
 
 .chat .chat-history ul {
   width: auto;
-  height: 450px;
+  height: 60vh;
   padding: 20px;
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: auto;
 }
-
+.chat-history ul::-webkit-scrollbar {
+	width: 10px;
+  }
+.chat-history ul::-webkit-scrollbar-thumb {
+	-webkit-box-shadow: inset 0 0 6px rgba(0,0,0,.3);
+  border-radius: 10px;
+  background-color: #007bff;
+}
+.chat-history ul::-webkit-scrollbar-track {
+	-webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+	border-radius: 10px;
+	background-color: #F5F5F5;
+}
 .chat .chat-history ul li {
   list-style: none;
   margin-bottom: 30px;
@@ -910,6 +979,8 @@ export default {
 .chat .chat-history .message-data img {
   border-radius: 40px;
   width: 40px;
+  height: 40px;
+  margin-left: 10px;
 }
 
 .chat .chat-history .message-data-time {
@@ -924,7 +995,7 @@ export default {
   font-size: 16px;
   border-radius: 7px;
   display: inline-block;
-  position: relative;
+
 }
 
 .chat .chat-history .message:after {
@@ -1104,11 +1175,6 @@ export default {
   animation-duration: 0.6s;
 }
 
-.btn {
-    padding: 10px;
-    border: 0;
-    margin: 2px;
-}
 
 @keyframes zoom {
   from {
