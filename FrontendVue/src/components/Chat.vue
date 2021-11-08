@@ -235,6 +235,13 @@ export default {
         user: this.currentUsername,
         id: this.$socket.id,
       });
+
+      if (this.contactIsGroup) {
+        console.log(this.activeGroupId);
+        this.$socket.emit("joinSocketIORoom", {
+          roomId: this.activeGroupId,
+        });
+      }
       console.log("socket to notification channel connected");
     },
   },
@@ -389,10 +396,10 @@ export default {
     },
     fetchMessages(data) {
       this.contactIsGroup = false;
+      this.shouldScroll = data.shouldScroll;
 
       if (data.firstFetch) {
         this.scrollHeight = data.scrollHeight;
-        this.shouldScroll = true;
         this.activeContactUsername = data.username;
         this.$apollo.queries.userMessages.skip = false;
         this.$apollo.queries.userMessages.setVariables({
@@ -434,13 +441,13 @@ export default {
     },
     fetchGroupMessages(data) {
       this.contactIsGroup = true;
+      this.shouldScroll = data.shouldScroll;
       if (data.firstFetch) {
         this.activeGroupId = data.groupId;
         this.$apollo.queries.group.refetch({
           groupId: data.groupId,
         });
 
-        this.shouldScroll = data.shouldScroll;
         this.$apollo.queries.groupMessages.skip = false;
         this.$apollo.queries.groupMessages.setVariables({
           groupId: data.groupId,
