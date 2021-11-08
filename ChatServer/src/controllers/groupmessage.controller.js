@@ -1,5 +1,6 @@
 const crypto = require("crypto");
 const redisClient = require('../redis/redisClient')
+const axios = require('axios')
 
 exports.saveMessage = async (req, res) => {
     const BucketName = process.env.BUCKET_NAME
@@ -39,7 +40,10 @@ exports.saveMessage = async (req, res) => {
     newMessage.files = files
 
     let savedMessage = await GroupMessage.create(newMessage)
+    let FILE_SERVER_ENDPOINT = process.env.FILE_SERVER_ENDPOINT
+    let result = await axios.get(`${FILE_SERVER_ENDPOINT}/users/${savedMessage.sender}/avatar`)
 
+    console.log(savedMessage)
     // Get signed url from s3 to send back to Client
     for (let i = 0; i < newMessage.files.length; i++) {
         const destparams = {
@@ -73,7 +77,10 @@ exports.saveMessage = async (req, res) => {
 
     let messageReturnedToClient = {
         _id: savedMessage._id,
-        sender: savedMessage.sender,
+        sender: {
+            username: savedMessage.sender,
+            avatar: result.data.avatar
+        },
         group: savedMessage.group,
         content: savedMessage.content,
         fileUrls,
