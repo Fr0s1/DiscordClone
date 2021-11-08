@@ -63,6 +63,8 @@ services:
       MONGO_INITDB_DATABASE: discord
     networks:
       - discord-backend
+    volumes:
+      - mongodb-data:/data/db
 
   redis:
     image: redis
@@ -70,6 +72,12 @@ services:
       - 6379:6379
     networks:
       - discord-backend
+    volumes:
+      - redis-data:/data
 
 networks:
   discord-backend:
+
+volumes:
+  redis-data:
+  mongodb-data:
