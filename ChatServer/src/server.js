@@ -56,7 +56,7 @@ nsp.on('connection', (socket) => {
     });
 
     socket.on("joinSocketIORoom", data => {
-        // console.log(`Socket with id ${socket.id} has joined room ${data.roomId}`)
+        console.log(`Socket with id ${socket.id} has joined room ${data.roomId}`)
         socket.join(data.roomId)
     })
 

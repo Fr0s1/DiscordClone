@@ -41,9 +41,8 @@ exports.saveMessage = async (req, res) => {
 
     let savedMessage = await GroupMessage.create(newMessage)
     let FILE_SERVER_ENDPOINT = process.env.FILE_SERVER_ENDPOINT
-    let result = await axios.get(`${FILE_SERVER_ENDPOINT}/users/${savedMessage.sender}/avatar`)
+    let result = await axios.get(`${FILE_SERVER_ENDPOINT}/users/${req.body.sender}/avatar`)
 
-    console.log(savedMessage)
     // Get signed url from s3 to send back to Client
     for (let i = 0; i < newMessage.files.length; i++) {
         const destparams = {
