@@ -14,10 +14,16 @@
             </div>
             <contact-list
               :contactlist="user.contactlist"
+              :contactIsGroup="contactIsGroup"
               @fetch-messages="fetchMessages"
             ></contact-list>
 
-            <group-list :groups="user.groups"></group-list>
+            <group-list
+              :groups="user.groups"
+              :contactIsGroup="contactIsGroup"
+              @fetch-group-messages="fetchGroupMessages"
+              @joinSocketIORoom="joinSocketIORoom"
+            ></group-list>
           </div>
           <div class="chat">
             <div class="chat-header clearfix">
@@ -41,7 +47,9 @@
                 <div class="col-lg-6 hidden-sm text-right">
                   <button
                     class="btn btn-outline-primary"
-                    @click="startVideoCall()"
+                    @click="
+                      contactIsGroup ? startGroupVideoCall() : startVideoCall()
+                    "
                   >
                     <i
                       class="fa fa-phone"
@@ -101,24 +109,50 @@
               :userAvatarUrl="user.avatar"
               :hasFinishedLoadingMessages="hasFinishedLoadingMessages"
               :realtimeFetchedMessages="realtimeFetchedMessages"
+              :scrollHeight="scrollHeight"
+              :shouldScroll="shouldScroll"
               @fetch-messages="fetchMessages"
-              v-if="activeContactUsername"
+              v-if="!contactIsGroup"
             ></chat-history>
+            <group-chat-history
+              v-else
+              :groupMessages="groupMessages"
+              :activeGroupId="activeGroupId"
+              :realtimeGroupMessages="realtimeGroupMessages"
+              :scrollHeight="scrollHeight"
+              :shouldScroll="shouldScroll"
+              :hasFinishedLoadingGroupMessages="hasFinishedLoadingGroupMessages"
+              @fetch-group-messages="fetchGroupMessages"
+            ></group-chat-history>
 
             <send-message
               :activeContactUsername="activeContactUsername"
+              :contactIsGroup="contactIsGroup"
+              :activeGroupId="activeGroupId"
+              :currentUserAvatarUrl="user.avatar"
               @chatMessage="sendMessage"
               @realtime-message="addToRealtimeMessagesList"
+              @groupChatMessage="sendGroupMessage"
             ></send-message>
           </div>
 
           <private-video-chat
-            v-if="hasVideoCallStarted"
+            v-if="hasVideoCallStarted && !contactIsGroup"
             :activeContactPeerId="activeContactPeerId"
             :peer="peer"
             :isCaller="isCaller"
             :answeringCall="answeringCall"
+            @stop-video-chat="hasVideoCallStarted = false"
           ></private-video-chat>
+          <group-video-chat
+            v-else-if="hasVideoCallStarted && contactIsGroup && activeGroupId"
+            :groupMembersPeerIds="groupMembersPeerIds"
+            :peer="peer"
+            :isCaller="isCaller"
+            :answeringCall="answeringCall"
+            :groupMembers="group.members"
+            @stop-video-chat="hasVideoCallStarted = false"
+          ></group-video-chat>
         </div>
       </div>
     </div>
@@ -130,10 +164,13 @@ import gql from "graphql-tag";
 import Peer from "peerjs";
 import moment from "moment";
 
-import GroupList from "./groups-components/GroupList.vue";
 import ContactList from "./private-chat-components/ContactList.vue";
 import ChatHistory from "./private-chat-components/ChatHistory.vue";
 import PrivateVideoChat from "./private-chat-components/PrivateVideoChat.vue";
+
+import GroupList from "./groups-components/GroupList.vue";
+import GroupChatHistory from "./groups-components/GroupChatHistory.vue";
+import GroupVideoChat from "./groups-components/GroupVideoChat.vue";
 
 import SendMessage from "./SendMessage.vue";
 
@@ -145,6 +182,8 @@ export default {
     ChatHistory,
     SendMessage,
     PrivateVideoChat,
+    GroupChatHistory,
+    GroupVideoChat,
   },
   data() {
     return {
@@ -156,13 +195,20 @@ export default {
 
       activeContactUsername: null,
       activeGroupGroupname: null,
-      activeContactIndex: null,
+      activeGroupId: null,
 
       userMessages: {
         messages: [],
       }, // Messages fetch from GraphQL
 
+      group: {
+        members: [],
+      },
+
       realtimeFetchedMessages: {},
+      realtimeGroupMessages: {},
+
+      groupMembersPeerIds: [],
 
       peer: null, // PeerJS object for current logged in user
 
@@ -175,10 +221,20 @@ export default {
       isCaller: null,
 
       answeringCall: null,
+
+      contactIsGroup: null,
+
+      scrollHeight: 0,
+
+      shouldScroll: null,
     };
   },
   sockets: {
     connect: function () {
+      this.$socket.emit("currentUser", {
+        user: this.currentUsername,
+        id: this.$socket.id,
+      });
       console.log("socket to notification channel connected");
     },
   },
@@ -244,26 +300,99 @@ export default {
         `,
         variables: {
           firstUser: this.currentUsername,
-          secondUser: this.activeContactUsername,
-          limit: this.messagesToFetch,
-          nextCursor: this.currentTime,
+          secondUser: null,
+          limit: null,
+          nextCursor: null,
         },
         skip: true,
       };
     },
-    // groupMessages() {
-
-    // }
+    groupMessages() {
+      return {
+        query: gql`
+          query Query($groupId: String!, $nextCursor: Date, $limit: Int) {
+            groupMessages(
+              groupId: $groupId
+              nextCursor: $nextCursor
+              limit: $limit
+            ) {
+              messages {
+                sender {
+                  username
+                  avatar
+                }
+                content
+                files {
+                  fileUrl
+                  fileType
+                  fileName
+                }
+                sentTime
+              }
+              count
+              nextCursor
+            }
+          }
+        `,
+        variables: {
+          limit: null,
+          nextCursor: null,
+          groupId: null,
+        },
+        skip: true,
+      };
+    },
+    group() {
+      return {
+        query: gql`
+          query Query($groupId: String!) {
+            group(groupId: $groupId) {
+              members {
+                username
+                name
+              }
+            }
+          }
+        `,
+        variables() {
+          return {
+            groupId: this.activeGroupId,
+          };
+        },
+        skip() {
+          return !this.activeGroupId;
+        },
+      };
+    },
   },
   methods: {
     addToRealtimeMessagesList(message) {
-      if (!this.realtimeFetchedMessages[this.activeContactUsername]) {
-        this.realtimeFetchedMessages[this.activeContactUsername] = [];
+      if (this.contactIsGroup) {
+        if (!this.realtimeGroupMessages[this.activeGroupId]) {
+          this.realtimeGroupMessages[this.activeGroupId] = [];
+        }
+        this.realtimeGroupMessages[this.activeGroupId].push(message);
+      } else {
+        if (!this.realtimeFetchedMessages[this.activeContactUsername]) {
+          this.realtimeFetchedMessages[this.activeContactUsername] = [];
+        }
+        this.realtimeFetchedMessages[this.activeContactUsername].push(message);
       }
-      this.realtimeFetchedMessages[this.activeContactUsername].push(message);
+
+      if (message.sender.username === this.currentUsername) {
+        this.shouldScroll = true;
+
+        this.scrollHeight = 0;
+      } else {
+        this.shouldScroll = false;
+      }
     },
     fetchMessages(data) {
+      this.contactIsGroup = false;
+
       if (data.firstFetch) {
+        this.scrollHeight = data.scrollHeight;
+        this.shouldScroll = true;
         this.activeContactUsername = data.username;
         this.$apollo.queries.userMessages.skip = false;
         this.$apollo.queries.userMessages.setVariables({
@@ -274,6 +403,7 @@ export default {
         });
         this.$apollo.queries.userMessages.refetch();
       } else {
+        this.scrollHeight = data.scrollHeight;
         this.$apollo.queries.userMessages.skip = false;
         this.$apollo.queries.userMessages.fetchMore({
           variables: {
@@ -302,9 +432,60 @@ export default {
         });
       }
     },
-    fetchGroupMessages(data) {},
+    fetchGroupMessages(data) {
+      this.contactIsGroup = true;
+      if (data.firstFetch) {
+        this.activeGroupId = data.groupId;
+        this.$apollo.queries.group.refetch({
+          groupId: data.groupId,
+        });
+
+        this.shouldScroll = data.shouldScroll;
+        this.$apollo.queries.groupMessages.skip = false;
+        this.$apollo.queries.groupMessages.setVariables({
+          groupId: data.groupId,
+          limit: data.limit,
+          nextCursor: data.nextCursor,
+        });
+        this.$apollo.queries.groupMessages.refetch();
+      } else {
+        this.scrollHeight = data.scrollHeight;
+        this.$apollo.queries.groupMessages.skip = false;
+        this.$apollo.queries.groupMessages.fetchMore({
+          variables: {
+            groupId: data.groupId,
+            limit: data.limit,
+            nextCursor: data.nextCursor,
+          },
+          updateQuery: (previousResult, { fetchMoreResult }) => {
+            const newGroupMessages = fetchMoreResult.groupMessages.messages;
+            return {
+              groupMessages: {
+                __typename: previousResult.groupMessages.__typename,
+                // Merging the tag list
+                messages: [
+                  ...previousResult.groupMessages.messages,
+                  ...newGroupMessages,
+                ],
+                count:
+                  previousResult.groupMessages.count +
+                  fetchMoreResult.groupMessages.count,
+                nextCursor: fetchMoreResult.groupMessages.nextCursor,
+              },
+            };
+          },
+        });
+      }
+    },
     sendMessage(data) {
       this.$socket.emit("chatMessage", data);
+    },
+    sendGroupMessage(data) {
+      this.$socket.emit("groupMessage", data);
+    },
+    joinSocketIORoom(data) {
+      console.log("Emitted");
+      this.$socket.emit("joinSocketIORoom", data);
     },
     async startVideoCall() {
       this.hasVideoCallStarted = true;
@@ -322,7 +503,31 @@ export default {
           this.contactListPeerIds[this.activeContactUsername];
       }
     },
+    async startGroupVideoCall() {
+      let groupMembers = this.group.members;
+      for (let i = 0; i < groupMembers.length; i++) {
+        let member = groupMembers[i];
+        if (member.username != this.currentUsername) {
+          let result = await this.axios.get(
+            `${this.config.socketIO_HTTP}/session/${member.username}/peerId`
+          );
 
+          if (
+            this.groupMembersPeerIds.findIndex(
+              (element) => element.username == member.username
+            ) == -1
+          ) {
+            this.groupMembersPeerIds.push({
+              ...member,
+              peerId: result.data,
+            });
+          }
+        }
+      }
+
+      this.hasVideoCallStarted = true;
+      this.isCaller = true;
+    },
     async getActiveContactPeerId() {
       let res = await this.axios.get(
         `${this.config.socketIO_HTTP}/session/${this.activeContactUsername}/peerId`
@@ -341,11 +546,11 @@ export default {
         (contact) => contact.username == this.activeContactUsername
       );
     },
-    messages() {
-      return this.userMessages.messages.slice().reverse();
-    },
     hasFinishedLoadingMessages() {
       return !this.$apollo.queries.userMessages.loading;
+    },
+    hasFinishedLoadingGroupMessages() {
+      return !this.$apollo.queries.groupMessages.loading;
     },
   },
   created() {
@@ -373,13 +578,17 @@ export default {
 
     peer.on("call", (answeringCall) => {
       this.isCaller = false;
-
+      console.log("Called");
       this.hasVideoCallStarted = true;
 
       this.answeringCall = answeringCall;
     });
 
     this.sockets.subscribe("chatMessage", function (data) {
+      this.addToRealtimeMessagesList(data);
+    });
+
+    this.sockets.subscribe("groupMessage", function (data) {
       this.addToRealtimeMessagesList(data);
     });
   },

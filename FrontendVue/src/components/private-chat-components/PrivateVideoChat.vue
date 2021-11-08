@@ -99,6 +99,9 @@ export default {
     },
 
     endVideoCall() {
+      this.$emit("stop-video-chat");
+      this.stopWebcamAndMicrophone(this.srcStream);
+      this.stopWebcamAndMicrophone(this.contactStream);
       this.currentCall.close();
     },
     // stop only mic
@@ -109,6 +112,11 @@ export default {
     changeMicrophoneStatus(stream) {
       this.hasTurnedOffMicrophone = !this.hasTurnedOffMicrophone;
       stream.getAudioTracks()[0].enabled = !this.hasTurnedOffMicrophone;
+    },
+    stopWebcamAndMicrophone(stream) {
+      stream.getTracks().forEach(function (track) {
+        track.stop();
+      });
     },
   },
   mounted() {

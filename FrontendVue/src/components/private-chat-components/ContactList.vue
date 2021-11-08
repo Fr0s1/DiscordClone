@@ -3,7 +3,7 @@
     <li
       class="clearfix"
       v-for="(contact, index) in contactlist"
-      :class="activeContactIndex === index ? 'active' : ''"
+      :class="!contactIsGroup && activeContactIndex === index ? 'active' : ''"
       @click="setActiveContact(index)"
       :key="index"
     >
@@ -24,6 +24,9 @@ export default {
       required: true,
       default: [],
     },
+    contactIsGroup: {
+      type: Boolean,
+    },
   },
   data() {
     return {
@@ -34,13 +37,27 @@ export default {
   },
   methods: {
     setActiveContact(index) {
+      console.log("Clicked");
       this.activeContactIndex = index;
+      console.log(this.activeContactUsername);
     },
   },
   computed: {
     activeContactUsername() {
       if (this.contactlist.length > 0) {
-        return this.contactlist[this.activeContactIndex].username;
+        let newActiveUsername =
+          this.contactlist[this.activeContactIndex].username;
+        // this.$emit("fetch-messages", {
+        //   limit: this.limit,
+        //   nextCursor: this.nextCursor,
+        //   username: newActiveUsername,
+        //   firstFetch: true,
+        //   activeContactIndex: this.activeContactIndex,
+        //   contactIsGroup: false,
+        //   scrollHeight: 0,
+        //   shouldScroll: true,
+        // });
+        return newActiveUsername;
       }
     },
   },
@@ -52,6 +69,9 @@ export default {
         username: newVal,
         firstFetch: true,
         activeContactIndex: this.activeContactIndex,
+        contactIsGroup: false,
+        scrollHeight: 0,
+        shouldScroll: true,
       });
     },
   },

@@ -188,14 +188,17 @@ export default {
     realtimeFetchedMessages: {
       type: Object,
     },
+    scrollHeight: {
+      type: Number,
+    },
+    shouldScroll: {
+      type: Boolean,
+    },
   },
   data() {
     return {
       nextCursor: new Date().toISOString(),
       limit: 10,
-      scrollHeight: null,
-
-      shouldScroll: true,
     };
   },
   methods: {
@@ -206,13 +209,13 @@ export default {
     fetchMessages() {
       let chatHistory = this.$refs.chatHistory;
       if (chatHistory.scrollTop == 0) {
-        this.scrollHeight = chatHistory.scrollHeight;
-        this.shouldScroll = true;
         this.$emit("fetch-messages", {
           limit: this.limit,
           nextCursor: this.userMessages.nextCursor,
           username: this.activeContactUsername,
           firstFetch: false,
+          scrollHeight: chatHistory.scrollHeight,
+          shouldScroll: true,
         });
       }
     },
@@ -236,12 +239,11 @@ export default {
     },
   },
   updated() {
-    console.log(this.hasFinishedLoadingMessages);
     if (this.hasFinishedLoadingMessages) {
+      let chatHistory = this.$refs.chatHistory;
+
       if (this.shouldScroll) {
-        let chatHistory = this.$refs.chatHistory;
         this.scrollDown(chatHistory.scrollHeight - this.scrollHeight);
-        this.shouldScroll = false;
       }
     }
   },
@@ -255,7 +257,7 @@ export default {
 
 .chat .chat-history ul {
   width: auto;
-  height: 450px;
+  height: 500px;
   padding: 20px;
   overflow-y: auto;
   overflow-x: hidden;

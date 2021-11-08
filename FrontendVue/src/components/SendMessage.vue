@@ -2,7 +2,10 @@
   <div class="chat-message clearfix">
     <div class="input-group mb-0">
       <div class="message-input">
-        <form enctype="multipart/form-data" @submit.prevent="sendMessage()">
+        <form
+          enctype="multipart/form-data"
+          @submit.prevent="contactIsGroup ? sendGroupMessage() : sendMessage()"
+        >
           <div class="input-group-prepend">
             <button class="btn-outline-primary btn">
               <i
@@ -56,6 +59,12 @@ export default {
       type: String,
     },
     activeGroupId: {
+      type: String,
+    },
+    contactIsGroup: {
+      type: Boolean,
+    },
+    currentUserAvatarUrl: {
       type: String,
     },
   },
@@ -137,8 +146,65 @@ export default {
         this.messagesFilePreviewUrls.push(URL.createObjectURL(file));
       }
     },
+    sendGroupMessage() {
+      let message = {
+        sender: {
+          username: this.currentUsername,
+          avatar: this.currentUserAvatarUrl,
+        },
+        group: this.activeGroupId,
+        content: this.messageContent.trim(),
+        files: [],
+        sentTime: new Date().toISOString(),
+      };
+
+      if (this.messagesFilePreviewUrls.length > 0) {
+        this.messagesFilePreviewUrls.forEach((fileUrl) => {
+          message.files.push({
+            fileUrl,
+          });
+        });
+      }
+
+      this.$emit("realtime-message", message);
+
+      let sentMessage = new FormData();
+
+      sentMessage.append("sender", this.currentUsername);
+      sentMessage.append("content", this.messageContent);
+      sentMessage.append("group", this.activeGroupId);
+      if (this.messageFiles.length > 0) {
+        for (let fileIndex in this.messageFiles) {
+          sentMessage.append(`f${fileIndex}`, this.messageFiles[fileIndex]);
+        }
+
+        this.axios
+          .post(`${this.config.socketIO_HTTP}/groupmessage`, sentMessage)
+          .then((res) => {
+            this.$emit("groupChatMessage", res.data);
+          })
+          .catch((e) => {
+            console.log(e);
+          });
+      } else {
+        this.axios
+          .post(`${this.config.socketIO_HTTP}/groupmessage`, sentMessage)
+          .then((res) => {
+            console.log(res);
+          })
+          .catch((e) => {
+            console.log(e);
+          });
+
+        this.$emit("groupChatMessage", message);
+      }
+      this.messageContent = "";
+
+      this.messageFiles = [];
+      this.messagesFilePreviewUrls = [];
+      this.$refs.messageFiles.value = null;
+    },
   },
-  sendGroupMessage() {},
 };
 </script>
 <style scoped>

@@ -3,7 +3,7 @@
     <li
       class="clearfix"
       v-for="(group, index) in groups"
-      :class="activeGroupIndex === index ? 'active' : ''"
+      :class="contactIsGroup && activeGroupIndex === index ? 'active' : ''"
       @click="setActiveGroup(index)"
       :key="index"
     >
@@ -23,6 +23,9 @@ export default {
       required: true,
       default: [],
     },
+    contactIsGroup: {
+      type: Boolean,
+    },
   },
   data() {
     return {
@@ -34,6 +37,18 @@ export default {
   methods: {
     setActiveGroup(index) {
       this.activeGroupIndex = index;
+      this.$emit("fetch-group-messages", {
+        limit: this.limit,
+        nextCursor: this.nextCursor,
+        groupId: this.groups[this.activeGroupIndex]._id,
+        firstFetch: true,
+        contactIsGroup: true,
+        shouldScroll: true,
+      });
+
+      this.$emit("joinSocketIORoom", {
+        roomId: this.groups[this.activeGroupIndex]._id,
+      });
     },
   },
   computed: {
@@ -42,25 +57,10 @@ export default {
         return this.groups[this.activeGroupIndex].groupName;
       }
     },
-    activeGroupId() {
-      if (this.groups.length > 0 && this.activeGroupIndex) {
-        return this.groups[this.activeGroupIndex]._id;
-      }
-    },
-  },
-  watch: {
-    activeGroupId(newGroupId, oldGroupName) {
-      this.$emit("fetch-group-messages", {
-        limit: this.limit,
-        nextCursor: this.nextCursor,
-        groupId: newGroupId,
-        firstFetch: true,
-        activeContactIndex: this.activeContactIndex,
-      });
-    },
   },
 };
 </script>
+
 <style scoped>
 .card {
   background: #fff;

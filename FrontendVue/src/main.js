@@ -24,11 +24,22 @@ applyPolyfills().then(() => {
     defineCustomElements(window);
 });
 
+import { createStore } from 'vuex'
 
 (async () => {
     const app = createApp({
         render: () => h(App),
     })
+
+    const store = createStore({
+        state() {
+            return {
+
+            }
+        }
+    })
+    
+    app.use(store)
 
     app.use(VueAxios, axios)
     app.use(router)
