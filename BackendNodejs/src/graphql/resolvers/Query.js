@@ -10,21 +10,15 @@ async function user(parent, args, context) {
 
 async function group(parent, args, context) {
     const Group = context.mongo.Group
-    const User = context.mongo.User
 
-    let adminFound = await User.findOne({
-        username: args.admin
-    })
-
-    if (adminFound) {
+    try {
         let result = await Group.findOne({
-            admin: adminFound._id,
-            groupName: args.groupName
+            _id: args.groupId
         })
 
         return result
-    } else {
-        throw new Error('Admin for this group does not exists')
+    } catch (e) {
+        throw new Error(`Can't find group at given moment. Try again later`)
     }
 }
 
