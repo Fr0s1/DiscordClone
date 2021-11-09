@@ -57,52 +57,24 @@
                   </div>
                 </div>
                 <div class="col-lg-6 hidden-sm text-right">
-                  <button class="btn btn-outline-primary">
+                  <button class="btn btn-outline-primary" data-toggle="tooltip" data-placement="auto" title="Call">
                     <i
                       class="fa fa-phone"
-                      data-toggle="tooltip"
-                      data-placement="auto"
-                      title="Call"
                     ></i>
                   </button>
-                  <button class="btn btn-outline-primary"  @click="videoChat()">
+                  <button class="btn btn-outline-primary" data-toggle="tooltip" data-placement="auto" title="Video call" @click="videoChat()">
                     <i
                       class="fas fa-camera"
-                      data-toggle="tooltip"
-                      data-placement="auto"
-                      title="Video call"
                     ></i>
                   </button>
-                  <button class="btn btn-outline-primary">
+                  <button class="btn btn-outline-primary" data-toggle="tooltip" data-placement="auto" title="Profile" @click="info()">
                     <i
-                      class="fas fa-image"
-                      data-toggle="tooltip"
-                      data-placement="auto"
-                      title="Ảnh"
+                      class="fas fa-user-alt"
                     ></i>
                   </button>
-                  <button class="btn btn-outline-primary">
-                    <i
-                      class="fas fa-cogs"
-                      data-toggle="tooltip"
-                      data-placement="auto"
-                      title="Cài đặt"
-                    ></i>
-                  </button>
-                  <button class="btn btn-outline-primary">
-                    <i
-                      class="fas fa-question"
-                      data-toggle="tooltip"
-                      data-placement="auto"
-                      title="Trợ giúp"
-                    ></i>
-                  </button>
-                  <button class="btn btn-outline-primary" @click="info()">
+                  <button class="btn btn-outline-primary" data-toggle="tooltip" data-placement="auto" title="About Us" @click="about()">
                     <i
                       class="fas fa-info"
-                      data-toggle="tooltip"
-                      data-placement="auto"
-                      title="About"
                     ></i>
                   </button>
                 </div>
@@ -425,13 +397,18 @@ export default {
       peer: null, // PeerJS object for current logged in user
       contactListPeerIds: [], // List of user contact list peerId
       currentCall: null, // Current video call PeerJS MediaConnection Object
+
       messagesToFetch: 10, // Number of messages to be fetch from GraphQL in one query
+
       hasTurnedOffMicrophone: false,
       hasTurnedOffWebcam: false,
+
       hasVideoCallStarted: false,
       srcStream: null,
       contactStream: null,
+
       scrollHeight: null,
+
       shouldScroll: false,
     };
   },
@@ -510,16 +487,21 @@ export default {
       let chatHistory = this.$refs.chatHistory;
       chatHistory.scrollTop = scrollHeight;
     },
-    info(){
+    about(){
       this.$router.push('/');
+    },
+    info(){
+      this.$router.push('/user/'+this.currentUsername);
     },
     fetchedMessage() {
       // Because graphql query is reactive, query will be automatically run again when
       // query variable change, in this case is fetching message before a specific time
       let chatHistory = this.$refs.chatHistory;
+
       if (chatHistory.scrollTop == 0) {
         this.scrollHeight = chatHistory.scrollHeight;
         this.shouldScroll = true;
+
         this.$apollo.queries.userMessages.skip = false;
         this.$apollo.queries.userMessages.fetchMore({
           variables: {
@@ -586,9 +568,11 @@ export default {
       if (!this.realtimeFetchedMessages[this.activeContactUsername]) {
         this.realtimeFetchedMessages[this.activeContactUsername] = [];
       }
+
       this.realtimeFetchedMessages[this.activeContactUsername].push(message);
       this.scrollHeight = 0;
       this.shouldScroll = true;
+
       let sentMessage = new FormData();
       sentMessage.append("sender", this.currentUsername);
       sentMessage.append("receiver", this.activeContactUsername);
@@ -678,13 +662,17 @@ export default {
     endVideoCall() {
       this.currentCall.close();
     },
+
     // stop only mic
     changeWebcamStatus(stream) {
       this.hasTurnedOffWebcam = !this.hasTurnedOffWebcam;
+
       stream.getVideoTracks()[0].enabled = !this.hasTurnedOffWebcam;
     },
+
     changeMicrophoneStatus(stream) {
       this.hasTurnedOffMicrophone = !this.hasTurnedOffMicrophone;
+
       stream.getAudioTracks()[0].enabled = !this.hasTurnedOffMicrophone;
     },
     formatTime(value) {
@@ -750,9 +738,12 @@ export default {
     let peer = this.peer;
     peer.on("call", (call) => {
       console.log("Call received");
+
       this.hasVideoCallStarted = true;
       let currentCall = this.currentCall;
+
       currentCall = call;
+
       navigator.mediaDevices
         .getUserMedia({ video: true, audio: true })
         .then((stream) => {
@@ -1207,6 +1198,24 @@ export default {
 @media only screen and (max-width: 700px) {
   .modal-content {
     width: 100%;
+  }
+}
+
+.loader {
+  border: 16px solid #f3f3f3; /* Light grey */
+  border-top: 16px solid #3498db; /* Blue */
+  border-radius: 50%;
+  width: 120px;
+  height: 120px;
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
   }
 }
 </style>
