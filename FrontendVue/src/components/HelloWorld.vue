@@ -5,12 +5,12 @@
       Đây là sản phẩm môn Dự Án INT 3509-1</font>
       <a href="https://cli.vuejs.org" target="_blank" rel="noopener"
         ></a
-      >.
+      >
     </p>
     <h3 style="color:#007bff">Nhóm thực hiện</h3>
     <ul style="color:#007bff">
       <li>
-        <a>Đinh Trọng Hiếu<br>18020xxx</a>
+        <a>Đinh Trọng Hiếu<br>18020486</a>
       </li>
       <li>
         <a>Phạm Văn Hoàng<br>18020564</a>

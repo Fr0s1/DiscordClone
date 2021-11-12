@@ -13,14 +13,7 @@
                 <p class="m-b-sm">UXUI + Frontend Developer</p>
                 <a v-bind:href="`/edit-profile`" style="cursor:pointer" class="btn btn-xs btn-primary mb-2">Edit Profile</a>
                 <a v-bind:href="`/chat`" style="cursor:pointer" class="btn btn-xs btn-primary mb-2">Chat</a>
-                <button
-                    type="button"
-                    class="btn btn-primary"
-                >
-                 <amplify-sign-out text-transform="auto">
-                        
-                 </amplify-sign-out>
-                </button>
+                <a @click='signOut()' style="cursor:pointer" class="btn btn-xs btn-primary mb-2">Sign Out</a>
             </div>
         </div>
 
@@ -105,6 +98,7 @@
 <script>
 import gql from "graphql-tag";
 import { AuthState, onAuthUIStateChange } from '@aws-amplify/ui-components';
+import { Auth } from 'aws-amplify';
 
 export default {
   inject: ["currentUsername"],
@@ -145,6 +139,14 @@ export default {
       console.log(this.currentUsername);
       // console.log(this.user);
     },
+    async signOut() {
+    try {
+        await Auth.signOut();
+    } catch (error) {
+        console.log('error signing out: ', error);
+    }
+    this.$router.push('/');
+    },       
   },
   
   mounted() {

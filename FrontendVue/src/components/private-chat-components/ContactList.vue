@@ -131,6 +131,7 @@ export default {
 
 .people-list .chat-list img {
   width: 45px;
+  height: 45px;
   border-radius: 50%;
 }
 

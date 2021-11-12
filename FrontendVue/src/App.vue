@@ -17,9 +17,5 @@ export default {};
     --amplify-primary-shade: #1100ff;
     --amplify-text-sm: 1rem;
   }
-  :root.amplify-button{
-    --text-transform: auto;
-    
-  }
-  
+ 
 </style>
