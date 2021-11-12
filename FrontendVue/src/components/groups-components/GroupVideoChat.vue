@@ -9,11 +9,15 @@
         class="member-video"
         v-for="(member, index) in members"
         :key="index"
-        ref="contactVideo"
+        :id="member.username"
+        :ref="`contactVideo-${member.username}`"
       >
-        <video autoplay="true" :id="member.username" @click="setMainUserVideo">
-          <p>{{ member.name }}</p>
-        </video>
+        <video
+          autoplay="true"
+          :id="member.username"
+          @click="setMainUserVideo"
+        ></video>
+        <p>{{ member.name }}</p>
       </div>
     </div>
     <div class="control-buttons" style="margin-bottom: 20px">
@@ -57,9 +61,6 @@
 export default {
   inject: ["currentUsername", "config"],
   props: {
-    isCaller: {
-      type: Boolean,
-    },
     peer: {
       default: null,
     },
@@ -92,32 +93,28 @@ export default {
         .then((stream) => {
           let userWebcam = this.$refs.srcVideo;
           let peer = this.peer;
-          let membersWebcam = this.$refs.contactVideo;
           this.srcStream = stream;
           userWebcam.srcObject = stream;
           userWebcam.play();
-          if (this.isCaller) {
-            this.groupMembersPeerIds.forEach((member) => {
-              console.log(member.peerId);
-              this.groupMembersPeerCurrentCall[member.username] = peer.call(
-                member.peerId,
-                stream
-              );
-              this.groupMembersPeerCurrentCall[member.username].on(
-                "stream",
-                function (remoteStream) {
-                  // Show stream in some video/canvas element.
-                  console.log("Received stream");
-                  console.log(membersWebcam.childNodes[0]);
-                  membersWebcam.childNodes[0].srcObject = remoteStream;
-                  console.log(remoteStream);
-                }
-              );
-            });
-          } else {
-            this.call = this.answeringCall;
-            this.call.answer(stream); // Answer the call with an A/V stream.
-          }
+          this.groupMembersPeerIds.forEach((member) => {
+            console.log(member.peerId);
+            this.groupMembersPeerCurrentCall[member.username] = peer.call(
+              member.peerId,
+              stream
+            );
+            this.groupMembersPeerCurrentCall[member.username].on(
+              "stream",
+              (remoteStream) => {
+                // Show stream in some video/canvas element.
+                console.log("Received stream");
+                let membersWebcam =
+                  this.$refs[`contactVideo-${member.username}`];
+
+                membersWebcam.childNodes[0].srcObject = remoteStream;
+                console.log(remoteStream);
+              }
+            );
+          });
         })
         .catch(function (err) {
           console.log("An error occurred: " + err);
@@ -156,3 +153,13 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+.member-video {
+  display: inline-block;
+}
+
+.member-video video {
+  height: 200px;
+}
+</style>

@@ -145,10 +145,11 @@
             @stop-video-chat="hasVideoCallStarted = false"
           ></private-video-chat>
           <group-video-chat
-            v-else-if="hasVideoCallStarted && contactIsGroup && activeGroupId"
+            v-else-if="
+              hasGroupVideoCallStarted && contactIsGroup && activeGroupId
+            "
             :groupMembersPeerIds="groupMembersPeerIds"
             :peer="peer"
-            :isCaller="isCaller"
             :answeringCall="answeringCall"
             :groupMembers="group.members"
             @stop-video-chat="hasVideoCallStarted = false"
@@ -214,7 +215,9 @@ export default {
 
       contactListPeerIds: [], // List of user contact list peerId
 
-      hasVideoCallStarted: false,
+      hasVideoCallStarted: false, //Check if current user has started a 1 to 1 call
+
+      hasGroupVideoCallStarted: false, // Check if current user has started a group video call
 
       activeContactPeerId: null,
 
@@ -222,11 +225,13 @@ export default {
 
       answeringCall: null,
 
-      contactIsGroup: null,
+      contactIsGroup: null, // Boolean to decide if message is sent to 1 user or multicast to group member
 
       scrollHeight: 0,
 
       shouldScroll: null,
+
+      dataConnections: {}, // Object to store data connection object to each group members when start group video call
     };
   },
   sockets: {
@@ -529,10 +534,19 @@ export default {
               peerId: result.data,
             });
           }
+
+          // Save data connection object to each group member
+          let conn = (this.dataConnections[member.username] = this.peer.connect(
+            result.data
+          ));
+
+          conn.on("open", function () {
+            conn.send("Group video call");
+          });
         }
       }
 
-      this.hasVideoCallStarted = true;
+      this.hasGroupVideoCallStarted = true;
       this.isCaller = true;
     },
     async getActiveContactPeerId() {
@@ -584,11 +598,35 @@ export default {
     let peer = this.peer;
 
     peer.on("call", (answeringCall) => {
-      this.isCaller = false;
       console.log("Called");
-      this.hasVideoCallStarted = true;
-
       this.answeringCall = answeringCall;
+
+      if (this.contactIsGroup) {
+        this.startGroupVideoCall();
+
+        navigator.mediaDevices
+          .getUserMedia({ video: true, audio: true })
+          .then((stream) => {
+            this.answeringCall.answer(stream);
+            this.hasVideoCallStarted = true;
+          });
+      } else {
+        this.isCaller = false;
+        this.hasVideoCallStarted = true;
+      }
+    });
+
+    peer.on("connection", (dataConnection) => {
+      console.log("Connected");
+
+      dataConnection.on("data", function (data) {
+        console.log("Received data ", data);
+
+        if (data === "Group video call") {
+          this.hasGroupVideoCallStarted = true;
+        } else if (data === "Private video call") {
+        }
+      });
     });
 
     this.sockets.subscribe("chatMessage", function (data) {

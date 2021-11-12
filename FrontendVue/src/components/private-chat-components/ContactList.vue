@@ -47,16 +47,7 @@ export default {
       if (this.contactlist.length > 0) {
         let newActiveUsername =
           this.contactlist[this.activeContactIndex].username;
-        // this.$emit("fetch-messages", {
-        //   limit: this.limit,
-        //   nextCursor: this.nextCursor,
-        //   username: newActiveUsername,
-        //   firstFetch: true,
-        //   activeContactIndex: this.activeContactIndex,
-        //   contactIsGroup: false,
-        //   scrollHeight: 0,
-        //   shouldScroll: true,
-        // });
+
         return newActiveUsername;
       }
     },
