@@ -16,33 +16,18 @@
               </div>
               <input type="text" class="form-control" placeholder="Search..." />
             </div>
-            <ul class="list-unstyled chat-list mt-2 mb-0">
-              <li
-                class="clearfix"
-                v-for="(contact, index) in user.contactlist"
-                :class="activeContactIndex === index ? 'active' : ''"
-                @click="setActiveContact(index)"
-                :key="index"
-              >
-                <img :src="contact.avatar" alt="avatar" />
-                <div class="about">
-                  <div class="name">{{ contact.name }}</div>
-                  <div class="status">
-                    <i class="fa fa-circle online"></i> Online
-                  </div>
-                </div>
-                <div
-                  class="badge bg-success float-right"
-                  v-if="
-                    contact.username !== activeContactUsername &&
-                    realtimeFetchedMessages[contact.username] &&
-                    realtimeFetchedMessages[contact.username].length > 0
-                  "
-                >
-                  {{ realtimeFetchedMessages[contact.username].length }}
-                </div>
-              </li>
-            </ul>
+            <contact-list
+              :contactlist="user.contactlist"
+              :contactIsGroup="contactIsGroup"
+              @fetch-messages="fetchMessages"
+            ></contact-list>
+
+            <group-list
+              :groups="user.groups"
+              :contactIsGroup="contactIsGroup"
+              @fetch-group-messages="fetchGroupMessages"
+              @joinSocketIORoom="joinSocketIORoom"
+            ></group-list>
           </div>
           <div class="chat">
             <div class="chat-header clearfix">
@@ -53,7 +38,10 @@
                     data-toggle="modal"
                     data-target="#view_info"
                   >
-                    <img :src="activeContactAvatar" alt="avatar" />
+                    <img
+                      :src="user.contactlist[activeContactIndex]?.avatar"
+                      alt="avatar"
+                    />
                   </a>
                   <div class="chat-about">
                     <h6 class="m-b-0">{{ activeContactUsername }}</h6>
@@ -62,11 +50,26 @@
                 </div>
                 <div class="col-lg-6 hidden-sm text-right">
 <<<<<<< HEAD
+<<<<<<< HEAD
                   <button
                     class="btn btn-outline-primary"
                     @click="videoChat()"
                   >
                     <i class="fa fa-phone" data-toggle="tooltip" data-placement="auto" title="Call"></i>
+=======
+                  <button
+                    class="btn btn-outline-primary"
+                    @click="
+                      contactIsGroup ? startGroupVideoCall() : startVideoCall()
+                    "
+                  >
+                    <i
+                      class="fa fa-phone"
+                      data-toggle="tooltip"
+                      data-placement="auto"
+                      title="Call"
+                    ></i>
+>>>>>>> 5c59c6dcf62731b4e826e160e75ad1fe076d3277
                   </button>
                   <button class="btn btn-outline-primary">
                     <i class="fas fa-camera" data-toggle="tooltip" data-placement="auto" title="Video call"></i>
@@ -107,6 +110,7 @@
                 </div>
               </div>
             </div>
+<<<<<<< HEAD
             <div class="chat-history">
               <ul class="m-b-0" ref="chatHistory" @scroll="fetchedMessage">
                 <!-- <div class="loader"></div> -->
@@ -343,28 +347,44 @@
                     />
                   </form>
                 </div>
+=======
+>>>>>>> 5c59c6dcf62731b4e826e160e75ad1fe076d3277
 
-                <div class="message-files-preview">
-                  <img
-                    v-for="(src, index) in messagesFilePreviewUrls"
-                    :key="index"
-                    :src="src"
-                    style="width: 200px"
-                  />
-                </div>
-              </div>
-            </div>
+            <chat-history
+              :userMessages="userMessages"
+              :activeContactUsername="activeContactUsername"
+              :currentUsername="currentUsername"
+              :userAvatarUrl="user.avatar"
+              :hasFinishedLoadingMessages="hasFinishedLoadingMessages"
+              :realtimeFetchedMessages="realtimeFetchedMessages"
+              :scrollHeight="scrollHeight"
+              :shouldScroll="shouldScroll"
+              @fetch-messages="fetchMessages"
+              v-if="!contactIsGroup"
+            ></chat-history>
+            <group-chat-history
+              v-else
+              :groupMessages="groupMessages"
+              :activeGroupId="activeGroupId"
+              :realtimeGroupMessages="realtimeGroupMessages"
+              :scrollHeight="scrollHeight"
+              :shouldScroll="shouldScroll"
+              :hasFinishedLoadingGroupMessages="hasFinishedLoadingGroupMessages"
+              @fetch-group-messages="fetchGroupMessages"
+            ></group-chat-history>
+
+            <send-message
+              :activeContactUsername="activeContactUsername"
+              :contactIsGroup="contactIsGroup"
+              :activeGroupId="activeGroupId"
+              :currentUserAvatarUrl="user.avatar"
+              @chatMessage="sendMessage"
+              @realtime-message="addToRealtimeMessagesList"
+              @groupChatMessage="sendGroupMessage"
+            ></send-message>
           </div>
-        </div>
-      </div>
-    </div>
 
-    <div class="video-chat" v-if="hasVideoCallStarted">
-      <div class="video">
-        <video ref="srcVideo" autoplay="true" muted id="userWebcam"></video>
-        <video ref="contactVideo" autoplay="true" id="contactWebcam"></video>
-      </div>
-
+<<<<<<< HEAD
 <<<<<<< HEAD
       <div class="control-buttons" style="margin-bottom:20px">
         <button
@@ -429,6 +449,26 @@
           <i v-else class="fas fa-video"></i>
 >>>>>>> dfcef8fe98256cdfe4a276e4007ebe23aa703a84
         </button>
+=======
+          <private-video-chat
+            v-if="hasVideoCallStarted && !contactIsGroup"
+            :activeContactPeerId="activeContactPeerId"
+            :peer="peer"
+            :isCaller="isCaller"
+            :answeringCall="answeringCall"
+            @stop-video-chat="hasVideoCallStarted = false"
+          ></private-video-chat>
+          <group-video-chat
+            v-else-if="hasVideoCallStarted && contactIsGroup && activeGroupId"
+            :groupMembersPeerIds="groupMembersPeerIds"
+            :peer="peer"
+            :isCaller="isCaller"
+            :answeringCall="answeringCall"
+            :groupMembers="group.members"
+            @stop-video-chat="hasVideoCallStarted = false"
+          ></group-video-chat>
+        </div>
+>>>>>>> 5c59c6dcf62731b4e826e160e75ad1fe076d3277
       </div>
     </div>
   </div>
@@ -438,6 +478,7 @@
 import gql from "graphql-tag";
 import Peer from "peerjs";
 import moment from "moment";
+<<<<<<< HEAD
 export default {
   inject: ["currentUsername", "config"],
   filters: {
@@ -446,13 +487,38 @@ export default {
         return moment(value).format("DD/MM/YYYY HH:mm");
       }
     },
+=======
+
+import ContactList from "./private-chat-components/ContactList.vue";
+import ChatHistory from "./private-chat-components/ChatHistory.vue";
+import PrivateVideoChat from "./private-chat-components/PrivateVideoChat.vue";
+
+import GroupList from "./groups-components/GroupList.vue";
+import GroupChatHistory from "./groups-components/GroupChatHistory.vue";
+import GroupVideoChat from "./groups-components/GroupVideoChat.vue";
+
+import SendMessage from "./SendMessage.vue";
+
+export default {
+  inject: ["currentUsername", "config"],
+  components: {
+    GroupList,
+    ContactList,
+    ChatHistory,
+    SendMessage,
+    PrivateVideoChat,
+    GroupChatHistory,
+    GroupVideoChat,
+>>>>>>> 5c59c6dcf62731b4e826e160e75ad1fe076d3277
   },
   data() {
     return {
       user: {
         // User information fetched from GraphQL Server
         contactlist: [],
+        groups: [],
       },
+<<<<<<< HEAD
       activeContactIndex: 0, // Default index of current contact in contactlist
       userMessages: {
         messages: [],
@@ -461,26 +527,61 @@ export default {
       messagesFilePreviewUrls: [], // An array contain img's src when user upload image for previewing
       messageFiles: [], // // An array contain user uploaded message to send in form
       realtimeFetchedMessages: {}, // Messages received by socket.io events
+=======
+
+      activeContactUsername: null,
+      activeGroupGroupname: null,
+      activeGroupId: null,
+
+      userMessages: {
+        messages: [],
+      }, // Messages fetch from GraphQL
+
+      group: {
+        members: [],
+      },
+
+      realtimeFetchedMessages: {},
+      realtimeGroupMessages: {},
+
+      groupMembersPeerIds: [],
+
+>>>>>>> 5c59c6dcf62731b4e826e160e75ad1fe076d3277
       peer: null, // PeerJS object for current logged in user
       contactListPeerIds: [], // List of user contact list peerId
+<<<<<<< HEAD
       currentCall: null, // Current video call PeerJS MediaConnection Object
-
-      messagesToFetch: 10, // Number of messages to be fetch from GraphQL in one query
-
-      hasTurnedOffMicrophone: false,
-      hasTurnedOffWebcam: false,
+=======
 
       hasVideoCallStarted: false,
-      srcStream: null,
-      contactStream: null,
+>>>>>>> 5c59c6dcf62731b4e826e160e75ad1fe076d3277
 
-      scrollHeight: null,
+      activeContactPeerId: null,
 
-      shouldScroll: false,
+      isCaller: null,
+
+      answeringCall: null,
+
+      contactIsGroup: null,
+
+      scrollHeight: 0,
+
+      shouldScroll: null,
     };
   },
   sockets: {
     connect: function () {
+      this.$socket.emit("currentUser", {
+        user: this.currentUsername,
+        id: this.$socket.id,
+      });
+
+      if (this.contactIsGroup) {
+        console.log(this.activeGroupId);
+        this.$socket.emit("joinSocketIORoom", {
+          roomId: this.activeGroupId,
+        });
+      }
       console.log("socket to notification channel connected");
     },
   },
@@ -495,6 +596,11 @@ export default {
                 username
                 name
                 avatar
+              }
+              groups {
+                _id
+                groupName
+                groupAvatar
               }
             }
           }
@@ -541,15 +647,73 @@ export default {
         `,
         variables: {
           firstUser: this.currentUsername,
-          secondUser: this.activeContactUsername,
-          limit: this.messagesToFetch,
-          nextCursor: this.currentTime,
+          secondUser: null,
+          limit: null,
+          nextCursor: null,
         },
         skip: true,
       };
     },
+    groupMessages() {
+      return {
+        query: gql`
+          query Query($groupId: String!, $nextCursor: Date, $limit: Int) {
+            groupMessages(
+              groupId: $groupId
+              nextCursor: $nextCursor
+              limit: $limit
+            ) {
+              messages {
+                sender {
+                  username
+                  avatar
+                }
+                content
+                files {
+                  fileUrl
+                  fileType
+                  fileName
+                }
+                sentTime
+              }
+              count
+              nextCursor
+            }
+          }
+        `,
+        variables: {
+          limit: null,
+          nextCursor: null,
+          groupId: null,
+        },
+        skip: true,
+      };
+    },
+    group() {
+      return {
+        query: gql`
+          query Query($groupId: String!) {
+            group(groupId: $groupId) {
+              members {
+                username
+                name
+              }
+            }
+          }
+        `,
+        variables() {
+          return {
+            groupId: this.activeGroupId,
+          };
+        },
+        skip() {
+          return !this.activeGroupId;
+        },
+      };
+    },
   },
   methods: {
+<<<<<<< HEAD
     scrollDown(scrollHeight) {
       let chatHistory = this.$refs.chatHistory;
       chatHistory.scrollTop = scrollHeight;
@@ -564,18 +728,53 @@ export default {
       // Because graphql query is reactive, query will be automatically run again when
       // query variable change, in this case is fetching message before a specific time
       let chatHistory = this.$refs.chatHistory;
+=======
+    addToRealtimeMessagesList(message) {
+      if (this.contactIsGroup) {
+        if (!this.realtimeGroupMessages[this.activeGroupId]) {
+          this.realtimeGroupMessages[this.activeGroupId] = [];
+        }
+        this.realtimeGroupMessages[this.activeGroupId].push(message);
+      } else {
+        if (!this.realtimeFetchedMessages[this.activeContactUsername]) {
+          this.realtimeFetchedMessages[this.activeContactUsername] = [];
+        }
+        this.realtimeFetchedMessages[this.activeContactUsername].push(message);
+      }
+>>>>>>> 5c59c6dcf62731b4e826e160e75ad1fe076d3277
 
-      if (chatHistory.scrollTop == 0) {
-        this.scrollHeight = chatHistory.scrollHeight;
+      if (message.sender.username === this.currentUsername) {
         this.shouldScroll = true;
 
+        this.scrollHeight = 0;
+      } else {
+        this.shouldScroll = false;
+      }
+    },
+    fetchMessages(data) {
+      this.contactIsGroup = false;
+      this.shouldScroll = data.shouldScroll;
+
+      if (data.firstFetch) {
+        this.scrollHeight = data.scrollHeight;
+        this.activeContactUsername = data.username;
+        this.$apollo.queries.userMessages.skip = false;
+        this.$apollo.queries.userMessages.setVariables({
+          firstUser: this.currentUsername,
+          secondUser: data.username,
+          limit: data.limit,
+          nextCursor: data.nextCursor,
+        });
+        this.$apollo.queries.userMessages.refetch();
+      } else {
+        this.scrollHeight = data.scrollHeight;
         this.$apollo.queries.userMessages.skip = false;
         this.$apollo.queries.userMessages.fetchMore({
           variables: {
             firstUser: this.currentUsername,
-            secondUser: this.activeContactUsername,
-            limit: this.messagesToFetch,
-            nextCursor: this.userMessages.nextCursor,
+            secondUser: data.username,
+            limit: data.limit,
+            nextCursor: data.nextCursor,
           },
           updateQuery: (previousResult, { fetchMoreResult }) => {
             const newMessages = fetchMoreResult.userMessages.messages;
@@ -597,6 +796,7 @@ export default {
         });
       }
     },
+<<<<<<< HEAD
     setActiveContact(index) {
       // Set realtime message array of current contact to empty to prevent duplicate because when switching back to this current contact
       // graphql will make a new query to get latest 3 messages
@@ -679,19 +879,66 @@ export default {
         let file = files[fileIndex];
         this.messagesFilePreviewUrls.push(URL.createObjectURL(file));
       }
+=======
+    fetchGroupMessages(data) {
+      this.contactIsGroup = true;
+      this.shouldScroll = data.shouldScroll;
+      if (data.firstFetch) {
+        this.activeGroupId = data.groupId;
+        this.$apollo.queries.group.refetch({
+          groupId: data.groupId,
+        });
+
+        this.$apollo.queries.groupMessages.skip = false;
+        this.$apollo.queries.groupMessages.setVariables({
+          groupId: data.groupId,
+          limit: data.limit,
+          nextCursor: data.nextCursor,
+        });
+        this.$apollo.queries.groupMessages.refetch();
+      } else {
+        this.scrollHeight = data.scrollHeight;
+        this.$apollo.queries.groupMessages.skip = false;
+        this.$apollo.queries.groupMessages.fetchMore({
+          variables: {
+            groupId: data.groupId,
+            limit: data.limit,
+            nextCursor: data.nextCursor,
+          },
+          updateQuery: (previousResult, { fetchMoreResult }) => {
+            const newGroupMessages = fetchMoreResult.groupMessages.messages;
+            return {
+              groupMessages: {
+                __typename: previousResult.groupMessages.__typename,
+                // Merging the tag list
+                messages: [
+                  ...previousResult.groupMessages.messages,
+                  ...newGroupMessages,
+                ],
+                count:
+                  previousResult.groupMessages.count +
+                  fetchMoreResult.groupMessages.count,
+                nextCursor: fetchMoreResult.groupMessages.nextCursor,
+              },
+            };
+          },
+        });
+      }
     },
-    zoomImage(img) {
-      let modal = this.$refs.modal;
-      modal.style.display = "block";
-      let zoomImg = this.$refs.zoomImage;
-      zoomImg.src = img.src;
+    sendMessage(data) {
+      this.$socket.emit("chatMessage", data);
+>>>>>>> 5c59c6dcf62731b4e826e160e75ad1fe076d3277
     },
-    closeZoomImage() {
-      let modal = this.$refs.modal;
-      modal.style.display = "none";
+    sendGroupMessage(data) {
+      this.$socket.emit("groupMessage", data);
     },
-    async videoChat() {
+    joinSocketIORoom(data) {
+      console.log("Emitted");
+      this.$socket.emit("joinSocketIORoom", data);
+    },
+    async startVideoCall() {
       this.hasVideoCallStarted = true;
+<<<<<<< HEAD
       let peerId = await this.getActiveContactPeerId();
       this.contactListPeerIds.push({
         username: this.activeContactUsername,
@@ -718,7 +965,46 @@ export default {
         })
         .catch(function (err) {
           console.log("An error occurred: " + err);
+=======
+      this.isCaller = true;
+
+      if (!this.contactListPeerIds[this.activeContactUsername]) {
+        let peerId = await this.getActiveContactPeerId();
+        this.activeContactPeerId = peerId;
+        this.contactListPeerIds.push({
+          username: this.activeContactUsername,
+          peerId,
+>>>>>>> 5c59c6dcf62731b4e826e160e75ad1fe076d3277
         });
+      } else {
+        this.activeContactPeerId =
+          this.contactListPeerIds[this.activeContactUsername];
+      }
+    },
+    async startGroupVideoCall() {
+      let groupMembers = this.group.members;
+      for (let i = 0; i < groupMembers.length; i++) {
+        let member = groupMembers[i];
+        if (member.username != this.currentUsername) {
+          let result = await this.axios.get(
+            `${this.config.socketIO_HTTP}/session/${member.username}/peerId`
+          );
+
+          if (
+            this.groupMembersPeerIds.findIndex(
+              (element) => element.username == member.username
+            ) == -1
+          ) {
+            this.groupMembersPeerIds.push({
+              ...member,
+              peerId: result.data,
+            });
+          }
+        }
+      }
+
+      this.hasVideoCallStarted = true;
+      this.isCaller = true;
     },
     async getActiveContactPeerId() {
       let res = await this.axios.get(
@@ -726,38 +1012,22 @@ export default {
       );
       return res.data;
     },
-    endVideoCall() {
-      this.currentCall.close();
-    },
 
-    // stop only mic
-    changeWebcamStatus(stream) {
-      this.hasTurnedOffWebcam = !this.hasTurnedOffWebcam;
-
-      stream.getVideoTracks()[0].enabled = !this.hasTurnedOffWebcam;
-    },
-
-    changeMicrophoneStatus(stream) {
-      this.hasTurnedOffMicrophone = !this.hasTurnedOffMicrophone;
-
-      stream.getAudioTracks()[0].enabled = !this.hasTurnedOffMicrophone;
-    },
     formatTime(value) {
       return moment(String(value)).format("MM/DD/YYYY HH:mm");
     },
   },
   computed: {
-    activeContactUsername() {
-      return this.user.contactlist[this.activeContactIndex]?.username;
+    activeContactIndex() {
+      return this.user.contactlist.findIndex(
+        (contact) => contact.username == this.activeContactUsername
+      );
     },
-    activeContactAvatar() {
-      return this.user.contactlist[this.activeContactIndex]?.avatar;
+    hasFinishedLoadingMessages() {
+      return !this.$apollo.queries.userMessages.loading;
     },
-    activeContactPeerId() {
-      return this.contactListPeerIds[this.activeContactUsername];
-    },
-    messages() {
-      return this.userMessages.messages.slice().reverse();
+    hasFinishedLoadingGroupMessages() {
+      return !this.$apollo.queries.groupMessages.loading;
     },
   },
   created() {
@@ -765,6 +1035,7 @@ export default {
       user: this.currentUsername,
       id: this.$socket.id,
     });
+<<<<<<< HEAD
     this.sockets.subscribe("chatMessage", function (data) {
       let sender = data.sender.username;
       if (!this.realtimeFetchedMessages[sender]) {
@@ -773,6 +1044,9 @@ export default {
       this.realtimeFetchedMessages[sender].push(data);
       this.shouldScroll = false;
     });
+=======
+
+>>>>>>> 5c59c6dcf62731b4e826e160e75ad1fe076d3277
     this.peer = new Peer();
     this.peer.on("open", (id) => {
       console.log("My peer ID is: " + id);
@@ -783,26 +1057,12 @@ export default {
           peerId: id,
         }
       );
-      this.userPeerId = id;
     });
   },
-  watch: {
-    activeContactUsername(newUsername, oldUsername) {
-      console.log(newUsername, oldUsername);
-      this.currentTime = new Date().toISOString();
-      this.$apollo.queries.userMessages.skip = false;
-      this.$apollo.queries.userMessages.setVariables({
-        firstUser: this.currentUsername,
-        secondUser: newUsername,
-        limit: this.messagesToFetch,
-        nextCursor: this.currentTime,
-      });
-      this.$apollo.queries.userMessages.refetch();
-      this.shouldScroll = true;
-    },
-  },
+
   mounted() {
     let peer = this.peer;
+<<<<<<< HEAD
     peer.on("call", (call) => {
       console.log("Call received");
 
@@ -829,16 +1089,24 @@ export default {
             console.log("Call ended");
           });
         });
+=======
+
+    peer.on("call", (answeringCall) => {
+      this.isCaller = false;
+      console.log("Called");
+      this.hasVideoCallStarted = true;
+
+      this.answeringCall = answeringCall;
     });
-  },
-  updated() {
-    if (!this.$apollo.queries.userMessages.loading) {
-      if (this.shouldScroll) {
-        let chatHistory = this.$refs.chatHistory;
-        this.scrollDown(chatHistory.scrollHeight - this.scrollHeight);
-        this.shouldScroll = false;
-      }
-    }
+
+    this.sockets.subscribe("chatMessage", function (data) {
+      this.addToRealtimeMessagesList(data);
+    });
+
+    this.sockets.subscribe("groupMessage", function (data) {
+      this.addToRealtimeMessagesList(data);
+>>>>>>> 5c59c6dcf62731b4e826e160e75ad1fe076d3277
+    });
   },
 };
 </script>

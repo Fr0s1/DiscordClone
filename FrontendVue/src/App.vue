@@ -1,16 +1,14 @@
 <template>
   <amplify-authenticator>
     <!-- The rest of your app code -->
-    
+
     <router-view />
    
   </amplify-authenticator>
 </template>
 
 <script>
-export default {
-  
-};
+export default {};
 </script>
 <style>
   :root{

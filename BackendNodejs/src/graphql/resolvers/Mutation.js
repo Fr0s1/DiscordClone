@@ -1,6 +1,21 @@
 const { User } = require("../../mongodb/schemas")
 const { RedisPubSub } = require('graphql-redis-subscriptions')
-const pubsub = new RedisPubSub();
+const Redis = require('ioredis');
+
+const options = {
+    host: process.env.redisHost,
+    port: process.env.redisPort,
+    retryStrategy: times => {
+        // reconnect after
+        return Math.min(times * 50, 2000);
+    }
+};
+
+const pubsub = new RedisPubSub({
+    publisher: new Redis(options),
+    subscriber: new Redis(options)
+});
+
 // Add AWS Cognito user information to MongoDB to make it easier to write resolvers 
 // Just need to query to MongoDB instead of fetching using Cognito SDK
 async function addUser(parent, args, context) {

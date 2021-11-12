@@ -6,6 +6,9 @@ const cors = require('cors')
 const path = require('path')
 const bodyParser = require('body-parser')
 
+const { createClient } = require("redis");
+const redisAdapter = require('@socket.io/redis-adapter');
+
 require('dotenv').config({ path: path.join(process.cwd(), 'env/.env') })
 
 let corsOptions = {
@@ -29,12 +32,18 @@ const io = require("socket.io")(server, {
     allowEIO3: true,
 });
 
+const pubClient = createClient({ host: process.env.redisHost, port: process.env.redisPort });
+const subClient = pubClient.duplicate();
+
+io.adapter(redisAdapter(pubClient, subClient));
+
 const nsp = io.of('/chat')
 nsp.on('connection', (socket) => {
     console.log(`Client ${socket.id} connected`)
 
     // Save socket id which connect to server
     socket.on('currentUser', data => {
+        console.log(data)
         userSessionController.saveSocketID(data)
     })
 
@@ -42,9 +51,19 @@ nsp.on('connection', (socket) => {
         let receiverSocketId = await userSessionController.getSocketId(msg.receiver.username)
 
         if (receiverSocketId) {
-            nsp.to(receiverSocketId).emit("chatMessage", msg)
+            socket.to(receiverSocketId).emit("chatMessage", msg)
         }
     });
+
+    socket.on("joinSocketIORoom", data => {
+        console.log(`Socket with id ${socket.id} has joined room ${data.roomId}`)
+        socket.join(data.roomId)
+    })
+
+    socket.on("groupMessage", data => {
+        // console.log(`Received data from socket ${socket.id}`)
+        socket.to(data.group).emit("groupMessage", data)
+    })
 });
 
 app.get('/chat/healthz', (req, res) => {

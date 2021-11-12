@@ -1,0 +1,83 @@
+version: "3.9"
+services:
+  graphql:
+    build: BackendNodejs
+    ports:
+      - 4000:4000
+    networks:
+      - discord-backend
+    image: frost2203/discordclone-graphql
+    environment:
+      BUCKET_NAME: frost-image
+      FILE_SERVER_ENDPOINT: http://files:8000/file
+      region: ap-southeast-1
+      cognitoUserPoolId: ap-southeast-1_tO2VfGlVT
+      tokenUse: access
+      tokenExpiration: 7200000
+      mongodb_database: discord
+      mongodb_host: mongo
+      mongodb_port: 27017
+      redisHost: redis
+      redisPort: 6379
+      ENV: DOCKER
+  socketio:
+    build: ChatServer
+    image: frost2203/discordclone-socketio
+    ports:
+      - 3000:3000
+    environment:
+      BUCKET_NAME: frost-image
+      mongodb_database: discord
+      mongodb_host: mongo
+      mongodb_port: 27017
+      redisKeyExpireTime: 3600
+      redisHost: redis
+      redisPort: 6379
+      FILE_SERVER_ENDPOINT: http://files:8000/file
+      ENV: DOCKER
+    networks:
+      - discord-backend
+
+  files:
+    build: FilesServer
+    image: frost2203/discordclone-filesserver
+    ports:
+      - 8000:8000
+    environment:
+      BUCKET_NAME: frost-image
+      redisKeyExpireTime: 3600
+      redisHost: redis
+      redisPort: 6379
+      mongodb_database: discord
+      mongodb_host: mongo
+      mongodb_port: 27017
+      ENV: DOCKER
+    networks:
+      - discord-backend
+
+  mongo:
+    image: mongo
+    ports:
+      - 27017:27017
+    environment:
+      MONGO_INITDB_DATABASE: discord
+    networks:
+      - discord-backend
+    volumes:
+      - mongodb-data:/data/db
+
+  redis:
+    image: redis
+    ports:
+      - 6379:6379
+    networks:
+      - discord-backend
+    volumes:
+      - redis-data:/data
+
+networks:
+  discord-backend:
+
+volumes:
+  redis-data:
+  mongodb-data:

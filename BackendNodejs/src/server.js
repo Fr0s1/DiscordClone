@@ -139,11 +139,12 @@ async function startApolloServer() {
     })
 
     server.applyMiddleware({ app })
-    await new Promise(resolve => httpServer.listen({ port: 4000 }, resolve))
+    const PORT = process.env.PORT || 4000
+    await new Promise(resolve => httpServer.listen({ port: PORT }, resolve))
     const os = require("os")
     const hostname = os.hostname()
 
-    console.log(`🚀 Server ready at ${hostname}${server.graphqlPath}`)
+    console.log(`🚀 Server ready at ${hostname}:${PORT}${server.graphqlPath}`)
 }
 
 startApolloServer()

@@ -10,13 +10,21 @@ const Group = mongoose.model('Group', groupSchema)
 const Message = mongoose.model('Message', messageSchema)
 const GroupMessage = mongoose.model('GroupMessage', groupMessageSchema)
 
+let ENV = process.env.ENV
+let connectionUri
+let mongodb_host = process.env.mongodb_host
+let mongodb_database = process.env.mongodb_database
 
-// let mongodb_user = process.env.mongodb_user
-// let mongodb_password = process.env.mongdb_password
-let database = process.env.database
-let host = process.env.host
-let connectionUri = `mongodb://${host}/${database}`
-// const uri = `mongodb+srv://${mongodb_user}:${mongodb_password}@sandbox.8g94t.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`
+if (ENV == "AWS") {
+    let mongodb_user = process.env.mongodb_user
+    let mongodb_password = process.env.mongdb_password
+
+    connectionUri = `mongodb+srv://${mongodb_user}:${mongodb_password}@${mongodb_host}/${mongodb_database}?retryWrites=true&w=majority`
+} else {
+    let mongodb_port = process.env.mongodb_port
+    connectionUri = `mongodb://${mongodb_host}:${mongodb_port}/${mongodb_database}`
+}
+
 main().catch(err => console.log(err));
 
 async function main() {

@@ -3,7 +3,7 @@ type Query {
   user(username: String): User
 
   # Get information about a group chat
-  group(admin: String!, groupName: String!): GroupChat
+  group(groupId: String!): GroupChat
 
   # Get a list of group
   groupsList(groupName: String!): [GroupChat]!
@@ -53,7 +53,13 @@ type Mutation {
 
   deleteGroupMessage(messageId: String!): GroupMessage
 
-  updateUserInfo(email: String, name: String, phone_number: String, accountStatus: AccountStatus, lastOnlineTime: Date): User!
+  updateUserInfo(
+    email: String
+    name: String
+    phone_number: String
+    accountStatus: AccountStatus
+    lastOnlineTime: Date
+  ): User!
   # addUserToFriendList(username: String!): [String!]!
 
   addUserToContactList(username: String!): User!

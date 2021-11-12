@@ -4,7 +4,14 @@ const { promisifyAll } = require('bluebird');
 
 promisifyAll(redis);
 
-const client = redis.createClient();
+let ENV = process.env.ENV
+
+let redisOption = {}
+if (ENV !== "DEV") {
+    redisOption.host = process.env.redisHost
+}
+
+const client = redis.createClient(redisOption);
 
 const runApplication = async () => {
     // Connect to redis at 127.0.0.1 port 6379 no password.
@@ -12,6 +19,5 @@ const runApplication = async () => {
 };
 
 runApplication();
-
 
 module.exports = client
