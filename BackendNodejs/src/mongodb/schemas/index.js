@@ -12,12 +12,31 @@ const GroupMessage = mongoose.model('GroupMessage', groupMessageSchema)
 
 let ENV = process.env.ENV
 let connectionUri
+
 let mongodb_host = process.env.mongodb_host
 let mongodb_database = process.env.mongodb_database
 
 if (ENV == "AWS") {
-    let mongodb_user = process.env.mongodb_user
-    let mongodb_password = process.env.mongdb_password
+    /* If deployed on AWS, key/value pair is mounted as
+    file in previously specified directory
+    */
+    const fs = require('fs');
+    const path = require('path');
+
+    // Get name of secret file
+    let secretName = process.env.AWS_SecretName
+
+    // Get path of directory which stores the file
+    let secretsStorePath = process.env.SECRETS_STORE_PATH
+
+    let secretsJsonString = fs.readFileSync(path.join(secretsStorePath, secretName), {
+        encoding: "utf-8"
+    })
+
+    let secrets = JSON.parse(secretsJsonString)
+
+    let mongodb_user = secrets.mongodb_user
+    let mongodb_password = secrets.mongdb_password
 
     connectionUri = `mongodb+srv://${mongodb_user}:${mongodb_password}@${mongodb_host}/${mongodb_database}?retryWrites=true&w=majority`
 } else {

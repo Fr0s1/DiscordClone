@@ -9,7 +9,11 @@ const bodyParser = require('body-parser')
 const { createClient } = require("redis");
 const redisAdapter = require('@socket.io/redis-adapter');
 
-require('dotenv').config({ path: path.join(process.cwd(), 'env/.env') })
+let ENV = process.env.ENV
+
+if (ENV !== "AWS") {
+    require('dotenv').config({ path: path.join(process.cwd(), 'env/.env') })
+}
 
 let corsOptions = {
     origin: "*"

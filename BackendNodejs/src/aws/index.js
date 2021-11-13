@@ -11,6 +11,8 @@ const s3Config = {
     region: 'ap-southeast-1'
 }
 
+
+
 let env = process.env.ENV
 
 if (env === "DOCKER") {
