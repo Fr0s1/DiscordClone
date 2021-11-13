@@ -19,6 +19,8 @@ if (ENV == "AWS") {
     /* If deployed on AWS, key/value pair is mounted as
     file in previously specified directory
     */
+    const fs = require('fs');
+    const path = require('path');
 
     // Get name of secret file
     let secretName = process.env.AWS_SecretName
@@ -33,7 +35,7 @@ if (ENV == "AWS") {
     let secrets = JSON.parse(secretsJsonString)
 
     let mongodb_user = secrets.mongodb_user
-    let mongodb_password = secrets.mongdb_password
+    let mongodb_password = secrets.mongodb_password
 
     connectionUri = `mongodb+srv://${mongodb_user}:${mongodb_password}@${mongodb_host}/${mongodb_database}?retryWrites=true&w=majority`
 } else {
