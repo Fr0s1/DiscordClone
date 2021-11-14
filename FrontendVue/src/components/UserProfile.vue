@@ -1,182 +1,112 @@
 <template>
-  <div class="container emp-profile">
-    <form method="post">
-      <div class="row">
-        <div class="col-md-4">
-          <div class="profile-img">
-            <img :src="user.avatar" alt="" />
-            <div class="file btn btn-lg btn-primary">
-              Change Photo
-              <input type="file" name="file" />
+<div class="container">
+<div id="content" class="content p-0">
+    <div class="profile-header">
+        <div class="profile-header-cover"></div>
+        <div class="profile-header-content">
+            <div class="profile-header-img mb-4">
+                <img v-bind:src="user.avatar" class="mb-4" alt="" />
             </div>
-          </div>
-        </div>
-        <div class="col-md-6">
-          <div class="profile-head">
-            <h5>{{ user.name }}</h5>
-            <h6>Web Developer and Designer</h6>
-            <p class="proile-rating">RANKINGS : <span>8/10</span></p>
-            <ul class="nav nav-tabs" id="myTab" role="tablist">
-              <li class="nav-item">
-                <a
-                  class="nav-link active"
-                  id="home-tab"
-                  data-toggle="tab"
-                  href="#home"
-                  role="tab"
-                  aria-controls="home"
-                  aria-selected="true"
-                  >About</a
-                >
-              </li>
-              <li class="nav-item">
-                <a
-                  class="nav-link"
-                  id="profile-tab"
-                  data-toggle="tab"
-                  href="#profile"
-                  role="tab"
-                  aria-controls="profile"
-                  aria-selected="false"
-                  >Friends</a
-                >
-              </li>
-            </ul>
-          </div>
-        </div>
-        <div class="col-md-2">
-          <input
-            type="submit"
-            class="profile-edit-btn"
-            name="btnAddMore"
-            value="Edit Profile"
-          />
-        </div>
-      </div>
-      <div class="row">
-        <div class="col-md-4">
-          <div class="profile-work">
-            <p>WORK LINK</p>
-            <a href="">Website Link</a><br />
-            <a href="">Bootsnipp Profile</a><br />
-            <a href="">Bootply Profile</a>
-            <p>SKILLS</p>
-            <a href="">Web Designer</a><br />
-            <a href="">Web Developer</a><br />
-            <a href="">WordPress</a><br />
-            <a href="">WooCommerce</a><br />
-            <a href="">PHP, .Net</a><br />
-          </div>
-        </div>
-        <div class="col-md-8">
-          <div class="tab-content profile-tab" id="myTabContent">
-            <div
-              class="tab-pane fade show active"
-              id="home"
-              role="tabpanel"
-              aria-labelledby="home-tab"
-            >
-              <div class="row">
-                <div class="col-md-6">
-                  <label>Name</label>
-                </div>
-                <div class="col-md-6">
-                  <p>{{ user.name }}</p>
-                </div>
-              </div>
-              <div class="row">
-                <div class="col-md-6">
-                  <label>Email</label>
-                </div>
-                <div class="col-md-6">
-                  <p>{{ user.email }}</p>
-                </div>
-              </div>
-              <div class="row">
-                <div class="col-md-6">
-                  <label>Phone</label>
-                </div>
-                <div class="col-md-6">
-                  <p>{{ user.phone_number }}</p>
-                </div>
-              </div>
-              <div class="row">
-                <div class="col-md-6">
-                  <label>Profession</label>
-                </div>
-                <div class="col-md-6">
-                  <p>Web Developer and Designer</p>
-                </div>
-              </div>
+
+            <div class="profile-header-info">
+                <h4 class="m-t-sm">{{ user.name }}</h4>
+                <p class="m-b-sm">UXUI + Frontend Developer</p>
+                <a v-bind:href="`/edit-profile`" style="cursor:pointer" class="btn btn-xs btn-primary mb-2">Edit Profile</a>
+                <a v-bind:href="`/chat`" style="cursor:pointer" class="btn btn-xs btn-primary mb-2">Chat</a>
+                <a @click='signOut()' style="cursor:pointer" class="btn btn-xs btn-primary mb-2">Sign Out</a>
             </div>
-            <div
-              class="tab-pane fade"
-              id="profile"
-              role="tabpanel"
-              aria-labelledby="profile-tab"
-            >
-              <div class="row">
-                <div class="col-md-6">
-                  <label>Experience</label>
-                </div>
-                <div class="col-md-6">
-                  <p>Expert</p>
-                </div>
-              </div>
-              <div class="row">
-                <div class="col-md-6">
-                  <label>Hourly Rate</label>
-                </div>
-                <div class="col-md-6">
-                  <p>10$/hr</p>
-                </div>
-              </div>
-              <div class="row">
-                <div class="col-md-6">
-                  <label>Total Projects</label>
-                </div>
-                <div class="col-md-6">
-                  <p>230</p>
-                </div>
-              </div>
-              <div class="row">
-                <div class="col-md-6">
-                  <label>English Level</label>
-                </div>
-                <div class="col-md-6">
-                  <p>Expert</p>
-                </div>
-              </div>
-              <div class="row">
-                <div class="col-md-6">
-                  <label>Availability</label>
-                </div>
-                <div class="col-md-6">
-                  <p>6 months</p>
-                </div>
-              </div>
-              <div class="row">
-                <div class="col-md-12">
-                  <label>Your Bio</label><br />
-                  <p>Your detail description</p>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
-      </div>
-    </form>
-  </div>
+
+        <ul class="profile-header-tab nav nav-tabs">
+            <li class="nav-item"><a href="#profile-post" class="nav-link" data-toggle="tab">POSTS</a></li>
+            <li class="nav-item"><a href="#profile-about" class="nav-link" data-toggle="tab">ABOUT</a></li>
+            <li class="nav-item"><a href="#profile-photos" class="nav-link" data-toggle="tab">PHOTOS</a></li>
+            <li class="nav-item"><a href="#profile-videos" class="nav-link" data-toggle="tab">VIDEOS</a></li>
+            <li class="nav-item"><a href="#profile-friends" class="nav-link active show" data-toggle="tab">FRIENDS</a></li>
+        </ul>
+    </div>
+
+    <div class="profile-container">
+        <div class="row row-space-20">
+            <div class="col-md-8">
+                <div class="tab-content p-0">
+
+                    <div class="tab-pane fade active show" id="profile-friends">
+                        <div class="m-b-10"><b>Friend List (9)</b></div>
+
+                        <ul class="friend-list clearfix">
+                            <li style="background-color: #242526" v-for="list in user.friendlist" v-bind:key="list.username">
+                                <a href="#">
+                                    <div class="friend-img"><img v-bind:src="list.avatar" alt="" /></div>
+                                    <div class="friend-info">
+                                        <h4>{{list.username}}</h4>
+                                        <p>392 friends</p>
+                                    </div>
+                                   <i style="color:black" class="bi bi-three-dots"></i>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4 hidden-xs hidden-sm">
+                <ul class="profile-info-list">
+                    <li class="title">PERSONAL INFORMATION</li>
+                    <li>
+                        <div class="field">Occupation:</div>
+                        <div class="value">UXUI / Frontend Developer</div>
+                    </li>
+                    <li>
+                        <div class="field">Skills:</div>
+                        <div class="value">C++, PHP, HTML5, CSS, jQuery, MYSQL, Ionic, Laravel, Phonegap, Bootstrap, Angular JS, Angular JS, Asp.net</div>
+                    </li>
+                    <li>
+                        <div class="field">Birth of Date:</div>
+                        <div class="value">1989/11/04</div>
+                    </li>
+                    <li>
+                        <div class="field">Email:</div>
+                        <div class="value">{{user.email}}</div>
+                    </li>
+                    <li>
+                        <div class="field">Address:</div>
+                        <div class="value">
+                            <address class="m-b-0">
+                                Twitter, Inc.<br />
+                                1355 Market Street, Suite 900<br />
+                                San Francisco, CA 94103
+                            </address>
+                        </div>
+                    </li>
+                    <li>
+                        <div class="field">Phone Number:</div>
+                        <div class="value">
+                            {{ user.phone_number }}
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+ 
 </template>
 
 <script>
 import gql from "graphql-tag";
+import { AuthState, onAuthUIStateChange } from '@aws-amplify/ui-components';
+import { Auth } from 'aws-amplify';
 
 export default {
   inject: ["currentUsername"],
   data() {
     return {
-      // Initialize your apollo data
+
+    //   user: {},
+      friendlist: [],
       user: {},
     };
   },
@@ -209,6 +139,14 @@ export default {
       console.log(this.currentUsername);
       // console.log(this.user);
     },
+    async signOut() {
+    try {
+        await Auth.signOut();
+    } catch (error) {
+        console.log('error signing out: ', error);
+    }
+    this.$router.push('/');
+    },       
   },
   
   mounted() {
@@ -218,99 +156,314 @@ export default {
 </script>
 
 <style scoped>
-body {
-  background: -webkit-linear-gradient(left, #3931af, #00c6ff);
+body{
+    background: #eaeaea;
+    margin-top:20px;
 }
-.emp-profile {
-  padding: 3%;
-  margin-top: 3%;
-  margin-bottom: 3%;
-  border-radius: 0.5rem;
-  background: #fff;
+.btn-xs{
+    margin-right: 1vw;
 }
-.profile-img {
-  text-align: center;
+.profile-info-list {
+    padding: 0;
+    margin: 0;
+    list-style-type: none;
 }
-.profile-img img {
-  width: 70%;
-  height: 100%;
+.friend-list,
+.img-grid-list {
+    margin: -1px;
+    list-style-type: none;
 }
-.profile-img .file {
-  position: relative;
-  overflow: hidden;
-  margin-top: -20%;
-  width: 70%;
-  border: none;
-  border-radius: 0;
-  font-size: 15px;
-  background: #212529b8;
+.profile-info-list > li.title {
+    font-size: 0.825rem;
+    font-weight: 700;
+    color: #8a8a8f;
+    padding: 0 0 0.3125rem;
 }
-.profile-img .file input {
-  position: absolute;
-  opacity: 0;
-  right: 0;
-  top: 0;
+.profile-info-list > li + li.title {
+    padding-top: 1.5625rem;
 }
-.profile-head h5 {
-  color: #333;
+.profile-info-list > li {
+    padding: 0.625rem 0;
 }
-.profile-head h6 {
-  color: #0062cc;
+.profile-info-list > li .field {
+    font-weight: 700;
 }
-.profile-edit-btn {
-  border: none;
-  border-radius: 1.5rem;
-  width: 70%;
-  padding: 2%;
-  font-weight: 600;
-  color: #6c757d;
-  cursor: pointer;
+.profile-info-list > li .value {
+    color: #666;
 }
-.proile-rating {
-  font-size: 12px;
-  color: #818182;
-  margin-top: 5%;
+.profile-info-list > li.img-list a {
+    display: inline-block;
 }
-.proile-rating span {
-  color: #495057;
-  font-size: 15px;
-  font-weight: 600;
+.profile-info-list > li.img-list a img {
+    max-width: 2.25rem;
+    -webkit-border-radius: 2.5rem;
+    -moz-border-radius: 2.5rem;
+    border-radius: 2.5rem;
 }
-.profile-head .nav-tabs {
-  margin-bottom: 5%;
+.coming-soon-cover img,
+.email-detail-attachment .email-attachment .document-file img,
+.email-sender-img img,
+.friend-list .friend-img img,
+.profile-header-img img {
+    max-width: 100%;
 }
-.profile-head .nav-tabs .nav-link {
-  font-weight: 600;
-  border: none;
+.table.table-profile th {
+    border: none;
+    color: #000;
+    padding-bottom: 0.3125rem;
+    padding-top: 0;
 }
-.profile-head .nav-tabs .nav-link.active {
-  border: none;
-  border-bottom: 2px solid #0062cc;
+.table.table-profile td {
+    border-color: #c8c7cc;
 }
-.profile-work {
-  padding: 14%;
-  margin-top: -15%;
+.table.table-profile tbody + thead > tr > th {
+    padding-top: 1.5625rem;
 }
-.profile-work p {
-  font-size: 12px;
-  color: #818182;
-  font-weight: 600;
-  margin-top: 10%;
+.table.table-profile .field {
+    color: #666;
+    font-weight: 600;
+    width: 25%;
+    text-align: right;
 }
-.profile-work a {
-  text-decoration: none;
-  color: #495057;
-  font-weight: 600;
-  font-size: 14px;
+.table.table-profile .value {
+    font-weight: 500;
 }
-.profile-work ul {
-  list-style: none;
+.profile-header {
+    position: relative;
+    overflow: hidden;
 }
-.profile-tab label {
-  font-weight: 600;
+.profile-header .profile-header-cover {
+    background: url(https://bootdey.com/img/Content/bg1.jpg) center no-repeat;
+    background-size: 100% auto;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
 }
-.profile-tab p {
-  font-weight: 600;
-  color: #0062cc;
+.profile-header .profile-header-cover:before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.25) 0, rgba(0, 0, 0, 0.85) 100%);
 }
+.profile-header .profile-header-content,
+.profile-header .profile-header-tab,
+.profile-header-img,
+body .fc-icon {
+    position: relative;
+}
+.profile-header .profile-header-tab {
+    background: #fff;
+    list-style-type: none;
+    margin: -1.25rem 0 0;
+    padding: 0 0 0 8.75rem;
+    border-bottom: 1px solid #c8c7cc;
+    white-space: nowrap;
+}
+.profile-header .profile-header-tab > li {
+    display: inline-block;
+    margin: 0;
+}
+.profile-header .profile-header-tab > li > a {
+    display: block;
+    color: #000;
+    line-height: 1.25rem;
+    padding: 0.625rem 1.25rem;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.75rem;
+    border: none;
+}
+.profile-header .profile-header-tab > li.active > a,
+.profile-header .profile-header-tab > li > a.active {
+    color: #007aff;
+}
+.profile-header .profile-header-content:after,
+.profile-header .profile-header-content:before {
+    content: "";
+    display: table;
+    clear: both;
+}
+.profile-header .profile-header-content {
+    color: #fff;
+    padding: 1.25rem;
+}
+body .fc th a,
+body .fc-ltr .fc-basic-view .fc-day-top .fc-day-number,
+body .fc-widget-header a {
+    color: #000;
+}
+.profile-header-img {
+    float: left;
+    width: 7.5rem;
+    height: 7.5rem;
+    overflow: hidden;
+    z-index: 10;
+    margin: 0 1.25rem -1.25rem 0;
+    padding: 0.1875rem;
+    -webkit-border-radius: 0.25rem;
+    -moz-border-radius: 0.25rem;
+    border-radius: 0.25rem;
+    background: #fff;
+}
+.profile-header-info h4 {
+    font-weight: 500;
+    margin-bottom: 0.3125rem;
+}
+.profile-container {
+    padding: 1.5625rem;
+}
+@media (max-width: 967px) {
+    .profile-header-img {
+        width: 5.625rem;
+        height: 5.625rem;
+        margin: 0;
+    }
+    .profile-header-info {
+        margin-left: 6.5625rem;
+        padding-bottom: 0.9375rem;
+    }
+    .profile-header .profile-header-tab {
+        padding-left: 0;
+    }
+}
+@media (max-width: 767px) {
+    .profile-header .profile-header-cover {
+        background-position: top;
+    }
+    .profile-header-img {
+        width: 3.75rem;
+        height: 3.75rem;
+        margin: 0;
+    }
+    .profile-header-info {
+        margin-left: 4.6875rem;
+        padding-bottom: 0.9375rem;
+    }
+    .profile-header-info h4 {
+        margin: 0 0 0.3125rem;
+    }
+    .profile-header .profile-header-tab {
+        white-space: nowrap;
+        overflow: scroll;
+        padding: 0;
+    }
+    .profile-container {
+        padding: 0.9375rem 0.9375rem 3.6875rem;
+    }
+    .friend-list > li {
+        float: none;
+        width: auto;
+    }
+}
+.profile-info-list {
+    padding: 0;
+    margin: 0;
+    list-style-type: none;
+}
+.friend-list,
+.img-grid-list {
+    margin: -1px;
+    list-style-type: none;
+}
+.profile-info-list > li.title {
+    font-size: 0.625rem;
+    font-weight: 700;
+    color: #8a8a8f;
+    padding: 0 0 0.3125rem;
+}
+.profile-info-list > li + li.title {
+    padding-top: 1.5625rem;
+}
+.profile-info-list > li {
+    padding: 0.625rem 0;
+}
+.profile-info-list > li .field {
+    font-weight: 700;
+}
+.profile-info-list > li .value {
+    color: #666;
+}
+.profile-info-list > li.img-list a {
+    display: inline-block;
+}
+.profile-info-list > li.img-list a img {
+    max-width: 2.25rem;
+    -webkit-border-radius: 2.5rem;
+    -moz-border-radius: 2.5rem;
+    border-radius: 2.5rem;
+}
+.coming-soon-cover img,
+.email-detail-attachment .email-attachment .document-file img,
+.email-sender-img img,
+.friend-list .friend-img img,
+.profile-header-img img {
+    max-width: 100%;
+}
+.table.table-profile th {
+    border: none;
+    color: #000;
+    padding-bottom: 0.3125rem;
+    padding-top: 0;
+}
+.table.table-profile td {
+    border-color: #c8c7cc;
+}
+.table.table-profile tbody + thead > tr > th {
+    padding-top: 1.5625rem;
+}
+.table.table-profile .field {
+    color: #666;
+    font-weight: 600;
+    width: 25%;
+    text-align: right;
+}
+.table.table-profile .value {
+    font-weight: 500;
+}
+.friend-list {
+    padding: 0;
+}
+.friend-list > li {
+    float: left;
+    width: 50%;
+}
+.friend-list > li > a {
+    display: block;
+    text-decoration: none;
+    color: #000;
+    padding: 0.625rem;
+    margin: 1px;
+    background: #fff;
+}
+.friend-list > li > a:after,
+.friend-list > li > a:before {
+    content: "";
+    display: table;
+    clear: both;
+}
+.friend-list .friend-img {
+    float: left;
+    width: 3rem;
+    height: 3rem;
+    overflow: hidden;
+    background: #efeff4;
+}
+.friend-list .friend-info {
+    margin-left: 3.625rem;
+}
+.friend-list .friend-info h4 {
+    margin: 0.3125rem 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+.friend-list .friend-info p {
+    color: #666;
+    margin: 0;
+}
+
 </style>

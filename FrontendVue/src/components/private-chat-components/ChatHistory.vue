@@ -220,7 +220,7 @@ export default {
       }
     },
     formatTime(value) {
-      return moment(String(value)).format("MM/DD/YYYY hh:mm");
+      return moment(String(value)).format("DD/MM/YYYY HH:mm");
     },
     zoomImage(img) {
       let modal = this.$refs.modal;
@@ -250,14 +250,30 @@ export default {
 };
 </script>
 <style scoped>
+.btn{
+  width: 40px;
+}
 .chat .chat-history {
   padding: 20px;
   border-bottom: 2px solid #fff;
 }
+.chat-history ul::-webkit-scrollbar {
+	width: 10px;
+  }
+.chat-history ul::-webkit-scrollbar-thumb {
+	-webkit-box-shadow: inset 0 0 6px rgba(0,0,0,.3);
+  border-radius: 10px;
+  background-color: #007bff;
+}
+.chat-history ul::-webkit-scrollbar-track {
+	-webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+	border-radius: 10px;
+	background-color: #F5F5F5;
+}
 
 .chat .chat-history ul {
   width: auto;
-  height: 500px;
+  height: 59vh;
   padding: 20px;
   overflow-y: auto;
   overflow-x: hidden;
@@ -279,6 +295,7 @@ export default {
 .chat .chat-history .message-data img {
   border-radius: 40px;
   width: 40px;
+  height: 40px;
 }
 
 .chat .chat-history .message-data-time {

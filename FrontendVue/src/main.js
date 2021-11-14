@@ -38,7 +38,7 @@ import { createStore } from 'vuex'
             }
         }
     })
-    
+
     app.use(store)
 
     app.use(VueAxios, axios)
@@ -49,9 +49,8 @@ import { createStore } from 'vuex'
         debug: true,
         connection: config.socketIO_Endpoint,
         options: {
-            withCredentials: false
+            withCredentials: true,
         },
-        transports: ["websocket"]
     }))
 
     const cache = new InMemoryCache()

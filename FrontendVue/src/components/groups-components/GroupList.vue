@@ -62,6 +62,9 @@ export default {
 </script>
 
 <style scoped>
+.btn{
+  width: 40px;
+}
 .card {
   background: #fff;
   transition: 0.5s;
@@ -114,6 +117,7 @@ export default {
 
 .people-list .chat-list img {
   width: 45px;
+  height: 45px;
   border-radius: 50%;
 }
 

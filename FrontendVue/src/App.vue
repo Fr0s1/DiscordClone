@@ -3,11 +3,19 @@
     <!-- The rest of your app code -->
 
     <router-view />
-    <amplify-sign-out></amplify-sign-out>
+   
   </amplify-authenticator>
 </template>
 
 <script>
 export default {};
 </script>
-<style></style>
+<style>
+  :root{
+    --amplify-primary-color: #007bff;
+    --amplify-primary-tint: #2600ff;
+    --amplify-primary-shade: #1100ff;
+    --amplify-text-sm: 1rem;
+  }
+ 
+</style>

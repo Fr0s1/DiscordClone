@@ -179,7 +179,7 @@ export default {
       }
     },
     formatTime(timeString) {
-      return moment(String(timeString)).format("MM/DD/YYYY hh:mm a");
+      return moment(String(timeString)).format("DD/MM/YYYY HH:mm");
     },
     zoomImage(img) {
       let modal = this.$refs.modal;
@@ -223,8 +223,21 @@ body {
 .chat-messages {
   display: flex;
   flex-direction: column;
-  max-height: 550px;
+  height: 69vh;
   overflow-y: scroll;
+}
+.chat-messages::-webkit-scrollbar {
+	width: 10px;
+  }
+.chat-messages::-webkit-scrollbar-thumb {
+	-webkit-box-shadow: inset 0 0 6px rgba(0,0,0,.3);
+  border-radius: 10px;
+  background-color: #007bff;
+}
+.chat-messages::-webkit-scrollbar-track {
+	-webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+	border-radius: 10px;
+	background-color: #F5F5F5;
 }
 
 .chat-message-left,
