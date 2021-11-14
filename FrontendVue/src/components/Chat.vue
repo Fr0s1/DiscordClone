@@ -58,7 +58,15 @@
                       title="Call"
                     ></i>
                   </button>
-                  <button class="btn btn-outline-primary">
+                  <button
+                    class="btn btn-outline-primary"
+                    data-toggle="tooltip"
+                    data-placement="auto"
+                    title="Video call"
+                    @click="
+                      contactIsGroup ? startGroupVideoCall() : startVideoCall()
+                    "
+                  >
                     <i
                       class="fas fa-camera"
                       data-toggle="tooltip"
@@ -651,21 +659,6 @@ export default {
   max-width: 100vw;
 }
 
-.control-buttons,
-.video {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.video {
-  margin-bottom: 10px;
-}
-
-.video .container {
-  max-width: 100vw;
-}
-
 .message-input {
   width: 100%;
 }
@@ -701,45 +694,6 @@ export default {
   transition: 0.5s;
 }
 
-.people-list .chat-list li {
-  padding: 10px 15px;
-  list-style: none;
-  border-radius: 3px;
-}
-
-.people-list .chat-list li:hover {
-  background: #efefef;
-  cursor: pointer;
-}
-
-.people-list .chat-list li.active {
-  background: #efefef;
-}
-
-.people-list .chat-list li .name {
-  font-size: 15px;
-}
-
-.people-list .chat-list img {
-  width: 45px;
-  border-radius: 50%;
-}
-
-.people-list img {
-  float: left;
-  border-radius: 50%;
-}
-
-.people-list .about {
-  float: left;
-  padding-left: 8px;
-}
-
-.people-list .status {
-  color: #999;
-  font-size: 13px;
-}
-
 .chat .chat-header {
   padding: 15px 20px;
   border-bottom: 2px solid #f4f7f6;
@@ -749,103 +703,12 @@ export default {
   float: left;
   border-radius: 40px;
   width: 40px;
+  height: 40px;
 }
 
 .chat .chat-header .chat-about {
   float: left;
   padding-left: 10px;
-}
-
-.chat .chat-history {
-  padding: 20px;
-  border-bottom: 2px solid #fff;
-}
-
-.chat .chat-history ul {
-  width: auto;
-  height: 450px;
-  padding: 20px;
-  overflow-y: auto;
-  overflow-x: hidden;
-}
-
-.chat .chat-history ul li {
-  list-style: none;
-  margin-bottom: 30px;
-}
-
-.chat .chat-history ul li:last-child {
-  margin-bottom: 0px;
-}
-
-.chat .chat-history .message-data {
-  margin-bottom: 15px;
-}
-
-.chat .chat-history .message-data img {
-  border-radius: 40px;
-  width: 40px;
-}
-
-.chat .chat-history .message-data-time {
-  color: #434651;
-  padding-left: 6px;
-}
-
-.chat .chat-history .message {
-  color: #444;
-  padding: 18px 20px;
-  line-height: 26px;
-  font-size: 16px;
-  border-radius: 7px;
-  display: inline-block;
-  position: relative;
-}
-
-.chat .chat-history .message:after {
-  bottom: 100%;
-  left: 7%;
-  border: solid transparent;
-  content: " ";
-  height: 0;
-  width: 0;
-  position: absolute;
-  pointer-events: none;
-  border-bottom-color: #fff;
-  border-width: 10px;
-  margin-left: -10px;
-}
-
-.chat .chat-history .my-message {
-  background: #efefef;
-}
-
-.chat .chat-history .my-message:after {
-  bottom: 100%;
-  left: 30px;
-  border: solid transparent;
-  content: " ";
-  height: 0;
-  width: 0;
-  position: absolute;
-  pointer-events: none;
-  border-bottom-color: #efefef;
-  border-width: 10px;
-  margin-left: -10px;
-}
-
-.chat .chat-history .other-message {
-  background: #e8f1f3;
-  text-align: right;
-}
-
-.chat .chat-history .other-message:after {
-  border-bottom-color: #e8f1f3;
-  left: 93%;
-}
-
-.chat .chat-message {
-  padding: 20px;
 }
 
 .online,
@@ -1016,24 +879,6 @@ export default {
 @media only screen and (max-width: 700px) {
   .modal-content {
     width: 100%;
-  }
-}
-
-.loader {
-  border: 16px solid #f3f3f3; /* Light grey */
-  border-top: 16px solid #3498db; /* Blue */
-  border-radius: 50%;
-  width: 120px;
-  height: 120px;
-  animation: spin 2s linear infinite;
-}
-
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
   }
 }
 </style>
