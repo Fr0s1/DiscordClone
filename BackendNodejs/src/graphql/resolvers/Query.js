@@ -4,7 +4,7 @@ async function user(parent, args, context) {
     let user = await User.findOne({
         username: args.username
     })
-
+    
     return user
 }
 

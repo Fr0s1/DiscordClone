@@ -30,10 +30,11 @@ let userSessionController = require('./controllers/user-session.controller')
 
 const io = require("socket.io")(server, {
     cors: {
-        origin: "*",
-        methods: ["GET", "POST"]
+        origin: process.env.frontend_endpoint,
+        methods: ["GET", "POST"],
+        credentials: true
     },
-    allowEIO3: true,
+    allowEIO3: true
 });
 
 const pubClient = createClient({ host: process.env.redisHost, port: process.env.redisPort });
