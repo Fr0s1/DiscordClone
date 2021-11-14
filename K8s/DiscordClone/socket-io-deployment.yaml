@@ -1,0 +1,106 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: socketio-deployment
+  namespace: discord-backend
+spec:
+  selector:
+    matchLabels:
+      app: socketio-server
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: socketio-server
+    spec:
+      serviceAccountName: discord-backend-sa
+      volumes:
+        - name: secrets-store-inline
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: "discord-clone-mongodb-atlas-secrets"
+      containers:
+        - name: socketio
+          image: 207986101045.dkr.ecr.ap-southeast-1.amazonaws.com/discordclone-socketio:sticky
+          imagePullPolicy: Always
+          resources:
+            limits:
+              memory: "128Mi"
+              cpu: "500m"
+          ports:
+            - containerPort: 3000
+          env:
+            - name: ENV
+              value: AWS
+            - name: BUCKET_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: discord-backend-configmap
+                  key: BUCKET_NAME
+            - name: AWS_SecretName
+              valueFrom:
+                configMapKeyRef:
+                  name: discord-backend-configmap
+                  key: AWS_SecretName
+            - name: SECRETS_STORE_PATH
+              valueFrom:
+                configMapKeyRef:
+                  name: discord-backend-configmap
+                  key: SECRETS_STORE_PATH
+            - name: FILE_SERVER_ENDPOINT
+              valueFrom:
+                configMapKeyRef:
+                  name: discord-backend-configmap
+                  key: FILE_SERVER_ENDPOINT
+            - name: region
+              valueFrom:
+                configMapKeyRef:
+                  name: discord-backend-configmap
+                  key: region
+            - name: redisKeyExpireTime
+              valueFrom:
+                configMapKeyRef:
+                  name: discord-backend-configmap
+                  key: redisKeyExpireTime
+            - name: mongodb_database
+              valueFrom:
+                configMapKeyRef:
+                  name: discord-backend-configmap
+                  key: mongodb_database
+            - name: mongodb_host
+              valueFrom:
+                configMapKeyRef:
+                  name: discord-backend-configmap
+                  key: mongodb_host
+            - name: mongodb_port
+              valueFrom:
+                configMapKeyRef:
+                  name: discord-backend-configmap
+                  key: mongodb_port
+            - name: redisHost
+              valueFrom:
+                configMapKeyRef:
+                  name: discord-backend-configmap
+                  key: redisHost
+            - name: redisPort
+              valueFrom:
+                configMapKeyRef:
+                  name: discord-backend-configmap
+                  key: redisPort
+            - name: frontend_endpoint
+              valueFrom:
+                configMapKeyRef:
+                  name: discord-backend-configmap
+                  key: frontend_endpoint
+          volumeMounts:
+            - name: secrets-store-inline
+              mountPath: "/mnt/secrets-store"
+              readOnly: true
+          livenessProbe:
+            httpGet:
+              path: /chat/healthz
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 5

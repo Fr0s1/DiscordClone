@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: discordclone-graphql-svc
+  namespace: discord-backend
+spec:
+  selector:
+    app: graphql-server
+  ports:
+    - name: "apollo-server"
+      port: 4000
+      targetPort: 4000
+      protocol: TCP
+  type: ClusterIP

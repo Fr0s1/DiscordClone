@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: discordclone-socketio-svc
+  namespace: discord-backend
+spec:
+  selector:
+    app: socketio-server
+  ports:
+    - name: socketio-server
+      port: 3000
+      targetPort: 3000
+      protocol: TCP
+  type: ClusterIP
+  sessionAffinity: ClientIP

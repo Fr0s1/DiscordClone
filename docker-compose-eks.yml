@@ -1,0 +1,28 @@
+version: "3.9"
+services:
+  graphql:
+    build: BackendNodejs
+    ports:
+      - 4000:4000
+    networks:
+      - discord-backend
+    image: 207986101045.dkr.ecr.ap-southeast-1.amazonaws.com/discordclone-graphql:eks
+
+  socketio:
+    build: ChatServer
+    image: 207986101045.dkr.ecr.ap-southeast-1.amazonaws.com/discordclone-socketio:eks
+    ports:
+      - 3000:3000
+    networks:
+      - discord-backend
+
+  files:
+    build: FilesServer
+    image: 207986101045.dkr.ecr.ap-southeast-1.amazonaws.com/discordclone-filesserver:eks
+    ports:
+      - 8000:8000
+    networks:
+      - discord-backend
+
+networks:
+  discord-backend:
