@@ -293,6 +293,7 @@ export default {
 }
 
 .chat .chat-history .message-data img {
+  margin-left: 5px;
   border-radius: 40px;
   width: 40px;
   height: 40px;
@@ -346,7 +347,7 @@ export default {
 }
 
 .chat .chat-history .other-message {
-  background: #e8f1f3;
+  background: #cce5ff;
   text-align: right;
 }
 

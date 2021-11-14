@@ -2,7 +2,7 @@
   <div class="hello">
     <h1 style="color:#007bff">{{ msg }}</h1>
     <p> <font size="20px" style="color:#007bff">
-      Đây là sản phẩm môn Dự Án INT 3509-1</font>
+      <b>Đây là sản phẩm môn Dự Án INT 3509-1</b></font>
       <a href="https://cli.vuejs.org" target="_blank" rel="noopener"
         ></a
       >
@@ -40,6 +40,7 @@
 <script>
 export default {
   name: "Discord Clone",
+  inject: ["currentUsername"],
   props: {
     msg: String,
   },

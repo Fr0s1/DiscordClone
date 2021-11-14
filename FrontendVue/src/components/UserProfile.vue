@@ -36,7 +36,7 @@
 
                         <ul class="friend-list clearfix">
                             <li style="background-color: #242526" v-for="list in user.friendlist" v-bind:key="list.username">
-                                <a href="#">
+                                <a :href="'/profile/'+ list.username">
                                     <div class="friend-img"><img v-bind:src="list.avatar" alt="" /></div>
                                     <div class="friend-info">
                                         <h4>{{list.username}}</h4>
