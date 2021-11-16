@@ -30,7 +30,7 @@ let userSessionController = require('./controllers/user-session.controller')
 
 const io = require("socket.io")(server, {
     cors: {
-        origin: process.env.frontend_endpoint,
+        origin: "*",
         methods: ["GET", "POST"],
         credentials: true
     },
