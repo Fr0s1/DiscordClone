@@ -10,7 +10,14 @@
       <img :src="contact.avatar" alt="avatar" />
       <div class="about">
         <div class="name">{{ contact.name }}</div>
-        <div class="status"><i class="fa fa-circle online"></i> Online</div>
+        <div class="status">
+          <i
+            :class="`fa fa-circle ${
+              contact.accountStatus === 'Online' ? 'online' : 'offline'
+            }`"
+          ></i>
+          {{ contact.accountStatus }}
+        </div>
       </div>
     </li>
   </ul>
@@ -70,8 +77,6 @@ export default {
 </script>
 
 <style scoped>
-
-
 .chat-list li {
   padding: 10px 15px;
   list-style: none;
@@ -145,8 +150,6 @@ img {
   height: 0;
 }
 
-
-  
 @media only screen and (min-width: 768px) and (max-width: 992px) {
   .chat-list {
     height: 650px;

@@ -269,6 +269,7 @@ export default {
                 username
                 name
                 avatar
+                accountStatus
               }
               groups {
                 _id
@@ -280,6 +281,41 @@ export default {
         `,
         variables: {
           username: this.currentUsername,
+        },
+        subscribeToMore: {
+          document: gql`
+            subscription Subscription($username: String!) {
+              accountStatusInfo(username: $username) {
+                username
+                accountStatus
+              }
+            }
+          `,
+          variables: {
+            // This works just like regular queries
+            // and will re-subscribe with the right variables
+            // each time the values change
+            username: "hieudt223",
+          },
+          updateQuery: (previousResult, { subscriptionData }) => {
+            // Here, return the new result from the previous with the new data
+            let accountStatusInfo = subscriptionData.data.accountStatusInfo;
+            let oldContactList = previousResult.user.contactlist;
+            let contactlist = oldContactList.map((contact) =>
+              contact.username === accountStatusInfo.username
+                ? {
+                    ...contact,
+                    accountStatus: accountStatusInfo.accountStatus,
+                  }
+                : contact
+            );
+            return {
+              user: {
+                ...previousResult.user,
+                contactlist,
+              },
+            };
+          },
         },
       };
     },
@@ -568,6 +604,27 @@ export default {
     formatTime(value) {
       return moment(String(value)).format("MM/DD/YYYY hh:mm");
     },
+
+    // Change acccount status on "Online" or "Offline",...
+    changeAccountStatus(accountStatus) {
+      this.$apollo.mutate({
+        mutation: gql`
+          mutation Mutation($accountStatus: AccountStatus) {
+            updateUserInfo(accountStatus: $accountStatus) {
+              username
+              accountStatus
+            }
+          }
+        `,
+        variables: {
+          accountStatus,
+        },
+      });
+    },
+
+    tabOrWindowsClosedHandler() {
+      this.changeAccountStatus("Offline");
+    },
   },
   computed: {
     activeContactIndex() {
@@ -600,6 +657,9 @@ export default {
         }
       );
     });
+
+    // Changed account to offline if user close windows or tab
+    window.addEventListener("beforeunload", this.tabOrWindowsClosedHandler);
   },
 
   mounted() {
@@ -644,6 +704,8 @@ export default {
     this.sockets.subscribe("groupMessage", function (data) {
       this.addToRealtimeMessagesList(data);
     });
+
+    this.changeAccountStatus("Online");
   },
 };
 </script>
