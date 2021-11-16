@@ -1,5 +1,6 @@
 const { RedisPubSub } = require('graphql-redis-subscriptions')
 const Redis = require('ioredis');
+const { withFilter } = require('graphql-subscriptions');
 
 const options = {
     host: process.env.redisHost,
@@ -19,8 +20,16 @@ function accountStatusSubscribe() {
     return pubsub.asyncIterator(["ACCOUNT_STATUS_CHANGED"])
 }
 
+const mongoUtilFunctions = require('../../mongodb/utils/utils')
+
 const accountStatusInfo = {
-    subscribe: accountStatusSubscribe,
+    subscribe: withFilter(accountStatusSubscribe,
+        async (payload, variables) => {
+            console.log(payload)
+            console.log(variables)
+            return await mongoUtilFunctions.ifInContactList(payload.username, variables.username)
+        }
+    ),
     resolve: payload => {
         return payload
     }
