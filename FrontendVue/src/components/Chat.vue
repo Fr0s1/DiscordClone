@@ -17,6 +17,9 @@
               :contactIsGroup="contactIsGroup"
               @fetch-messages="fetchMessages"
               @change-contact-type="contactIsGroup = !contactIsGroup"
+              @empty-current-realtime-messages="
+                realtimeFetchedMessages[activeContactUsername] = []
+              "
               :realtimeFetchedMessages="realtimeFetchedMessages"
             ></contact-list>
 
@@ -175,7 +178,16 @@
             :peer="peer"
             :answeringCall="answeringCall"
             :groupMembers="group.members"
-            @stop-video-chat="hasVideoCallStarted = false"
+            :srcStream="srcStream"
+            @stop-video-chat="stopGroupVideoCall"
+            @change-webcam-status="
+              srcStream.getVideoTracks()[0].enabled =
+                !srcStream.getVideoTracks()[0].enabled
+            "
+            @change-microphone-status="
+              srcStream.getAudioTracks()[0].enabled =
+                !srcStream.getAudioTracks()[0].enabled
+            "
           ></group-video-chat>
         </div>
       </div>
@@ -256,6 +268,8 @@ export default {
       shouldScroll: null,
 
       dataConnections: {}, // Object to store data connection object to each group members when start group video call
+
+      srcStream: null,
     };
   },
   sockets: {
@@ -266,7 +280,6 @@ export default {
       });
 
       if (this.contactIsGroup) {
-        console.log(this.activeGroupId);
         this.$socket.emit("joinSocketIORoom", {
           roomId: this.activeGroupId,
         });
@@ -300,8 +313,8 @@ export default {
         },
         subscribeToMore: {
           document: gql`
-            subscription Subscription($username: String!) {
-              accountStatusInfo(username: $username) {
+            subscription Subscription($loggedInUsername: String!) {
+              accountStatusInfo(loggedInUsername: $loggedInUsername) {
                 username
                 accountStatus
               }
@@ -311,7 +324,7 @@ export default {
             // This works just like regular queries
             // and will re-subscribe with the right variables
             // each time the values change
-            username: "hieudt223",
+            loggedInUsername: this.currentUsername,
           },
           updateQuery: (previousResult, { subscriptionData }) => {
             // Here, return the new result from the previous with the new data
@@ -528,8 +541,6 @@ export default {
           nextCursor: data.nextCursor,
         });
         this.$apollo.queries.groupMessages.skip = false;
-
-        this.$apollo.queries.groupMessages.refetch();
       } else {
         this.scrollHeight = data.scrollHeight;
         this.$apollo.queries.groupMessages.fetchMore({
@@ -614,8 +625,14 @@ export default {
         }
       }
 
-      this.hasGroupVideoCallStarted = true;
+      this.srcStream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: true,
+      });
+
       this.isCaller = true;
+
+      this.hasGroupVideoCallStarted = true;
     },
     async getActiveContactPeerId() {
       let res = await this.axios.get(
@@ -648,6 +665,9 @@ export default {
 
     tabOrWindowsClosedHandler() {
       this.changeAccountStatus("Offline");
+      this.$socket.emit("delete-user-session", {
+        username: this.currentUsername,
+      });
     },
 
     compareMessageSentTime(firstMessage, secondMessage) {
@@ -658,6 +678,12 @@ export default {
         return 1;
       }
       return 0;
+    },
+
+    stopGroupVideoCall() {
+      this.srcStream.getTracks()[0].stop();
+
+      this.hasGroupVideoCallStarted = false;
     },
   },
   computed: {
@@ -720,19 +746,14 @@ export default {
   mounted() {
     let peer = this.peer;
 
-    peer.on("call", (answeringCall) => {
+    peer.on("call", async (answeringCall) => {
       console.log("Called");
       this.answeringCall = answeringCall;
 
       if (this.contactIsGroup) {
-        this.startGroupVideoCall();
-
-        navigator.mediaDevices
-          .getUserMedia({ video: true, audio: true })
-          .then((stream) => {
-            this.answeringCall.answer(stream);
-            this.hasVideoCallStarted = true;
-          });
+        console.log("Group Video Call");
+        await this.startGroupVideoCall();
+        this.answeringCall.answer(this.srcStream);
       } else {
         this.isCaller = false;
         this.hasVideoCallStarted = true;
