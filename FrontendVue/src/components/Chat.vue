@@ -16,12 +16,16 @@
               :contactlist="user.contactlist"
               :contactIsGroup="contactIsGroup"
               @fetch-messages="fetchMessages"
+              @change-contact-type="contactIsGroup = !contactIsGroup"
+              :realtimeFetchedMessages="realtimeFetchedMessages"
             ></contact-list>
 
             <group-list
               :groups="user.groups"
               :contactIsGroup="contactIsGroup"
+              :realtimeGroupMessages="realtimeGroupMessages"
               @fetch-group-messages="fetchGroupMessages"
+              @change-contact-type="contactIsGroup = !contactIsGroup"
               @joinSocketIORoom="joinSocketIORoom"
             ></group-list>
           </div>
@@ -35,12 +39,22 @@
                     data-target="#view_info"
                   >
                     <img
-                      :src="user.contactlist[activeContactIndex]?.avatar"
+                      :src="
+                        contactIsGroup
+                          ? activeGroupAvatar
+                          : user.contactlist[activeContactIndex]?.avatar
+                      "
                       alt="avatar"
                     />
                   </a>
                   <div class="chat-about">
-                    <h6 class="m-b-0">{{ activeContactUsername }}</h6>
+                    <h6 class="m-b-0">
+                      {{
+                        contactIsGroup
+                          ? activeGroupGroupName
+                          : activeContactUsername
+                      }}
+                    </h6>
                     <small>Last seen: 2 hours ago</small>
                   </div>
                 </div>
@@ -116,7 +130,7 @@
               :currentUsername="currentUsername"
               :userAvatarUrl="user.avatar"
               :hasFinishedLoadingMessages="hasFinishedLoadingMessages"
-              :realtimeFetchedMessages="realtimeFetchedMessages"
+              :allRealtimeMessages="allRealtimeMessages"
               :scrollHeight="scrollHeight"
               :shouldScroll="shouldScroll"
               @fetch-messages="fetchMessages"
@@ -140,6 +154,7 @@
               :currentUserAvatarUrl="user.avatar"
               @chatMessage="sendMessage"
               @realtime-message="addToRealtimeMessagesList"
+              @realtime-group-message="addToRealTimeGroupMessages"
               @groupChatMessage="sendGroupMessage"
             ></send-message>
           </div>
@@ -203,7 +218,8 @@ export default {
       },
 
       activeContactUsername: null,
-      activeGroupGroupname: null,
+      activeGroupIndex: null,
+
       activeGroupId: null,
 
       userMessages: {
@@ -422,41 +438,48 @@ export default {
     },
   },
   methods: {
-    addToRealtimeMessagesList(message) {
-      if (this.contactIsGroup) {
-        if (!this.realtimeGroupMessages[this.activeGroupId]) {
-          this.realtimeGroupMessages[this.activeGroupId] = [];
-        }
-        this.realtimeGroupMessages[this.activeGroupId].push(message);
-      } else {
-        if (!this.realtimeFetchedMessages[this.activeContactUsername]) {
-          this.realtimeFetchedMessages[this.activeContactUsername] = [];
-        }
-        this.realtimeFetchedMessages[this.activeContactUsername].push(message);
+    addToRealTimeGroupMessages(message) {
+      let groupId = message.group;
+      if (!this.realtimeGroupMessages[groupId]) {
+        this.realtimeGroupMessages[groupId] = [];
       }
+      this.realtimeGroupMessages[groupId].push(message);
+    },
+    addToRealtimeMessagesList(message) {
+      let sender = message.sender.username;
 
-      if (message.sender.username === this.currentUsername) {
+      if (!this.realtimeFetchedMessages[sender]) {
+        this.realtimeFetchedMessages[sender] = [];
+      }
+      this.realtimeFetchedMessages[sender].push(message);
+
+      if (sender === this.currentUsername) {
         this.shouldScroll = true;
 
         this.scrollHeight = 0;
       } else {
         this.shouldScroll = false;
       }
+
+      console.log(this.realtimeFetchedMessages[sender]);
     },
     fetchMessages(data) {
       this.contactIsGroup = false;
       this.shouldScroll = data.shouldScroll;
 
       if (data.firstFetch) {
+        this.realtimeFetchedMessages[this.currentUsername] = [];
+        this.realtimeFetchedMessages[data.username] = [];
         this.scrollHeight = data.scrollHeight;
         this.activeContactUsername = data.username;
-        this.$apollo.queries.userMessages.skip = false;
         this.$apollo.queries.userMessages.setVariables({
           firstUser: this.currentUsername,
           secondUser: data.username,
           limit: data.limit,
           nextCursor: data.nextCursor,
         });
+        this.$apollo.queries.userMessages.skip = false;
+
         this.$apollo.queries.userMessages.refetch();
       } else {
         this.scrollHeight = data.scrollHeight;
@@ -493,20 +516,22 @@ export default {
       this.shouldScroll = data.shouldScroll;
       if (data.firstFetch) {
         this.activeGroupId = data.groupId;
+        this.activeGroupIndex = data.activeGroupIndex;
+        this.realtimeGroupMessages[this.activeGroupId] = [];
         this.$apollo.queries.group.refetch({
           groupId: data.groupId,
         });
 
-        this.$apollo.queries.groupMessages.skip = false;
         this.$apollo.queries.groupMessages.setVariables({
           groupId: data.groupId,
           limit: data.limit,
           nextCursor: data.nextCursor,
         });
+        this.$apollo.queries.groupMessages.skip = false;
+
         this.$apollo.queries.groupMessages.refetch();
       } else {
         this.scrollHeight = data.scrollHeight;
-        this.$apollo.queries.groupMessages.skip = false;
         this.$apollo.queries.groupMessages.fetchMore({
           variables: {
             groupId: data.groupId,
@@ -540,7 +565,6 @@ export default {
       this.$socket.emit("groupMessage", data);
     },
     joinSocketIORoom(data) {
-      console.log("Emitted");
       this.$socket.emit("joinSocketIORoom", data);
     },
     async startVideoCall() {
@@ -625,6 +649,16 @@ export default {
     tabOrWindowsClosedHandler() {
       this.changeAccountStatus("Offline");
     },
+
+    compareMessageSentTime(firstMessage, secondMessage) {
+      if (firstMessage.sentTime < secondMessage.sentTime) {
+        return -1;
+      }
+      if (firstMessage.sentTime > secondMessage.sentTime) {
+        return 1;
+      }
+      return 0;
+    },
   },
   computed: {
     activeContactIndex() {
@@ -632,11 +666,32 @@ export default {
         (contact) => contact.username == this.activeContactUsername
       );
     },
+    activeGroupGroupName() {
+      return this.user.groups[this.activeGroupIndex]?.groupName;
+    },
+    activeGroupAvatar() {
+      return this.user.groups[this.activeGroupIndex]?.groupAvatar;
+    },
     hasFinishedLoadingMessages() {
       return !this.$apollo.queries.userMessages.loading;
     },
     hasFinishedLoadingGroupMessages() {
       return !this.$apollo.queries.groupMessages.loading;
+    },
+    allRealtimeMessages() {
+      let messagesSentByUser = this.realtimeFetchedMessages[
+        this.currentUsername
+      ]
+        ? this.realtimeFetchedMessages[this.currentUsername]
+        : [];
+      let messagesSentByActiveContact = this.realtimeFetchedMessages[
+        this.activeContactUsername
+      ]
+        ? this.realtimeFetchedMessages[this.activeContactUsername]
+        : [];
+
+      let allMessages = messagesSentByUser.concat(messagesSentByActiveContact);
+      return allMessages.sort(this.compareMessageSentTime);
     },
   },
   created() {
@@ -702,7 +757,7 @@ export default {
     });
 
     this.sockets.subscribe("groupMessage", function (data) {
-      this.addToRealtimeMessagesList(data);
+      this.addToRealTimeGroupMessages(data);
     });
 
     this.changeAccountStatus("Online");

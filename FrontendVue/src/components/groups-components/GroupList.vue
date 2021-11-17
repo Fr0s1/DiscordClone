@@ -11,6 +11,14 @@
       <div class="about">
         <div class="name">{{ group.groupName }}</div>
       </div>
+      <div
+        class="badge bg-success float-right"
+        v-if="
+          group.groupName !== activeGroupName &&
+          realtimeGroupMessages[group._id] &&
+          realtimeGroupMessages[group._id].length > 0
+        "
+      ></div>
     </li>
   </ul>
 </template>
@@ -26,28 +34,31 @@ export default {
     contactIsGroup: {
       type: Boolean,
     },
+    realtimeGroupMessages: {
+      type: Object,
+    },
   },
   data() {
     return {
       activeGroupIndex: null,
-      nextCursor: new Date().toISOString(),
       limit: 10,
     };
   },
   methods: {
     setActiveGroup(index) {
+      if (!this.contactIsGroup) {
+        this.$emit("change-contact-type");
+      }
+
       this.activeGroupIndex = index;
       this.$emit("fetch-group-messages", {
         limit: this.limit,
-        nextCursor: this.nextCursor,
+        nextCursor: new Date().toISOString(),
         groupId: this.groups[this.activeGroupIndex]._id,
         firstFetch: true,
         contactIsGroup: true,
         shouldScroll: true,
-      });
-
-      this.$emit("joinSocketIORoom", {
-        roomId: this.groups[this.activeGroupIndex]._id,
+        activeGroupIndex: this.activeGroupIndex,
       });
     },
   },
@@ -58,11 +69,29 @@ export default {
       }
     },
   },
+  watch: {
+    groups(newGroupList, oldGroupList) {
+      if (newGroupList && newGroupList.length > 0) {
+        this.groups.forEach((group) => {
+          this.$emit("joinSocketIORoom", {
+            roomId: group._id,
+          });
+        });
+      }
+    },
+  },
 };
 </script>
 
 <style scoped>
-.btn{
+.badge:empty {
+  display: inline-block;
+  height: 10px;
+  color: #86c541;
+  vertical-align: middle;
+}
+
+.btn {
   width: 40px;
 }
 .card {

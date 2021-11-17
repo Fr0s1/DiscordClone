@@ -166,7 +166,7 @@ export default {
         });
       }
 
-      this.$emit("realtime-message", message);
+      this.$emit("realtime-group-message", message);
 
       let sentMessage = new FormData();
 
