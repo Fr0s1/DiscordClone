@@ -23,8 +23,6 @@ type Query {
     nextCursor: Date
     limit: Int
   ): GroupMessageList
-
-  test: String
 }
 
 type Mutation {
@@ -37,17 +35,16 @@ type Mutation {
 
   createGroup(groupName: String!, username: String!): GroupChat
 
-  addUserToGroup(
-    admin: String!
-    groupName: String!
-    username: String!
-  ): GroupChat
+  addUserToGroup(groupId: String!, username: String!): GroupChat
 
-  removeUserFromGroup(
-    admin: String!
-    groupName: String!
-    username: String!
-  ): GroupChat
+  removeUserFromGroup(groupId: String!, username: String!): GroupChat
+
+  changeMessageInfo(
+    messageId: String!
+    seenStatus: Boolean
+    deletedBySender: Boolean
+    deletedByReceiver: Boolean
+  ): Message!
 
   deleteMessage(messageId: String!): Message
 
@@ -66,7 +63,8 @@ type Mutation {
 }
 
 type Subscription {
-  accountStatusInfo(username: String!): AccountStatusInfo
+  # To avoid confusion: loggedInUsername is the username of client who subscribe to account status in his/her contactlist
+  accountStatusInfo(loggedInUsername: String!): AccountStatusInfo
 }
 
 type AccountStatusInfo {
@@ -135,6 +133,7 @@ type Message {
   markedDeletedBySender: Boolean
   markedDeletedByReceiver: Boolean
   sentTime: Date!
+  seenStatus: Boolean
 }
 
 type GroupMessage {

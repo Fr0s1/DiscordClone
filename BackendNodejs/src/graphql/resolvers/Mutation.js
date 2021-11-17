@@ -109,22 +109,16 @@ async function addUserToGroup(parent, args, context) {
     } else {
         let userId = userFound._id
 
-        let groupAdmin = await User.findOne({
-            username: args.admin
-        })
-
         let groupFound = await Group.findOne({
-            groupName: args.groupName,
-            admin: groupAdmin._id
+            _id: args.groupId
         })
 
-        if (groupAdmin && groupFound) {
+        if (groupFound) {
             if (groupFound.members.includes(userId)) {
                 throw new Error('User is already in group')
             } else {
                 let result = await Group.findOneAndUpdate({
-                    groupName: args.groupName,
-                    admin: groupAdmin._id
+                    _id: groupFound._id
                 }, {
                     $push: { members: userId }
                 }, {
@@ -163,24 +157,18 @@ async function removeUserFromGroup(parent, args, context) {
     } else {
         let userId = userFound._id
 
-        let groupAdmin = await User.findOne({
-            username: args.admin
-        })
-
         let groupFound = await Group.findOne({
-            groupName: args.groupName,
-            admin: groupAdmin._id
+            _id: args.groupId
         })
 
         // Check if group exists
-        if (groupAdmin && groupFound) {
+        if (groupFound) {
             if (groupFound.members.includes(userId)) {
 
                 groupFound.members.splice(groupFound.members.indexOf(userId), 1)
 
                 await Group.updateOne({
-                    groupName: args.groupName,
-                    admin: groupAdmin._id
+                    _id: groupFound._id
                 }, {
                     members: groupFound.members
                 })
@@ -203,6 +191,27 @@ async function removeUserFromGroup(parent, args, context) {
     }
 }
 
+async function changeMessageInfo(parent, args, context) {
+    let Message = context.mongo.Message
+
+    let messageId = args.messageId
+
+    let newMessageInfo = { ...args }
+    delete newMessageInfo.messageId
+
+    try {
+        let result = await Message.findByIdAndUpdate({
+            _id: messageId
+        }, newMessageInfo, {
+            returnDocument: "after"
+        })
+
+        return result
+
+    } catch (e) {
+        throw new Error("Can't update message info at the moment" + e)
+    }
+}
 async function deleteMessage(parent, args, context) {
     let messageId = args.messageId
     let Message = context.mongo.Message
@@ -381,5 +390,6 @@ module.exports = {
     deleteMessage,
     deleteGroupMessage,
     updateUserInfo,
-    addUserToContactList
+    addUserToContactList,
+    changeMessageInfo
 }

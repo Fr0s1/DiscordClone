@@ -25,9 +25,7 @@ const mongoUtilFunctions = require('../../mongodb/utils/utils')
 const accountStatusInfo = {
     subscribe: withFilter(accountStatusSubscribe,
         async (payload, variables) => {
-            console.log(payload)
-            console.log(variables)
-            return await mongoUtilFunctions.ifInContactList(payload.username, variables.username)
+            return await mongoUtilFunctions.ifInContactList(payload.username, variables.loggedInUsername)
         }
     ),
     resolve: payload => {
