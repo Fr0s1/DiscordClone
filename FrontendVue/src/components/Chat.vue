@@ -622,6 +622,10 @@ export default {
           conn.on("open", function () {
             conn.send("Group video call");
           });
+
+          conn.on("data", (data) => {
+            console.log("Received: " + data);
+          });
         }
       }
 
