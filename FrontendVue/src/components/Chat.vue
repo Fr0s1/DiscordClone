@@ -603,6 +603,7 @@ export default {
 }
 .container {
   max-width: 100vw;
+  background: white;
 }
 
 .message-input {
