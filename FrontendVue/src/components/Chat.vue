@@ -799,6 +799,7 @@ export default {
 }
 .container {
   max-width: 100vw;
+  background: white;
 }
 
 .message-input {
@@ -904,10 +905,7 @@ export default {
   .chat-app .chat .chat-header {
     border-radius: 0.55rem 0.55rem 0 0;
   }
-  .chat-app .chat-history {
-    height: 300px;
-    overflow-x: auto;
-  }
+  
 }
 
 @media only screen and (min-width: 768px) and (max-width: 992px) {
@@ -915,10 +913,7 @@ export default {
     height: 650px;
     overflow-x: auto;
   }
-  .chat-app .chat-history {
-    height: 600px;
-    overflow-x: auto;
-  }
+  
 }
 
 @media only screen and (min-device-width: 768px) and (max-device-width: 1024px) and (orientation: landscape) and (-webkit-min-device-pixel-ratio: 1) {
@@ -926,10 +921,7 @@ export default {
     height: 480px;
     overflow-x: auto;
   }
-  .chat-app .chat-history {
-    height: calc(100vh - 350px);
-    overflow-x: auto;
-  }
+  
 }
 
 #myImg {

@@ -49,12 +49,38 @@
                 <div class="m-b-10"><b>Friend List (9)</b></div>
 
                 <ul class="friend-list clearfix">
-                  <li  
+                  <!-- <li  
                     style="background-color: #242526"
                     v-for="list in user.friendlist"
                     v-bind:key="list.username"
                   >
                     <a :href="'/profile/'+ list.username">
+                      <div class="friend-img">
+                        <img v-bind:src="list.avatar" alt="" />
+                      </div>
+                      <div class="friend-info">
+                        <h4>{{ list.username }}</h4>
+                        <p>392 friends</p>
+                      </div>
+                      <i style="color: black" class="bi bi-three-dots"></i>
+                    </a>
+                  </li> -->
+                  <li  
+                    style="background-color: #242526"
+                    v-for="list in user.friendlist"
+                    v-bind:key="list.username"
+                  >
+                    <a v-if="list.username != currentUsername" :href="'/profile/'+ list.username">
+                      <div class="friend-img">
+                        <img v-bind:src="list.avatar" alt="" />
+                      </div>
+                      <div class="friend-info">
+                        <h4>{{ list.username }}</h4>
+                        <p>392 friends</p>
+                      </div>
+                      <i style="color: black" class="bi bi-three-dots"></i>
+                    </a>
+                    <a v-else :href="'/user/'+ currentUsername">
                       <div class="friend-img">
                         <img v-bind:src="list.avatar" alt="" />
                       </div>
@@ -122,7 +148,7 @@ import gql from "graphql-tag";
 import { computed } from "@vue/reactivity";
 
 export default {
-  // inject: ["currentUsername"],
+  inject: ["currentUsername"],
   setup() {
     const route = useRoute();
 

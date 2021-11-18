@@ -37,7 +37,7 @@
         <i
           v-if="hasTurnedOffMicrophone"
           class="fas fa-microphone-slash"
-          style="color: red"
+          style="color: red; margin-left: -3px"
         ></i>
         <i v-else class="fas fa-microphone"></i>
       </button>
@@ -49,7 +49,7 @@
         <i
           v-if="hasTurnedOffWebcam"
           class="fas fa-video-slash"
-          style="color: red"
+          style="color: red; margin-left: -1px"
         ></i>
         <i v-else class="fas fa-video"></i>
       </button>
@@ -161,5 +161,9 @@ export default {
 
 .member-video video {
   height: 200px;
+}
+.btn {
+  width: 40px;
+  margin-right: 5px;
 }
 </style>
