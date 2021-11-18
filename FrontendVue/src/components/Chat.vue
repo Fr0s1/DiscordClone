@@ -63,16 +63,11 @@
                 <div class="col-lg-6 hidden-sm text-right">
                   <button
                     class="btn btn-outline-primary"
-                    @click="
-                      contactIsGroup ? startGroupVideoCall() : startVideoCall()
-                    "
+                    data-toggle="tooltip"
+                    data-placement="auto"
+                    title="Call"
                   >
-                    <i
-                      class="fa fa-phone"
-                      data-toggle="tooltip"
-                      data-placement="auto"
-                      title="Call"
-                    ></i>
+                    <i class="fa fa-phone"></i>
                   </button>
                   <button
                     class="btn btn-outline-primary"
@@ -83,44 +78,34 @@
                       contactIsGroup ? startGroupVideoCall() : startVideoCall()
                     "
                   >
-                    <i
-                      class="fas fa-camera"
-                      data-toggle="tooltip"
-                      data-placement="auto"
-                      title="Video call"
-                    ></i>
+                    <i class="fas fa-camera"></i>
                   </button>
-                  <button class="btn btn-outline-primary">
-                    <i
-                      class="fas fa-image"
-                      data-toggle="tooltip"
-                      data-placement="auto"
-                      title="Ảnh"
-                    ></i>
+                  <button
+                    class="btn btn-outline-primary"
+                    data-toggle="tooltip"
+                    data-placement="auto"
+                    title="Profile"
+                    @click="info"
+                  >
+                    <i class="fas fa-user-alt"></i>
                   </button>
-                  <button class="btn btn-outline-primary">
-                    <i
-                      class="fas fa-cogs"
-                      data-toggle="tooltip"
-                      data-placement="auto"
-                      title="Cài đặt"
-                    ></i>
+                  <button
+                    class="btn btn-outline-primary"
+                    data-toggle="tooltip"
+                    data-placement="auto"
+                    title="Sign Out"
+                    @click="signOut"
+                  >
+                    <i class="fas fa-sign-out-alt"></i>
                   </button>
-                  <button class="btn btn-outline-primary">
-                    <i
-                      class="fas fa-question"
-                      data-toggle="tooltip"
-                      data-placement="auto"
-                      title="Trợ giúp"
-                    ></i>
-                  </button>
-                  <button class="btn btn-outline-primary">
-                    <i
-                      class="fas fa-camera"
-                      data-toggle="tooltip"
-                      data-placement="auto"
-                      title="Đăng xuất"
-                    ></i>
+                  <button
+                    class="btn btn-outline-primary"
+                    data-toggle="tooltip"
+                    data-placement="auto"
+                    title="About Us"
+                    @click="about"
+                  >
+                    <i class="fas fa-info"></i>
                   </button>
                 </div>
               </div>
@@ -198,6 +183,7 @@
 import gql from "graphql-tag";
 import Peer from "peerjs";
 import moment from "moment";
+import { Auth } from "aws-amplify";
 
 import ContactList from "./private-chat-components/ContactList.vue";
 import ChatHistory from "./private-chat-components/ChatHistory.vue";
@@ -723,6 +709,21 @@ export default {
       let allMessages = messagesSentByUser.concat(messagesSentByActiveContact);
       return allMessages.sort(this.compareMessageSentTime);
     },
+
+    about() {
+      this.$router.push("/");
+    },
+    info() {
+      this.$router.push("/user/" + this.currentUsername);
+    },
+    async signOut() {
+      try {
+        await Auth.signOut();
+      } catch (error) {
+        console.log("error signing out: ", error);
+      }
+      this.$router.push("/");
+    },
   },
   created() {
     this.$socket.emit("currentUser", {
@@ -905,7 +906,6 @@ export default {
   .chat-app .chat .chat-header {
     border-radius: 0.55rem 0.55rem 0 0;
   }
-  
 }
 
 @media only screen and (min-width: 768px) and (max-width: 992px) {
@@ -913,7 +913,6 @@ export default {
     height: 650px;
     overflow-x: auto;
   }
-  
 }
 
 @media only screen and (min-device-width: 768px) and (max-device-width: 1024px) and (orientation: landscape) and (-webkit-min-device-pixel-ratio: 1) {
@@ -921,7 +920,6 @@ export default {
     height: 480px;
     overflow-x: auto;
   }
-  
 }
 
 #myImg {
