@@ -36,10 +36,9 @@
             <div class="chat-header clearfix">
               <div class="row">
                 <div class="col-lg-6">
-                  <a
-                    href="javascript:void(0);"
-                    data-toggle="modal"
-                    data-target="#view_info"
+                  <router-link
+                    :to="`/profile/${user.contactlist[activeContactIndex]?.username}`"
+                    target="_blank"
                   >
                     <img
                       :src="
@@ -49,7 +48,7 @@
                       "
                       alt="avatar"
                     />
-                  </a>
+                  </router-link>
                   <div class="chat-about">
                     <h6 class="m-b-0">
                       {{
@@ -270,6 +269,8 @@ export default {
       dataConnections: {}, // Object to store data connection object to each group members when start group video call
 
       srcStream: null,
+
+      incomingCallType: "", // Whether if incoming call is from user or from group chat
     };
   },
   sockets: {
@@ -466,13 +467,16 @@ export default {
       }
       this.realtimeFetchedMessages[sender].push(message);
 
-      if (sender === this.currentUsername) {
-        this.shouldScroll = true;
+      // if (sender === this.currentUsername) {
+      // this.shouldScroll = true;
 
-        this.scrollHeight = 0;
-      } else {
-        this.shouldScroll = false;
-      }
+      // this.scrollHeight = 0;
+      // } else {
+      //   this.shouldScroll = true;
+      // }
+      this.shouldScroll = true;
+
+      this.scrollHeight = 0;
 
       console.log(this.realtimeFetchedMessages[sender]);
     },
@@ -622,10 +626,6 @@ export default {
           conn.on("open", function () {
             conn.send("Group video call");
           });
-
-          conn.on("data", (data) => {
-            console.log("Received: " + data);
-          });
         }
       }
 
@@ -754,7 +754,7 @@ export default {
       console.log("Called");
       this.answeringCall = answeringCall;
 
-      if (this.contactIsGroup) {
+      if (this.incomingCallType === "group") {
         console.log("Group Video Call");
         await this.startGroupVideoCall();
         this.answeringCall.answer(this.srcStream);
@@ -771,8 +771,8 @@ export default {
         console.log("Received data ", data);
 
         if (data === "Group video call") {
+          this.incomingCallType = "group";
           this.hasGroupVideoCallStarted = true;
-        } else if (data === "Private video call") {
         }
       });
     });
