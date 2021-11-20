@@ -37,7 +37,6 @@ export default {
 
   
   methods: {
-
      loadUser() {
        console.log("abc")
         var name = Auth.currentUserInfo()
