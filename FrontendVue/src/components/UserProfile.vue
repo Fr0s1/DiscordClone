@@ -1,4 +1,5 @@
 <template>
+<body>
 <div class="container">
 <div id="content" class="content p-0">
     <div class="profile-header">
@@ -42,8 +43,9 @@
                                         <h4>{{list.username}}</h4>
                                         <p>392 friends</p>
                                     </div>
-                                   <i style="color:black" class="bi bi-three-dots"></i>
+                                   
                                 </a>
+                                <button @click="addContact(list)" class="btn btn-primary">AddContact</button>
                             </li>
                         </ul>
                     </div>
@@ -91,7 +93,7 @@
     </div>
 </div>
 </div>
-
+</body>
  
 </template>
 
@@ -99,12 +101,18 @@
 import gql from "graphql-tag";
 import { AuthState, onAuthUIStateChange } from '@aws-amplify/ui-components';
 import { Auth } from 'aws-amplify';
+export const ADD_CONTACT = gql`mutation ($username: String!) {
+  addUserToContactList(username: $username,) {
+   username
+  }
+}`;
+
+
 
 export default {
   inject: ["currentUsername"],
   data() {
     return {
-
     //   user: {},
       friendlist: [],
       user: {},
@@ -122,8 +130,12 @@ export default {
               phone_number
               avatar
               friendlist {
+                  _id
                 username
                 avatar
+              }
+              contactlist {
+                  username
               }
             }
           }
@@ -146,18 +158,31 @@ export default {
         console.log('error signing out: ', error);
     }
     this.$router.push('/');
-    },       
+    }, 
+    
+    addContact(list) {
+        console.log(list.username);
+        this.$apollo.mutate({
+        mutation: ADD_CONTACT,
+        variables: {
+          username: list.username,
+        }
+      });
+    },
+
+    
   },
   
   mounted() {
-    this.f();
+    // this.f();
+    console.log(this.user);
   },
 };
 </script>
 
 <style scoped>
-body{
-    background: #eaeaea;
+.body{
+    background: #ffffff;
     margin-top:20px;
 }
 .btn-xs{
@@ -465,5 +490,4 @@ body .fc-widget-header a {
     color: #666;
     margin: 0;
 }
-
 </style>

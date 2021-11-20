@@ -60,10 +60,13 @@ import { createStore } from 'vuex'
 
         try {
             let res = await Auth.currentSession()
+
+            // console.log(res);
             let accessToken = res.getAccessToken()
             let jwt = accessToken.getJwtToken()
 
             let user = await Auth.currentUserInfo();
+            // console.log(user);
             // console.log(user.username)
             //You can print them to see the full objects
             // console.log(`myAccessToken: ${JSON.stringify(accessToken)}`)
