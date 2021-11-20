@@ -212,6 +212,7 @@ async function changeMessageInfo(parent, args, context) {
         throw new Error("Can't update message info at the moment" + e)
     }
 }
+
 async function deleteMessage(parent, args, context) {
     let messageId = args.messageId
     let Message = context.mongo.Message

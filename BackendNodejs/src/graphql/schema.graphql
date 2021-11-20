@@ -41,7 +41,6 @@ type Mutation {
 
   changeMessageInfo(
     messageId: String!
-    seenStatus: Boolean
     deletedBySender: Boolean
     deletedByReceiver: Boolean
   ): Message!
