@@ -78,12 +78,10 @@
         </div>
       </li>
 
-      <!-- This section is to display messages fetch from graphql -->
+      <!-- This section is to display messages fetch from socketio -->
       <li
         class="clearfix"
-        v-for="(message, index) in realtimeFetchedMessages[
-          activeContactUsername
-        ]"
+        v-for="(message, index) in allRealtimeMessages"
         :key="index"
       >
         <div v-if="currentUsername === message.sender.username">
@@ -185,8 +183,8 @@ export default {
     hasFinishedLoadingMessages: {
       type: Boolean,
     },
-    realtimeFetchedMessages: {
-      type: Object,
+    allRealtimeMessages: {
+      type: Array,
     },
     scrollHeight: {
       type: Number,
@@ -208,7 +206,7 @@ export default {
     },
     fetchMessages() {
       let chatHistory = this.$refs.chatHistory;
-      if (chatHistory.scrollTop == 0) {
+      if (chatHistory.scrollTop == 0 && this.userMessages.nextCursor !== "") {
         this.$emit("fetch-messages", {
           limit: this.limit,
           nextCursor: this.userMessages.nextCursor,
@@ -250,62 +248,70 @@ export default {
 };
 </script>
 <style scoped>
-.btn{
+.btn {
   width: 40px;
 }
-.chat .chat-history {
+
+.chat-history {
   padding: 20px;
   border-bottom: 2px solid #fff;
 }
+
 .chat-history ul::-webkit-scrollbar {
-	width: 10px;
-  }
+  width: 10px;
+}
+
 .chat-history ul::-webkit-scrollbar-thumb {
-	-webkit-box-shadow: inset 0 0 6px rgba(0,0,0,.3);
+  -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+  --webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
   border-radius: 10px;
   background-color: #007bff;
 }
+
 .chat-history ul::-webkit-scrollbar-track {
-	-webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
-	border-radius: 10px;
-	background-color: #F5F5F5;
+  -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+  border-radius: 10px;
+  background-color: #f5f5f5;
+  --webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+  border-radius: 10px;
+  background-color: #f5f5f5;
 }
 
-.chat .chat-history ul {
+.chat-history ul {
   width: auto;
-  height: 59vh;
+  height: 71vh;
   padding: 20px;
   overflow-y: auto;
   overflow-x: hidden;
 }
 
-.chat .chat-history ul li {
+.chat-history ul li {
   list-style: none;
   margin-bottom: 30px;
 }
 
-.chat .chat-history ul li:last-child {
+.chat-history ul li:last-child {
   margin-bottom: 0px;
 }
 
-.chat .chat-history .message-data {
+.chat-history .message-data {
   margin-bottom: 15px;
 }
 
-.chat .chat-history .message-data img {
+.chat-history .message-data img {
   margin-left: 5px;
   border-radius: 40px;
   width: 40px;
   height: 40px;
 }
 
-.chat .chat-history .message-data-time {
+.chat-history .message-data-time {
   color: #434651;
   padding-left: 6px;
 }
 
-.chat .chat-history .message {
-  color: #444;
+.chat-history .message {
+  color: rgb(255, 255, 255);
   padding: 18px 20px;
   line-height: 26px;
   font-size: 16px;
@@ -314,7 +320,7 @@ export default {
   position: relative;
 }
 
-.chat .chat-history .message:after {
+.chat-history .message:after {
   bottom: 100%;
   left: 7%;
   border: solid transparent;
@@ -328,11 +334,11 @@ export default {
   margin-left: -10px;
 }
 
-.chat .chat-history .my-message {
-  background: #efefef;
+.chat-history .my-message {
+  background: #7289da;
 }
 
-.chat .chat-history .my-message:after {
+.chat-history .my-message:after {
   bottom: 100%;
   left: 30px;
   border: solid transparent;
@@ -346,22 +352,19 @@ export default {
   margin-left: -10px;
 }
 
-.chat .chat-history .other-message {
-  background: #cce5ff;
+.chat-history .other-message {
+  background: #7289da;
   text-align: right;
 }
 
-.chat .chat-history .other-message:after {
+.chat-history .other-message:after {
   border-bottom-color: #e8f1f3;
   left: 93%;
 }
 
-.chat .chat-message {
+.chat-message {
   padding: 20px;
 }
-
-.online,
-.offline,
 .me {
   margin-right: 2px;
   font-size: 8px;
@@ -394,46 +397,21 @@ export default {
 }
 
 @media only screen and (max-width: 767px) {
-  .chat-app .people-list {
-    height: 465px;
-    width: 100%;
-    overflow-x: auto;
-    background: #fff;
-    left: -400px;
-    display: none;
-  }
-  .chat-app .people-list.open {
-    left: 0;
-  }
-  .chat-app .chat {
-    margin: 0;
-  }
-  .chat-app .chat .chat-header {
-    border-radius: 0.55rem 0.55rem 0 0;
-  }
-  .chat-app .chat-history {
+  .chat-history {
     height: 300px;
     overflow-x: auto;
   }
 }
 
 @media only screen and (min-width: 768px) and (max-width: 992px) {
-  .chat-app .chat-list {
-    height: 650px;
-    overflow-x: auto;
-  }
-  .chat-app .chat-history {
+  .chat-history {
     height: 600px;
     overflow-x: auto;
   }
 }
 
 @media only screen and (min-device-width: 768px) and (max-device-width: 1024px) and (orientation: landscape) and (-webkit-min-device-pixel-ratio: 1) {
-  .chat-app .chat-list {
-    height: 480px;
-    overflow-x: auto;
-  }
-  .chat-app .chat-history {
+  .chat-history {
     height: calc(100vh - 350px);
     overflow-x: auto;
   }
@@ -495,6 +473,7 @@ export default {
   padding: 10px;
   border: 0;
   margin: 2px;
+  width: 40px;
 }
 
 @keyframes zoom {

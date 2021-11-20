@@ -19,6 +19,12 @@ import { createApolloProvider } from '@vue/apollo-option'
 import axios from 'axios'
 import VueAxios from 'vue-axios'
 
+// Import for GraphQL Subscription
+import { split } from 'apollo-link'
+import { WebSocketLink } from 'apollo-link-ws'
+import { getMainDefinition } from 'apollo-utilities'
+import { HttpLink } from 'apollo-link-http'
+
 Amplify.configure(aws_exports);
 applyPolyfills().then(() => {
     defineCustomElements(window);
@@ -49,7 +55,7 @@ import { createStore } from 'vuex'
         debug: true,
         connection: config.socketIO_Endpoint,
         options: {
-            withCredentials: true,
+            withCredentials: false,
         },
     }))
 
@@ -63,10 +69,6 @@ import { createStore } from 'vuex'
             let jwt = accessToken.getJwtToken()
 
             let user = await Auth.currentUserInfo();
-            // console.log(user.username)
-            //You can print them to see the full objects
-            // console.log(`myAccessToken: ${JSON.stringify(accessToken)}`)
-            // console.log(`myJwt: ${jwt}`)
             app.provide('currentUsername', user.username)
             return {
                 authorization: `Bearer ${jwt}`
@@ -76,10 +78,33 @@ import { createStore } from 'vuex'
         }
     };
 
-    const apolloClient = new ApolloClient({
+    const httpLink = new HttpLink({
+        // You should use an absolute URL here
         uri: config.graphQL_Endpoint,
-        cache,
         headers: await getHeaders()
+    })
+
+    const wsLink = new WebSocketLink({
+        uri: config.graphql_subscription_endpoint,
+        options: {
+            reconnect: true,
+        },
+    })
+
+    const link = split(
+        // split based on operation type
+        ({ query }) => {
+            const definition = getMainDefinition(query)
+            return definition.kind === 'OperationDefinition' &&
+                definition.operation === 'subscription'
+        },
+        wsLink,
+        httpLink
+    )
+
+    const apolloClient = new ApolloClient({
+        link,
+        cache,
     })
 
     const apolloProvider = createApolloProvider({

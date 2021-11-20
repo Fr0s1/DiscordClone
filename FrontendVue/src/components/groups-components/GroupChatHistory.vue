@@ -167,7 +167,7 @@ export default {
     },
     fetchGroupMessages() {
       let groupChatHistory = this.$refs.groupChatHistory;
-      if (groupChatHistory.scrollTop == 0) {
+      if (groupChatHistory.scrollTop == 0 && this.groupMessages.nextCursor !== "") {
         this.$emit("fetch-group-messages", {
           limit: this.limit,
           nextCursor: this.groupMessages.nextCursor,
@@ -223,19 +223,20 @@ body {
 .chat-messages {
   display: flex;
   flex-direction: column;
-  height: 69vh;
+  height: 71vh;
   overflow-y: scroll;
+  margin-bottom: 1rem;
 }
 .chat-messages::-webkit-scrollbar {
 	width: 10px;
   }
 .chat-messages::-webkit-scrollbar-thumb {
-	-webkit-box-shadow: inset 0 0 6px rgba(0,0,0,.3);
+	--webkit-box-shadow: inset 0 0 6px rgba(0,0,0,.3);
   border-radius: 10px;
   background-color: #007bff;
 }
 .chat-messages::-webkit-scrollbar-track {
-	-webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+	--webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
 	border-radius: 10px;
 	background-color: #F5F5F5;
 }

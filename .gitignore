@@ -1,3 +1,5 @@
 docker-compose.yml
 test
 K8s/command.txt
+K8s/DiscordClone/
+.vscode

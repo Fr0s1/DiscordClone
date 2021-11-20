@@ -1,4 +1,5 @@
 <template>
+<body>
 <div class="container">
 <div id="content" class="content p-0">
     <div class="profile-header">
@@ -91,7 +92,7 @@
     </div>
 </div>
 </div>
-
+</body>
  
 </template>
 
@@ -156,8 +157,8 @@ export default {
 </script>
 
 <style scoped>
-body{
-    background: #eaeaea;
+.body{
+    background: #ffffff;
     margin-top:20px;
 }
 .btn-xs{

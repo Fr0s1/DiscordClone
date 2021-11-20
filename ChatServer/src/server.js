@@ -69,6 +69,15 @@ nsp.on('connection', (socket) => {
         // console.log(`Received data from socket ${socket.id}`)
         socket.to(data.group).emit("groupMessage", data)
     })
+
+    socket.on("delete-user-session", data => {
+        console.log("disconnected")
+        userSessionController.deleteUserSession(data.username)
+    })
+
+    socket.on("disconnect", () => {
+        console.log(`Socket with id ${socket.id} disconnected`)
+    })
 });
 
 app.get('/chat/healthz', (req, res) => {
