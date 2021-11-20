@@ -206,7 +206,7 @@ export default {
     },
     fetchMessages() {
       let chatHistory = this.$refs.chatHistory;
-      if (chatHistory.scrollTop == 0) {
+      if (chatHistory.scrollTop == 0 && this.userMessages.nextCursor !== "") {
         this.$emit("fetch-messages", {
           limit: this.limit,
           nextCursor: this.userMessages.nextCursor,
@@ -279,7 +279,7 @@ export default {
 
 .chat-history ul {
   width: auto;
-  height: 65vh;
+  height: 71vh;
   padding: 20px;
   overflow-y: auto;
   overflow-x: hidden;

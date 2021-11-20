@@ -167,7 +167,7 @@ export default {
     },
     fetchGroupMessages() {
       let groupChatHistory = this.$refs.groupChatHistory;
-      if (groupChatHistory.scrollTop == 0) {
+      if (groupChatHistory.scrollTop == 0 && this.groupMessages.nextCursor !== "") {
         this.$emit("fetch-group-messages", {
           limit: this.limit,
           nextCursor: this.groupMessages.nextCursor,

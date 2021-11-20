@@ -109,38 +109,13 @@ export default {
   },
   methods: {
     setActiveContact(index) {
-      console.log("Contact clicked " + index);
+      this.$emit("empty-current-realtime-messages");
 
       if (this.contactIsGroup) {
         this.$emit("change-contact-type");
       }
-      console.log(this.contactIsGroup);
 
       this.activeContactIndex = index;
-
-      // Set latest message seen status to true
-      this.contactlistMessages[this.activeContactUsername][0].seenStatus = true;
-
-      // Update message seen status to database
-      this.$apollo.mutate({
-        mutation: gql`
-          mutation ChangeMessageInfo(
-            $messageId: String!
-            $seenStatus: Boolean
-          ) {
-            changeMessageInfo(messageId: $messageId, seenStatus: $seenStatus) {
-              _id
-              content
-              seenStatus
-            }
-          }
-        `,
-        variables: {
-          messageId:
-            this.contactlistMessages[this.activeContactUsername][0]._id,
-          seenStatus: true,
-        },
-      });
     },
   },
   computed: {
@@ -200,52 +175,38 @@ export default {
 </script>
 
 <style scoped>
-.badge:empty {
-  display: inline-block;
-  height: 10px;
-  color: #86c541;
-  vertical-align: middle;
-}
 .chat-list li {
   padding: 10px 15px;
   list-style: none;
   border-radius: 3px;
 }
-
 .chat-list li:hover {
   background: #efefef;
   cursor: pointer;
 }
-
 .chat-list li.active {
   background: #efefef;
 }
-
 .chat-list li .name {
   font-size: 15px;
 }
-
 .chat-list img {
   width: 45px;
   height: 45px;
   border-radius: 50%;
 }
-
 img {
   float: left;
   border-radius: 50%;
 }
-
 .about {
   float: left;
   padding-left: 8px;
 }
-
 .status {
   color: #999;
   font-size: 13px;
 }
-
 .online,
 .offline,
 .me {
@@ -253,23 +214,18 @@ img {
   font-size: 8px;
   vertical-align: middle;
 }
-
 .online {
   color: #86c541;
 }
-
 .offline {
   color: #e47297;
 }
-
 .me {
   color: #1d8ecd;
 }
-
 .float-right {
   float: right;
 }
-
 .clearfix:after {
   visibility: hidden;
   display: block;
@@ -277,19 +233,5 @@ img {
   content: " ";
   clear: both;
   height: 0;
-}
-
-@media only screen and (min-width: 768px) and (max-width: 992px) {
-  .chat-list {
-    height: 650px;
-    overflow-x: auto;
-  }
-}
-
-@media only screen and (min-device-width: 768px) and (max-device-width: 1024px) and (orientation: landscape) and (-webkit-min-device-pixel-ratio: 1) {
-  .chat-list {
-    height: 480px;
-    overflow-x: auto;
-  }
 }
 </style>

@@ -51,6 +51,9 @@ export default {
       }
 
       this.activeGroupIndex = index;
+
+      this.$emit("empty-realtime-group-messages", this.activeGroupId);
+
       this.$emit("fetch-group-messages", {
         limit: this.limit,
         nextCursor: new Date().toISOString(),
@@ -66,6 +69,11 @@ export default {
     activeGroupName() {
       if (this.groups.length > 0 && this.activeGroupIndex) {
         return this.groups[this.activeGroupIndex].groupName;
+      }
+    },
+    activeGroupId() {
+      if (this.groups.length > 0) {
+        return this.groups[this.activeGroupIndex]._id;
       }
     },
   },

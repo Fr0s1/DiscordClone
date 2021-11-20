@@ -95,8 +95,9 @@ export default {
       let peer = this.peer;
       userWebcam.srcObject = this.srcStream;
       userWebcam.play();
+
       this.groupMembersPeerIds.forEach((member) => {
-        console.log(member.peerId);
+        // Call all online group members
         this.groupMembersPeerCurrentCall[member.username] = peer.call(
           member.peerId,
           this.srcStream
@@ -104,13 +105,11 @@ export default {
         this.groupMembersPeerCurrentCall[member.username].on(
           "stream",
           (remoteStream) => {
-            // Show stream in some video/canvas element.
-            console.log("Received stream");
+            // Show stream in correct video element associated with group members
             this.groupMembersStream[member.username] = remoteStream;
             let membersWebcam = this.$refs[`contactVideo-${member.username}`];
 
             membersWebcam.childNodes[0].srcObject = remoteStream;
-            console.log(remoteStream);
           }
         );
       });

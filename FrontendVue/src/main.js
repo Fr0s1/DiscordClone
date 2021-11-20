@@ -69,10 +69,6 @@ import { createStore } from 'vuex'
             let jwt = accessToken.getJwtToken()
 
             let user = await Auth.currentUserInfo();
-            // console.log(user.username)
-            //You can print them to see the full objects
-            // console.log(`myAccessToken: ${JSON.stringify(accessToken)}`)
-            // console.log(`myJwt: ${jwt}`)
             app.provide('currentUsername', user.username)
             return {
                 authorization: `Bearer ${jwt}`
@@ -109,7 +105,6 @@ import { createStore } from 'vuex'
     const apolloClient = new ApolloClient({
         link,
         cache,
-
     })
 
     const apolloProvider = createApolloProvider({
