@@ -228,7 +228,7 @@ export default {
 
       activeGroupIndex: null,
 
-      activeGroupId: null,
+      activeGroupId: "",
 
       userMessages: {
         messages: [],
@@ -261,7 +261,7 @@ export default {
 
       scrollHeight: 0,
       shouldScroll: null,
-      /* 
+      /*
       The 2 above variables is set in followings case:
       + First fetch: true and scroll all the way to bottom of chat box
       + Fetch older messages when user scroll up
@@ -336,21 +336,25 @@ export default {
           updateQuery: (previousResult, { subscriptionData }) => {
             // Append next messages to current array messages fetched from GraphQL
             let accountStatusInfo = subscriptionData.data.accountStatusInfo;
-            let oldContactList = previousResult.user.contactlist;
-            let contactlist = oldContactList.map((contact) =>
-              contact.username === accountStatusInfo.username
-                ? {
-                    ...contact,
-                    accountStatus: accountStatusInfo.accountStatus,
-                  }
-                : contact
-            );
-            return {
-              user: {
-                ...previousResult.user,
-                contactlist,
-              },
-            };
+
+            if (accountStatusInfo) {
+              let oldContactList = previousResult.user.contactlist;
+              let contactlist = oldContactList.map((contact) =>
+                contact.username === accountStatusInfo.username
+                  ? {
+                      ...contact,
+                      accountStatus: accountStatusInfo.accountStatus,
+                    }
+                  : contact
+              );
+
+              return {
+                user: {
+                  ...previousResult.user,
+                  contactlist,
+                },
+              };
+            }
           },
         },
       };
@@ -448,13 +452,54 @@ export default {
             }
           }
         `,
-        variables() {
-          return {
-            groupId: this.activeGroupId,
-          };
+        variables: {
+          groupId: this.activeGroupId,
         },
-        skip() {
-          return !this.activeGroupId;
+        subscribeToMore: {
+          document: gql`
+            subscription Subscription($groupId: String!) {
+              groupMembersAccountStatus(groupId: $groupId) {
+                username
+                accountStatus
+              }
+            }
+          `,
+          variables() {
+            // This works just like regular queries
+            // and will re-subscribe with the right variables
+            // each time the values change
+            return {
+              groupId: this.activeGroupId,
+            };
+          },
+          skip() {
+            return this.activeGroupId === "";
+          },
+          updateQuery: (previousResult, { subscriptionData }) => {
+            // Append next messages to current array messages fetched from GraphQL
+            let groupMembersAccountStatusInfo =
+              subscriptionData.data.groupMembersAccountStatus;
+
+            if (groupMembersAccountStatusInfo) {
+              let oldListOfMembers = previousResult.group.members;
+              let newListsOfMembers = oldListOfMembers.map((contact) =>
+                contact.username === groupMembersAccountStatusInfo.username
+                  ? {
+                      ...contact,
+                      accountStatus:
+                        groupMembersAccountStatusInfo.accountStatus,
+                    }
+                  : contact
+              );
+
+              return {
+                group: {
+                  ...previousResult.group,
+                  members: newListsOfMembers,
+                },
+              };
+            }
+          },
         },
       };
     },
@@ -704,7 +749,7 @@ export default {
 
     /*
     The below function is trigged when user selects between group chat or from contact to group
-    Empty real time messages so that the messages are not duplicated in chat conversation and disable notification of new messages 
+    Empty real time messages so that the messages are not duplicated in chat conversation and disable notification of new messages
     */
     emptyRealtimeGroupsMessages(groupId) {
       this.realtimeGroupMessages[groupId] = [];
@@ -729,7 +774,7 @@ export default {
       return !this.$apollo.queries.groupMessages.loading;
     },
 
-    /* 
+    /*
     The array containing realtime messages from SocketIO server include messages sent by current logged in user
     and messages sent by current contact
     */
