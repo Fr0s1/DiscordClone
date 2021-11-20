@@ -62,8 +62,11 @@ type Mutation {
 }
 
 type Subscription {
-  # To avoid confusion: loggedInUsername is the username of client who subscribe to account status in his/her contactlist
+  # To avoid confusion: loggedInUsername is the username of client who subscribe to account status of his/her contactlist
   accountStatusInfo(loggedInUsername: String!): AccountStatusInfo
+
+  # Subscribe to group members account status when on/offline
+  groupMembersAccountStatus(groupId: String!): AccountStatusInfo
 }
 
 type AccountStatusInfo {
