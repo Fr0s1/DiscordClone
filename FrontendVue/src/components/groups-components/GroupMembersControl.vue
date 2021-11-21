@@ -4,7 +4,7 @@
     type="button"
     class="btn btn-outline-primary"
     data-toggle="modal"
-    data-target="#exampleModalCenter"
+    data-target="#addFriendsToGroup"
     @click="getUserFriendlist"
   >
     <i class="far fa-address-book"></i>
@@ -13,7 +13,7 @@
   <!-- Modal -->
   <div
     class="modal fade"
-    id="exampleModalCenter"
+    id="addFriendsToGroup"
     tabindex="-1"
     role="dialog"
     aria-labelledby="exampleModalCenterTitle"
@@ -50,6 +50,7 @@
             </li>
           </ul>
         </div>
+
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-dismiss="modal">
             Close
@@ -61,6 +62,69 @@
             @click="addUserToGroup"
           >
             Add user
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <button
+    type="button"
+    class="btn btn-outline-primary"
+    data-toggle="modal"
+    data-target="#removeMembersFromGroup"
+    @click="getUserFriendlist"
+    v-if="groupAdmin && currentUsername === groupAdmin.username"
+  >
+    <i class="fa fa-meteor"></i>
+  </button>
+
+  <!-- Modal -->
+  <div
+    class="modal fade"
+    id="removeMembersFromGroup"
+    tabindex="-1"
+    role="dialog"
+    aria-labelledby="exampleModalCenterTitle"
+    aria-hidden="true"
+  >
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLongTitle">Remove Members</h5>
+        </div>
+
+        <div class="modal-body">
+          <ul v-if="groupMembers">
+            <li v-for="(member, index) in groupMembers" :key="index">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                :value="member.username"
+                :id="`members-${member.username}`"
+                v-model="membersToRemove"
+              />
+              <label
+                class="form-check-label"
+                :for="`members-${member.username}`"
+              >
+                {{ member.name }}
+              </label>
+            </li>
+          </ul>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">
+            Close
+          </button>
+          <button
+            type="button"
+            class="btn btn-primary"
+            data-dismiss="modal"
+            @click="removeMembersFromGroup"
+          >
+            Remove Members
           </button>
         </div>
       </div>
@@ -83,9 +147,13 @@ export default {
     groupAdmin: {
       type: Object,
     },
+    groupMembers: {
+      type: Array,
+    },
   },
   data: {
     friendsToAdd: [],
+    membersToRemove: [],
   },
   methods: {
     addUserToGroup() {
@@ -104,6 +172,31 @@ export default {
             variables: {
               groupId: this.activeGroupId,
               username: friend,
+            },
+          });
+        });
+      }
+    },
+    removeMembersFromGroup() {
+      if (this.membersToRemove.length > 0) {
+        this.membersToRemove.forEach((member) => {
+          this.$apollo.mutate({
+            mutation: gql`
+              mutation RemoveUserFromGroup(
+                $groupId: String!
+                $username: String!
+              ) {
+                removeUserFromGroup(groupId: $groupId, username: $username) {
+                  groupName
+                  members {
+                    username
+                  }
+                }
+              }
+            `,
+            variables: {
+              groupId: this.activeGroupId,
+              username: member,
             },
           });
         });

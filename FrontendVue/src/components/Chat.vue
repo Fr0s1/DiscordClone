@@ -68,6 +68,7 @@
                     :friendlist="user.friendlist"
                     :activeGroupId="activeGroupId"
                     :groupAdmin="group.admin"
+                    :groupMembers="group.members"
                   ></group-members-control>
 
                   <button
@@ -180,6 +181,7 @@
             :groupMembers="group.members"
             v-if="contactIsGroup"
             :activeGroupAvatar="activeGroupAvatar"
+            :activeGroupId="activeGroupId"
           ></group-info>
         </div>
       </div>
