@@ -16,14 +16,14 @@ const pubsub = new RedisPubSub({
     subscriber: new Redis(options)
 });
 
-function accountStatusSubscribe() {
-    return pubsub.asyncIterator(["ACCOUNT_STATUS_CHANGED", "GROUP_MEMBERS_ACCOUNT_STATUS_CHANGED"])
+function subscriptionEvents() {
+    return pubsub.asyncIterator(["ACCOUNT_STATUS_CHANGED", "GROUP_MEMBERS_ACCOUNT_STATUS_CHANGED", "GROUP_MESSAGE_DELETED"])
 }
 
 const mongoUtilFunctions = require('../../mongodb/utils/utils')
 
 const accountStatusInfo = {
-    subscribe: withFilter(accountStatusSubscribe,
+    subscribe: withFilter(subscriptionEvents,
         async (payload, variables) => {
             return await mongoUtilFunctions.ifInContactList(payload.username, variables.loggedInUsername)
         }
@@ -34,8 +34,17 @@ const accountStatusInfo = {
 }
 
 const groupMembersAccountStatus = {
-    subscribe: withFilter(accountStatusSubscribe, async (payload, variables) => {
+    subscribe: withFilter(subscriptionEvents, async (payload, variables) => {
         return await mongoUtilFunctions.ifUserInGroupWithId(variables.groupId, payload.username)
+    }),
+    resolve: payload => {
+        return payload
+    }
+}
+
+const groupMessageDeleted = {
+    subscribe: withFilter(subscriptionEvents, (payload, variables) => {
+        return payload.group === variables.groupId
     }),
     resolve: payload => {
         return payload
@@ -44,6 +53,6 @@ const groupMembersAccountStatus = {
 
 module.exports = {
     accountStatusInfo,
-    groupMembersAccountStatus
-
+    groupMembersAccountStatus,
+    groupMessageDeleted
 }

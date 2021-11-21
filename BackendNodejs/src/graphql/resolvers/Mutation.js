@@ -259,20 +259,28 @@ async function deleteGroupMessage(parent, args, context) {
             _id: messageId
         }).populate('sender')
 
+        console.log(foundMessage)
+
         if (!foundMessage) {
             throw new Error(`Message with id ${messageId} does not exists`)
         }
 
-        if (username == foundMessage.sender.username) {
-            let Bucket = process.env.BUCKET_NAME
-            let Key = `groupmessage/${foundMessage._id}/`
+        if (username === foundMessage.sender.username) {
+            if (foundMessage.files.length > 0) {
+                let Bucket = process.env.BUCKET_NAME
+                let Key = `groupmessage/${foundMessage._id}/`
+                context.aws.emptyS3Directory(Bucket, Key)
+            }
+
             let deletedMessage = await GroupMessage.findByIdAndDelete({
                 _id: foundMessage._id
             })
 
-            await context.aws.emptyS3Directory(Bucket, Key)
+            pubsub.publish("GROUP_MESSAGE_DELETED", deletedMessage)
 
             return deletedMessage
+        } else {
+            throw new Error("Message not sent by this user")
         }
 
     } catch (e) {
@@ -344,10 +352,9 @@ async function updateUserInfo(parent, args, context) {
             let publishInfo = {
                 username,
                 accountStatus: updatedInfo.accountStatus,
-                lastOnlineTime: updatedInfo.lastOnlineTime
             }
 
-            pubsub.publish("ACCOUNT_STATUS_CHANGED", publishInfo)
+            pubsub.publish("ACCOUNT_STATUS_CHANGED", { ...publishInfo, lastOnlineTime: updatedInfo.lastOnlineTime })
 
             pubsub.publish("GROUP_MEMBERS_ACCOUNT_STATUS_CHANGED", publishInfo)
         }
