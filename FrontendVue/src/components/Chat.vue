@@ -63,11 +63,12 @@
                   </div>
                 </div>
                 <div class="col-lg-6 hidden-sm text-right">
-                  <add-group-members
+                  <group-members-control
                     v-if="contactIsGroup"
                     :friendlist="user.friendlist"
                     :activeGroupId="activeGroupId"
-                  ></add-group-members>
+                    :groupAdmin="group.admin"
+                  ></group-members-control>
 
                   <button
                     class="btn btn-outline-primary"
@@ -111,6 +112,7 @@
                 </div>
               </div>
             </div>
+
             <chat-history
               :userMessages="userMessages"
               :activeContactUsername="activeContactUsername"
@@ -199,7 +201,7 @@ import GroupList from "./groups-components/GroupList.vue";
 import GroupChatHistory from "./groups-components/GroupChatHistory.vue";
 import GroupVideoChat from "./groups-components/GroupVideoChat.vue";
 import GroupInfo from "./groups-components/GroupInfo.vue";
-import AddGroupMembers from "./groups-components/AddGroupMembers.vue";
+import GroupMembersControl from "./groups-components/GroupMembersControl.vue";
 
 import SendMessage from "./SendMessage.vue";
 
@@ -214,7 +216,7 @@ export default {
     GroupChatHistory,
     GroupVideoChat,
     GroupInfo,
-    AddGroupMembers,
+    GroupMembersControl,
   },
   data() {
     return {
@@ -449,6 +451,10 @@ export default {
                 accountStatus
                 avatar
               }
+
+              admin {
+                username
+              }
             }
           }
         `,
@@ -512,6 +518,12 @@ export default {
         this.realtimeGroupMessages[groupId] = [];
       }
       this.realtimeGroupMessages[groupId].push(message);
+
+      if (this.contactIsGroup && groupId === this.activeGroupId) {
+        this.shouldScroll = true;
+
+        this.scrollHeight = 0;
+      }
     },
     addToRealtimeMessagesList(message) {
       let sender = message.sender.username;
@@ -521,16 +533,20 @@ export default {
       }
       this.realtimeFetchedMessages[sender].push(message);
 
-      this.shouldScroll = true;
+      if (sender === this.activeContactUsername) {
+        this.shouldScroll = true;
 
-      this.scrollHeight = 0;
+        this.scrollHeight = 0;
+      }
     },
     fetchMessages(data) {
       this.contactIsGroup = false;
       this.shouldScroll = data.shouldScroll;
       if (data.firstFetch) {
+        // Empty realtime messages received from this new user when this username is not focused
         this.realtimeFetchedMessages[this.currentUsername] = [];
         this.realtimeFetchedMessages[data.username] = [];
+
         this.scrollHeight = data.scrollHeight;
         this.activeContactUsername = data.username;
         this.$apollo.queries.userMessages.setVariables({
@@ -579,6 +595,7 @@ export default {
 
         this.activeGroupIndex = data.activeGroupIndex;
 
+        // Empty realtime messages received from this group when this group is not focused
         this.realtimeGroupMessages[this.activeGroupId] = [];
 
         this.$apollo.queries.group.refetch({

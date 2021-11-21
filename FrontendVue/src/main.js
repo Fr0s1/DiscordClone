@@ -25,27 +25,17 @@ import { WebSocketLink } from 'apollo-link-ws'
 import { getMainDefinition } from 'apollo-utilities'
 import { HttpLink } from 'apollo-link-http'
 
+
 Amplify.configure(aws_exports);
 applyPolyfills().then(() => {
     defineCustomElements(window);
 });
 
-import { createStore } from 'vuex'
 
 (async () => {
     const app = createApp({
         render: () => h(App),
     })
-
-    const store = createStore({
-        state() {
-            return {
-
-            }
-        }
-    })
-
-    app.use(store)
 
     app.use(VueAxios, axios)
     app.use(router)

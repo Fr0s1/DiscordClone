@@ -96,7 +96,6 @@ export default {
   display: inline-block;
   height: 10px;
   color: #86c541;
-  vertical-align: middle;
 }
 
 .btn {

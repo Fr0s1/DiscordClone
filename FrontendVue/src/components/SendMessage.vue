@@ -5,6 +5,7 @@
         <form
           enctype="multipart/form-data"
           @submit.prevent="contactIsGroup ? sendGroupMessage() : sendMessage()"
+          autocomplete="off"
         >
           <div class="input-group-prepend">
             <button class="btn-outline-primary btn">

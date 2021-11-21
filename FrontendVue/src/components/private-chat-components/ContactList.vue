@@ -11,7 +11,7 @@
       <div
         class="badge bg-success float-right"
         v-if="
-          contact.username !== activeContactUsername &&
+          contact.username !== currentUsername &&
           realtimeFetchedMessages[contact.username] &&
           realtimeFetchedMessages[contact.username].length > 0
         "
@@ -175,6 +175,12 @@ export default {
 </script>
 
 <style scoped>
+.badge:empty {
+  display: inline-block;
+  height: 10px;
+  color: #86c541;
+}
+
 .chat-list li {
   padding: 10px 15px;
   list-style: none;
