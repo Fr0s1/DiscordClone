@@ -23,8 +23,6 @@ type Query {
     nextCursor: Date
     limit: Int
   ): GroupMessageList
-
-  test: String
 }
 
 type Mutation {
@@ -33,21 +31,20 @@ type Mutation {
     email: String!
     name: String!
     phone_number: String!
+    birthdate: BirthDate!
   ): User!
 
   createGroup(groupName: String!, username: String!): GroupChat
 
-  addUserToGroup(
-    admin: String!
-    groupName: String!
-    username: String!
-  ): GroupChat
+  addUserToGroup(groupId: String!, username: String!): GroupChat
 
-  removeUserFromGroup(
-    admin: String!
-    groupName: String!
-    username: String!
-  ): GroupChat
+  removeUserFromGroup(groupId: String!, username: String!): GroupChat
+
+  changeMessageInfo(
+    messageId: String!
+    deletedBySender: Boolean
+    deletedByReceiver: Boolean
+  ): Message!
 
   deleteMessage(messageId: String!): Message
 
@@ -63,10 +60,16 @@ type Mutation {
   # addUserToFriendList(username: String!): [String!]!
 
   addUserToContactList(username: String!): User!
+
+  removeUserFromContactList(username: String!): User!
 }
 
 type Subscription {
-  accountStatusInfo(username: String!): AccountStatusInfo
+  # To avoid confusion: loggedInUsername is the username of client who subscribe to account status of his/her contactlist
+  accountStatusInfo(loggedInUsername: String!): AccountStatusInfo
+
+  # Subscribe to group members account status when on/offline
+  groupMembersAccountStatus(groupId: String!): AccountStatusInfo
 }
 
 type AccountStatusInfo {
@@ -109,12 +112,15 @@ enum OperationStatus {
 
 scalar Date
 
+scalar BirthDate
+
 type User {
   # The following fields are saved in AWS Cognito
   username: String!
   email: String!
   name: String!
   phone_number: String!
+  birthdate: BirthDate!
 
   # The following fields are saved in MongoDB
   _id: String!
@@ -135,6 +141,7 @@ type Message {
   markedDeletedBySender: Boolean
   markedDeletedByReceiver: Boolean
   sentTime: Date!
+  seenStatus: Boolean
 }
 
 type GroupMessage {

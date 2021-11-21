@@ -6,7 +6,7 @@
       <div class="col-md-3">
         <div class="text-center">
           <img v-bind:src="g_user.avatar" class=" img-circle" alt="avatar">
-          <input type="file" class="form-control">
+          <input type="file"  @change="processFile($event)" class="form-control">
         </div>
       </div>
       
@@ -54,11 +54,12 @@
 
 <script>
 import gql from "graphql-tag";
-export const UPDATE_USER_INFO = gql`mutation ($email: String!, $name: String!, $phone_number: String!) {
-  updateUserInfo(email: $email, name: $name, phone_number: $phone_number,) {
+export const UPDATE_USER_INFO = gql`mutation ($email: String!, $name: String!, $phone_number: String!, $avatar: String!) {
+  updateUserInfo(email: $email, name: $name, phone_number: $phone_number, avatar: $avatar) {
     email,
     name,
-    phone_number
+    phone_number,
+    avatar
   }
 }`;
 export default {
@@ -72,8 +73,10 @@ export default {
           username: '',
           phone_number: '',
           emai: '',
+          avatar: ''
       },
       friendlist: [],
+      someData: ''
     };
   },
   apollo: {
@@ -97,12 +100,18 @@ export default {
           this.g_user.name = r.data.user.name
           this.g_user.email = r.data.user.email
           this.g_user.username = r.data.user.username
-          this.g_user.phone_number = r.data.user.phone_number
+          this.g_user.phone_number = r.data.user.phone_number,
+          this.g_user.avatar = r.data.user.avatar
         }
       };
     },
   },
   methods: {
+
+    processFile(event) {
+    this.someData = event.target.files[0]
+    console.log(this.someData.name)
+    },
 
     updateUserInfo() {
       console.log(this.g_user.name);
@@ -112,10 +121,11 @@ export default {
           name: this.g_user.name,
           email: this.g_user.email,
           phone_number: this.g_user.phone_number,
+          avatar: this.someData.name
         }
       });
       
-      this.$router.push('/user/'+this.currentUsername);
+      // this.$router.push('/user/'+this.currentUsername);
     }
 
   },

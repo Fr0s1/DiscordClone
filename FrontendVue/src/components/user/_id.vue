@@ -46,8 +46,6 @@
           <div class="col-md-8">
             <div class="tab-content p-0">
               <div class="tab-pane fade active show" id="profile-friends">
-                <div class="m-b-10"><b>Friend List ({{ user.friendlist.length }})</b></div>
-
                 <ul class="friend-list clearfix">
                   <!-- <li  
                     style="background-color: #242526"
@@ -200,7 +198,6 @@ export default {
           username: user.username,
         }
       });
-      this.$router.push('/chat');
     },
   },
 };

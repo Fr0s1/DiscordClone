@@ -3,6 +3,11 @@
     <!-- The rest of your app code -->
 
     <router-view />
+    <!-- <amplify-sign-in
+    header-text="My Custom Sign In Text"
+    slot="sign-in"
+    :handleSubmit="handleSubmit"
+  ></amplify-sign-in> -->
     <amplify-sign-up
       slot="sign-up"
       :formFields="formFields"
@@ -84,7 +89,9 @@ export default {
   //   this.unsubscribeAuth();
   // }
   methods: {
-    
+    // handleSubmit(e) {
+
+    // }
   }
   
 }

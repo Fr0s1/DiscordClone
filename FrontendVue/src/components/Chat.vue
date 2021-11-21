@@ -4,11 +4,11 @@
       <div class="col-lg-12">
         <div class="card chat-app">
           <div id="plist" class="people-list">
-            <div style="height:10vh; margin-top:-20px">
+            <div style="height:10vh;margin-bottom:30px; margin-top:-20px">
               <b-dropdown offset="25" variant="light" class="m-3" right >
                   <template #button-content>
                     <b-avatar variant="info" :src="user.avatar" class="mr-4"></b-avatar>
-                    <span>{{user.name}}</span>
+                    <span style="margin-left:5px">{{user.name}}</span>
                   </template>
 
                   <b-dropdown-item @click="about()"><b-icon icon="house-door"></b-icon><span style="margin-left:10px">Home</span></b-dropdown-item>

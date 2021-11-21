@@ -53,7 +53,7 @@
             <input
               type="text"
               class="form-control"
-              style="border-color: #007bff; border-radius:50px"
+              style="border-color: #007bff"
               placeholder="Enter text here..."
               name="content"
               id="content"

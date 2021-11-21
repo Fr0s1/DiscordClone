@@ -5,8 +5,12 @@
     <div class="profile-header">
         <div class="profile-header-cover"></div>
         <div class="profile-header-content">
-            <div class="profile-header-img mb-4">
+            <div v-if='user.avatar != ""' class="profile-header-img mb-4">
                 <img v-bind:src="user.avatar" class="mb-4" alt="" />
+            </div>
+
+            <div v-else class="profile-header-img mb-4">
+                <img src="https://thumbs.dreamstime.com/b/default-avatar-profile-icon-social-media-user-vector-image-icon-default-avatar-profile-icon-social-media-user-vector-image-209162840.jpg" class="mb-4" alt="" />
             </div>
 
             <div class="profile-header-info">
@@ -31,23 +35,23 @@
         <div class="row row-space-20">
             <div class="col-md-8">
                 <div class="tab-content p-0">
-<!-- :href="'/profile/'+ list.username" -->
-                    <div class="tab-pane fade active show" id="profile-friends">
-                        <div class="m-b-10"><b>Friend List ({{ user.friendlist.length }})</b></div>
 
+                    <div v-if="user.friendlist.length != 0"  class="tab-pane fade active show" id="profile-friends">
                         <ul class="friend-list clearfix">
                             <li style="background-color: #242526" v-for="list in user.friendlist" v-bind:key="list.username">
-                                <a >
+                                <a :href="'/profile/'+ list.username">
                                     <div class="friend-img"><img v-bind:src="list.avatar" alt="" /></div>
                                     <div class="friend-info">
-                                        <h4 class="username-friend" @click="move(list)">{{list.username}}</h4>
+                                        <h4>{{list.username}}</h4>
                                         <p>392 friends</p>
                                     </div>
-                                       
+                                   <i style="color:black" class="bi bi-three-dots"></i>
                                 </a>
-                                
                             </li>
                         </ul>
+                    </div>
+                    <div v-else  class="tab-pane fade active show" id="profile-friends">
+                        No friend
                     </div>
                 </div>
             </div>
@@ -65,7 +69,7 @@
                     </li>
                     <li>
                         <div class="field">Birth of Date:</div>
-                        <div class="value">1989/11/04</div>
+                        <div class="value">{{user.birthdate}}</div>
                     </li>
                     <li>
                         <div class="field">Email:</div>
@@ -121,13 +125,10 @@ export default {
               name
               phone_number
               avatar
+              birthdate
               friendlist {
-                  _id
                 username
                 avatar
-              }
-              contactlist {
-                  username
               }
             }
           }
@@ -139,11 +140,9 @@ export default {
     },
   },
   methods: {
-    move(list) {
-        this.$router.push('/profile/'+ list.username);
-    },
     f() {
       console.log(this.currentUsername);
+      // console.log(this.user);
     },
     async signOut() {
     try {
@@ -152,21 +151,16 @@ export default {
         console.log('error signing out: ', error);
     }
     this.$router.push('/');
-    }, 
+    },       
   },
   
   mounted() {
-    // this.f();
-    console.log(this.user);
+    this.f();
   },
 };
 </script>
 
 <style scoped>
-.username-friend {
-    cursor: pointer;
-    width: 30%;
-}
 .body{
     background: #ffffff;
     margin-top:20px;

@@ -24,6 +24,7 @@ export default {
   components: {
     HelloWorld,
   },
+  inject: ["currentUsername"],
 
   data() {
     return {
@@ -31,18 +32,16 @@ export default {
     };
   },
   mounted() {
-    // location.reload();
-    this.loadUser()
+    // this.$router.go()
+    // this.loadUser()
+    // console.log(this.$router)
   },
 
-  // beforeMounted() {
-  //   location.reload()
-  // },
-
-  methods: {
-     loadUser() {
-       console.log("abc")
-        var name = Auth.currentUserInfo()
+  beforeMounted() {
+    // location.reload()
+  },
+  created() {
+    var name = Auth.currentUserInfo()
         console.log(name)
         name.then(result => {
           console.log(result)
@@ -56,7 +55,25 @@ export default {
               }
             });
         })
-     } 
+  },
+  methods: {
+    //  loadUser() {
+    //    console.log("abc")
+    //     var name = Auth.currentUserInfo()
+    //     console.log(name)
+    //     name.then(result => {
+    //       console.log(result)
+    //       this.$apollo.mutate({
+    //           mutation: ADD_USER,
+    //           variables: {
+    //             name: result.attributes.name,
+    //             email: result.attributes.email,
+    //             phone_number: result.attributes.phone_number,
+    //             username: result.username
+    //           }
+    //         });
+    //     })
+    //  } 
 
   }
 };
