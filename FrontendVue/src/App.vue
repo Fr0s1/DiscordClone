@@ -7,7 +7,6 @@
       <amplify-sign-in
         header-text="Welcome to Discord Clone App"
         slot="sign-in"
-        usernameAlias="email"
         :formFields="formFields1"
       ></amplify-sign-in>
       <amplify-sign-up slot="sign-up" :formFields="formFields2">

@@ -129,11 +129,11 @@ export default {
     },
   },
   watch: {
-    activeContactUsername(newVal, oldVal) {
+    activeContactUsername(newUsername, oldVal) {
       this.$emit("fetch-messages", {
         limit: this.limit,
         nextCursor: new Date().toISOString(),
-        username: newVal,
+        username: newUsername,
         firstFetch: true,
         activeContactIndex: this.activeContactIndex,
         contactIsGroup: false,

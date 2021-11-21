@@ -23,6 +23,26 @@
             height="40"
           />
         </div>
+        <div
+          class="message-control-sender"
+          v-if="currentUsername === message.sender.username"
+        >
+          <b-dropdown
+            id="dropdown-1"
+            class="m-md-2"
+            toggle-class="text-decoration-none"
+            no-caret
+          >
+            <template class="btn btn-outline-primary" #button-content>
+              <i class="fas fa-ellipsis-h"></i>
+            </template>
+            <b-dropdown-item
+              @click="deleteGroupMessage(message._id, 'graphql')"
+            >
+              Delete message
+            </b-dropdown-item>
+          </b-dropdown>
+        </div>
         <div class="flex-shrink-1 bg-light rounded py-2 px-3 mr-3">
           <div class="font-weight-bold mb-1">
             {{
@@ -82,6 +102,27 @@
             height="40"
           />
         </div>
+
+        <div
+          class="message-control-sender"
+          v-if="currentUsername === message.sender.username"
+        >
+          <b-dropdown
+            id="dropdown-1"
+            class="m-md-2"
+            toggle-class="text-decoration-none"
+            no-caret
+          >
+            <template class="btn btn-outline-primary" #button-content>
+              <i class="fas fa-ellipsis-h"></i>
+            </template>
+            <b-dropdown-item
+              @click="deleteGroupMessage(message._id, 'socketio')"
+            >
+              Delete message
+            </b-dropdown-item>
+          </b-dropdown>
+        </div>
         <div class="flex-shrink-1 bg-light rounded py-2 px-3 mr-3">
           <div class="font-weight-bold mb-1">
             {{
@@ -129,8 +170,15 @@
 <script>
 import moment from "moment";
 
+import gql from "graphql-tag";
+
+import DeleteMessage from "../message-components/DeleteMessage.vue";
+
 export default {
   inject: ["currentUsername"],
+  components: {
+    DeleteMessage,
+  },
   props: {
     groupMessages: {
       type: Object,
@@ -158,6 +206,7 @@ export default {
     return {
       nextCursor: new Date().toISOString(),
       limit: 10,
+      graphql_group_messages: [],
     };
   },
   methods: {
@@ -167,7 +216,10 @@ export default {
     },
     fetchGroupMessages() {
       let groupChatHistory = this.$refs.groupChatHistory;
-      if (groupChatHistory.scrollTop == 0 && this.groupMessages.nextCursor !== "") {
+      if (
+        groupChatHistory.scrollTop == 0 &&
+        this.groupMessages.nextCursor !== ""
+      ) {
         this.$emit("fetch-group-messages", {
           limit: this.limit,
           nextCursor: this.groupMessages.nextCursor,
@@ -177,6 +229,31 @@ export default {
           shouldScroll: true,
         });
       }
+    },
+    deleteGroupMessage(messageId, messageType) {
+      if (messageType === "graphql") {
+        // Delete message from messages list pre-fetched from GraphQL
+        this.graphql_group_messages = this.graphql_group_messages.filter(
+          (message) => message._id !== messageId
+        );
+      } else if (messageType === "socketio") {
+        // Delete message from realtime messages array
+        this.$emit("delete-realtime-group-messages", messageId);
+      }
+
+      // Delete message saved in database
+      this.$apollo.mutate({
+        mutation: gql`
+          mutation Mutation($messageId: String!) {
+            deleteGroupMessage(messageId: $messageId) {
+              _id
+            }
+          }
+        `,
+        variables: {
+          messageId,
+        },
+      });
     },
     formatTime(timeString) {
       return moment(String(timeString)).format("DD/MM/YYYY HH:mm");
@@ -194,7 +271,7 @@ export default {
   },
   computed: {
     messages() {
-      return this.groupMessages.messages.slice().reverse();
+      return this.graphql_group_messages.slice().reverse();
     },
   },
   updated() {
@@ -204,6 +281,11 @@ export default {
         this.scrollDown(groupChatHistory.scrollHeight - this.scrollHeight);
       }
     }
+  },
+  watch: {
+    groupMessages(newGroupMessagesList, oldGroupMessagesList) {
+      this.graphql_group_messages = newGroupMessagesList.messages;
+    },
   },
 };
 </script>
@@ -228,17 +310,17 @@ body {
   margin-bottom: 1rem;
 }
 .chat-messages::-webkit-scrollbar {
-	width: 10px;
-  }
+  width: 10px;
+}
 .chat-messages::-webkit-scrollbar-thumb {
-	--webkit-box-shadow: inset 0 0 6px rgba(0,0,0,.3);
+  --webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
   border-radius: 10px;
   background-color: #007bff;
 }
 .chat-messages::-webkit-scrollbar-track {
-	--webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
-	border-radius: 10px;
-	background-color: #F5F5F5;
+  --webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+  border-radius: 10px;
+  background-color: #f5f5f5;
 }
 
 .chat-message-left,

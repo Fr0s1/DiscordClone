@@ -17,7 +17,10 @@
               :contactlist="user.contactlist"
               :contactIsGroup="contactIsGroup"
               @fetch-messages="fetchMessages"
-              @change-contact-type="contactIsGroup = !contactIsGroup"
+              @change-contact-type="
+                contactIsGroup = !contactIsGroup;
+                activeContactUsername = '';
+              "
               @empty-current-realtime-messages="emptyRealtimeChatMessages"
               :realtimeFetchedMessages="realtimeFetchedMessages"
             ></contact-list>
@@ -27,7 +30,10 @@
               :contactIsGroup="contactIsGroup"
               :realtimeGroupMessages="realtimeGroupMessages"
               @fetch-group-messages="fetchGroupMessages"
-              @change-contact-type="contactIsGroup = !contactIsGroup"
+              @change-contact-type="
+                contactIsGroup = !contactIsGroup;
+                activeGroupId = '';
+              "
               @joinSocketIORoom="joinSocketIORoom"
               @empty-realtime-group-messages="emptyRealtimeGroupsMessages"
             ></group-list>
@@ -60,7 +66,7 @@
                           : activeContactUsername
                       }}
                     </h6>
-                    <small>Last seen: 2 hours ago</small>
+                    <small>Last seen: {{ lastOnlineDuration }} hours ago</small>
                   </div>
                 </div>
                 <div class="col-lg-6 hidden-sm text-right">
@@ -136,6 +142,7 @@
               :shouldScroll="shouldScroll"
               :hasFinishedLoadingGroupMessages="hasFinishedLoadingGroupMessages"
               @fetch-group-messages="fetchGroupMessages"
+              @delete-realtime-group-messages="deleteRealtimeGroupMessages"
             ></group-chat-history>
 
             <send-message
@@ -304,6 +311,7 @@ export default {
                 name
                 avatar
                 accountStatus
+                lastOnlineTime
               }
               groups {
                 _id
@@ -327,6 +335,7 @@ export default {
               accountStatusInfo(loggedInUsername: $loggedInUsername) {
                 username
                 accountStatus
+                lastOnlineTime
               }
             }
           `,
@@ -347,6 +356,7 @@ export default {
                   ? {
                       ...contact,
                       accountStatus: accountStatusInfo.accountStatus,
+                      lastOnlineTime: accountStatusInfo.lastOnlineTime,
                     }
                   : contact
               );
@@ -441,6 +451,59 @@ export default {
           groupId: null,
         },
         skip: true,
+        subscribeToMore: {
+          document: gql`
+            subscription Subscription($groupId: String!) {
+              groupMessageDeleted(groupId: $groupId) {
+                _id
+                content
+              }
+            }
+          `,
+          variables() {
+            // This works just like regular queries
+            // and will re-subscribe with the right variables
+            // each time the values change
+            return {
+              groupId: this.activeGroupId,
+            };
+          },
+          skip() {
+            return this.activeGroupId === "";
+          },
+          updateQuery: (previousResult, { subscriptionData }) => {
+            // Append next messages to current array messages fetched from GraphQL
+            let groupMessageDeleted = subscriptionData.data.groupMessageDeleted;
+
+            if (groupMessageDeleted) {
+              let oldMessagesList = previousResult.groupMessages.messages;
+
+              // Check if deleted message is in pre-fetched group messages list from GraphQL
+              if (
+                oldMessagesList.findIndex(
+                  (message) => message._id === groupMessageDeleted._id
+                ) !== -1
+              ) {
+                let messagesList = oldMessagesList.filter(
+                  (message) => message._id !== groupMessageDeleted._id
+                );
+
+                return {
+                  groupMessages: {
+                    ...previousResult.groupMessages,
+                    messages: messagesList,
+                  },
+                };
+              } else {
+                // Deleted messsages is in realtime group messages array
+                this.realtimeGroupMessages[this.activeGroupId] =
+                  this.realtimeGroupMessages[this.activeGroupId].filter(
+                    (message) => message._id !== groupMessageDeleted._id
+                  );
+              }
+            }
+          },
+        },
       };
     },
     group() {
@@ -527,6 +590,12 @@ export default {
 
         this.scrollHeight = 0;
       }
+    },
+    deleteRealtimeGroupMessages(messageId) {
+      this.realtimeGroupMessages[this.activeGroupId] =
+        this.realtimeGroupMessages[this.activeGroupId].filter(
+          (message) => message._id !== messageId
+        );
     },
     addToRealtimeMessagesList(message) {
       let sender = message.sender.username;
@@ -702,19 +771,29 @@ export default {
         }
       }
 
-      this.srcStream = await navigator.mediaDevices.getUserMedia({
-        video: true,
-        audio: true,
-      });
+      // IMPORTANT NOTE: why webcam light does not turn off after clicking end group video call button
+      // navigator.mediaDevices.getUserMedia will return a new stream with every call, so the old stream is still there
+      // So if a user call a member and sending current stream, that member will call the current user back
+      // then current user will only need to send current stream but doesn't need to call getUserMedia again
+      // Ref: https://stackoverflow.com/questions/61842322/web-camera-light-stays-on-after-stream-is-stopped
+
+      if (!this.srcStream) {
+        // The above condition guarantee that every member's computer only access webcam and microphone 1 TIME
+        this.srcStream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: true,
+        });
+      }
 
       this.hasGroupVideoCallStarted = true;
     },
 
     stopGroupVideoCall() {
-      stream.getTracks().forEach(function (track) {
+      this.srcStream.getTracks().forEach(function (track) {
         track.stop();
       });
 
+      this.srcStream = null;
       this.hasGroupVideoCallStarted = false;
     },
 
@@ -753,6 +832,20 @@ export default {
       this.$socket.emit("delete-user-session", {
         username: this.currentUsername,
       });
+
+      this.$apollo.mutate({
+        mutation: gql`
+          mutation UpdateUserInfo($lastOnlineTime: Date) {
+            updateUserInfo(lastOnlineTime: $lastOnlineTime) {
+              username
+              lastOnlineTime
+            }
+          }
+        `,
+        variables: {
+          lastOnlineTime: new Date().toISOString(),
+        },
+      });
     },
 
     compareMessageSentTime(firstMessage, secondMessage) {
@@ -776,6 +869,21 @@ export default {
     */
     emptyRealtimeGroupsMessages(groupId) {
       this.realtimeGroupMessages[groupId] = [];
+    },
+
+    about() {
+      this.$router.push("/");
+    },
+    info() {
+      this.$router.push("/user/" + this.currentUsername);
+    },
+    async signOut() {
+      try {
+        await Auth.signOut();
+      } catch (error) {
+        console.log("error signing out: ", error);
+      }
+      this.$router.push("/");
     },
   },
   computed: {
@@ -817,19 +925,30 @@ export default {
       return allMessages.sort(this.compareMessageSentTime);
     },
 
-    about() {
-      this.$router.push("/");
-    },
-    info() {
-      this.$router.push("/user/" + this.currentUsername);
-    },
-    async signOut() {
-      try {
-        await Auth.signOut();
-      } catch (error) {
-        console.log("error signing out: ", error);
+    lastOnlineDuration() {
+      if (this.activeContactUsername) {
+        let activeContactIndex = this.user.contactlist.findIndex(
+          (contact) => contact.username === this.activeContactUsername
+        );
+
+        let accountStatus =
+          this.user.contactlist[activeContactIndex].accountStatus;
+        let userLastOnlineTime =
+          this.user.contactlist[activeContactIndex].lastOnlineTime;
+
+        if (accountStatus === "Offline") {
+          return moment
+            .duration(
+              moment(new Date().toISOString(), "YYYY/MM/DD HH:mm").diff(
+                moment(userLastOnlineTime, "YYYY/MM/DD HH:mm")
+              )
+            )
+            .asHours()
+            .toFixed(2);
+        }
+
+        return 0;
       }
-      this.$router.push("/");
     },
   },
   created() {
