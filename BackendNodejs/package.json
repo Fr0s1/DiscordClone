@@ -29,6 +29,7 @@
     "graphql-subscriptions": "^1.2.1",
     "graphql-tools": "^8.2.0",
     "ioredis": "^4.28.0",
+    "moment": "^2.29.1",
     "mongoose": "^6.0.7",
     "subscriptions-transport-ws": "^0.9.19"
   },

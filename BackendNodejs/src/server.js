@@ -27,6 +27,7 @@ const GroupMessage = require('./graphql/resolvers/GroupMessage')
 const Subscription = require('./graphql/resolvers/Subscription')
 
 const dateScalar = require('./graphql/scalars/Date')
+const birthDateScalar = require('./graphql/scalars/BirthDate')
 
 const { deprecatedDirective } = require('./graphql/directives/deprecatedDirective')
 const { makeExecutableSchema } = require('@graphql-tools/schema')
@@ -45,6 +46,7 @@ const { SubscriptionServer } = require('subscriptions-transport-ws')
 async function startApolloServer() {
     const resolvers = {
         Date: dateScalar,
+        BirthDate: birthDateScalar,
         Query,
         Mutation,
         User,

@@ -32,6 +32,7 @@ async function addUser(parent, args, context) {
             phone_number: args.phone_number,
             email: args.email,
             name: args.name,
+            birthdate: args.birthdate
         })
 
         return newUser
@@ -342,7 +343,8 @@ async function updateUserInfo(parent, args, context) {
         if (updatedInfo.accountStatus) {
             let publishInfo = {
                 username,
-                accountStatus: updatedInfo.accountStatus
+                accountStatus: updatedInfo.accountStatus,
+                lastOnlineTime: updatedInfo.lastOnlineTime
             }
 
             pubsub.publish("ACCOUNT_STATUS_CHANGED", publishInfo)
@@ -350,7 +352,9 @@ async function updateUserInfo(parent, args, context) {
             pubsub.publish("GROUP_MEMBERS_ACCOUNT_STATUS_CHANGED", publishInfo)
         }
 
-        let data = await cognitoClient.adminUpdateUserAttributes(params).promise()
+        if (UserAttributes.length > 0) {
+            let data = await cognitoClient.adminUpdateUserAttributes(params).promise()
+        }
 
         return updatedUser
     } catch (e) {
