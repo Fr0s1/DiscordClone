@@ -1,19 +1,37 @@
 <template>
   <div class="chat-history">
     <ul class="m-b-0" ref="chatHistory" @scroll="fetchMessages">
-      <!-- <div class="loader"></div> -->
-
       <!-- This section is to display messages fetch from graphql -->
       <li class="clearfix" v-for="(message, index) in messages" :key="index">
-        <div v-if="currentUsername === message.sender.username">
+        <div
+          v-if="currentUsername === message.sender.username"
+          class="graphql-messages"
+        >
           <div class="message-data text-right">
+            <div class="message-control-sender">
+              <b-dropdown
+                id="dropdown-1"
+                class="m-md-2"
+                toggle-class="text-decoration-none"
+                no-caret
+              >
+                <template class="btn btn-outline-primary" #button-content>
+                  <i class="fas fa-ellipsis-h"></i>
+                </template>
+                <b-dropdown-item @click="deleteMessage(message._id, 'graphql')">
+                  Delete message
+                </b-dropdown-item>
+              </b-dropdown>
+            </div>
             <span class="message-data-time">{{
               formatTime(message.sentTime)
             }}</span>
             <img :src="userAvatarUrl" alt="avatar" />
           </div>
+
           <div class="message other-message float-right">
             {{ message.content }}
+
             <div
               class="message-files"
               v-if="message.files && message.files.length > 0"
@@ -46,7 +64,23 @@
             <span class="message-data-time">{{
               formatTime(message.sentTime)
             }}</span>
+            <div class="message-control-sender">
+              <b-dropdown
+                id="dropdown-1"
+                class="m-md-2"
+                toggle-class="text-decoration-none"
+                no-caret
+              >
+                <template class="btn btn-outline-primary" #button-content>
+                  <i class="fas fa-ellipsis-h"></i>
+                </template>
+                <b-dropdown-item @click="deleteMessage(message._id, 'graphql')">
+                  Delete message
+                </b-dropdown-item>
+              </b-dropdown>
+            </div>
           </div>
+
           <div class="message my-message">
             {{ message.content }}
             <div
@@ -81,14 +115,32 @@
       <!-- This section is to display messages fetch from socketio -->
       <li
         class="clearfix"
-        v-for="(message, index) in allRealtimeMessages"
+        v-for="(message, index) in all_socketio_messages"
         :key="index"
       >
         <div v-if="currentUsername === message.sender.username">
           <div class="message-data text-right">
+            <div class="message-control-sender">
+              <b-dropdown
+                id="dropdown-1"
+                class="m-md-2"
+                toggle-class="text-decoration-none"
+                no-caret
+              >
+                <template class="btn btn-outline-primary" #button-content>
+                  <i class="fas fa-ellipsis-h"></i>
+                </template>
+                <b-dropdown-item
+                  @click="deleteMessage(message._id, 'socketio')"
+                >
+                  Delete message
+                </b-dropdown-item>
+              </b-dropdown>
+            </div>
             <span class="message-data-time">{{
               formatTime(message.sentTime)
             }}</span>
+
             <img :src="userAvatarUrl" alt="avatar" />
           </div>
           <div class="message other-message float-right">
@@ -125,6 +177,23 @@
             <span class="message-data-time">{{
               formatTime(message.sentTime)
             }}</span>
+            <div class="message-control-sender">
+              <b-dropdown
+                id="dropdown-1"
+                class="m-md-2"
+                toggle-class="text-decoration-none"
+                no-caret
+              >
+                <template class="btn btn-outline-primary" #button-content>
+                  <i class="fas fa-ellipsis-h"></i>
+                </template>
+                <b-dropdown-item
+                  @click="deleteMessage(message._id, 'socketio')"
+                >
+                  Delete message
+                </b-dropdown-item>
+              </b-dropdown>
+            </div>
           </div>
           <div class="message my-message">
             {{ message.content }}
@@ -162,6 +231,7 @@
 
 <script>
 import moment from "moment";
+import gql from "graphql-tag";
 
 export default {
   props: {
@@ -197,6 +267,8 @@ export default {
     return {
       nextCursor: new Date().toISOString(),
       limit: 10,
+      graphql_messages: [],
+      all_socketio_messages: [],
     };
   },
   methods: {
@@ -230,10 +302,38 @@ export default {
       let modal = this.$refs.modal;
       modal.style.display = "none";
     },
+
+    deleteMessage(messageId, type) {
+      if (type === "graphql") {
+        // Delete message from messages list pre-fetched from GraphQL
+        this.graphql_messages = this.graphql_messages.filter(
+          (message) => message._id !== messageId
+        );
+      } else if (type === "socketio") {
+        // Delete message from realtime messages array
+        this.all_socketio_messages = this.all_socketio_messages.filter(
+          (message) => message._id !== messageId
+        );
+      }
+
+      // Delete message saved in database
+      this.$apollo.mutate({
+        mutation: gql`
+          mutation DeleteMessage($messageId: String!) {
+            deleteMessage(messageId: $messageId) {
+              _id
+            }
+          }
+        `,
+        variables: {
+          messageId,
+        },
+      });
+    },
   },
   computed: {
     messages() {
-      return this.userMessages.messages.slice().reverse();
+      return this.graphql_messages.slice().reverse();
     },
   },
   updated() {
@@ -245,9 +345,29 @@ export default {
       }
     }
   },
+  watch: {
+    userMessages(newList, oldList) {
+      this.graphql_messages = newList.messages;
+    },
+    allRealtimeMessages(newList, oldList) {
+      this.all_socketio_messages = newList;
+    },
+  },
 };
 </script>
 <style scoped>
+.message-control-sender {
+  display: inline-block;
+}
+
+.graphql-messages {
+  position: relative;
+}
+
+.chat-history ul li {
+  margin-bottom: 0px;
+}
+
 .btn {
   width: 40px;
 }
@@ -285,7 +405,7 @@ export default {
   overflow-x: hidden;
 }
 
-.chat-history ul li {
+.chat-history ul li.clearfix {
   list-style: none;
   margin-bottom: 30px;
 }

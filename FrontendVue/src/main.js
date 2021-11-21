@@ -25,6 +25,11 @@ import { WebSocketLink } from 'apollo-link-ws'
 import { getMainDefinition } from 'apollo-utilities'
 import { HttpLink } from 'apollo-link-http'
 
+// Import Bootstrap Vue
+import BootstrapVue3 from 'bootstrap-vue-3';
+import { BootstrapIconsPlugin } from 'bootstrap-icons-vue';
+import 'bootstrap/dist/css/bootstrap.css'
+import 'bootstrap-vue-3/dist/bootstrap-vue-3.css'
 
 Amplify.configure(aws_exports);
 applyPolyfills().then(() => {
@@ -37,6 +42,9 @@ applyPolyfills().then(() => {
         render: () => h(App),
     })
 
+    app.use(BootstrapVue3)
+    app.use(BootstrapIconsPlugin)
+    
     app.use(VueAxios, axios)
     app.use(router)
     app.provide('config', config)

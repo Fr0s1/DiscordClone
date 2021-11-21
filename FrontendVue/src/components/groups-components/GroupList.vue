@@ -92,9 +92,15 @@ export default {
 </script>
 
 <style scoped>
+.badge {
+  height: 15px;
+  width: 15px;
+  border-radius: 50%;
+}
+
 .badge:empty {
-  display: inline-block;
-  height: 10px;
+  display: block;
+
   color: #86c541;
 }
 

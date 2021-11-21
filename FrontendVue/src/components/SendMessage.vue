@@ -102,8 +102,6 @@ export default {
 
       // The message must have at least 1 file or non empty content
       if (message.content.length > 0 || message.files.length > 0) {
-        this.$emit("realtime-message", message);
-
         let sentMessage = new FormData();
 
         sentMessage.append("sender", this.currentUsername);
@@ -114,27 +112,17 @@ export default {
           for (let fileIndex in this.messageFiles) {
             sentMessage.append(`f${fileIndex}`, this.messageFiles[fileIndex]);
           }
-
-          this.axios
-            .post(`${this.config.socketIO_HTTP}/message`, sentMessage)
-            .then((res) => {
-              this.$emit("chatMessage", res.data);
-            })
-            .catch((e) => {
-              console.log(e);
-            });
-        } else {
-          this.axios
-            .post(`${this.config.socketIO_HTTP}/message`, sentMessage)
-            .then((res) => {
-              console.log(res);
-            })
-            .catch((e) => {
-              console.log(e);
-            });
-
-          this.$emit("chatMessage", message);
         }
+        this.axios
+          .post(`${this.config.socketIO_HTTP}/message`, sentMessage)
+          .then((res) => {
+            this.$emit("chatMessage", res.data);
+            this.$emit("realtime-message", res.data);
+          })
+          .catch((e) => {
+            console.log(e);
+          });
+
         this.messageContent = "";
 
         this.messageFiles = [];

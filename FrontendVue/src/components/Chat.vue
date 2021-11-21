@@ -12,6 +12,7 @@
               </div>
               <input type="text" class="form-control" placeholder="Search..." />
             </div>
+
             <contact-list
               :contactlist="user.contactlist"
               :contactIsGroup="contactIsGroup"
@@ -273,9 +274,7 @@ export default {
 
       dataConnections: {}, // Object to store data connection object to each group members when start group video call
 
-      srcStream: null, // Media stream (webcam, microphone) to pass to video call components
-
-      incomingCallType: "", // Whether if incoming call is from user or from group chat
+      srcStream: null, // Media stream (webcam, microphone) to pass to group video call components
     };
   },
   sockets: {
@@ -379,6 +378,7 @@ export default {
               limit: $limit
             ) {
               messages {
+                _id
                 sender {
                   username
                 }
@@ -417,6 +417,7 @@ export default {
               limit: $limit
             ) {
               messages {
+                _id
                 sender {
                   username
                   avatar
@@ -669,6 +670,7 @@ export default {
       let groupMembers = this.group.members;
       for (let i = 0; i < groupMembers.length; i++) {
         let member = groupMembers[i];
+
         if (
           member.username != this.currentUsername &&
           member.accountStatus === "Online"
@@ -706,6 +708,14 @@ export default {
       });
 
       this.hasGroupVideoCallStarted = true;
+    },
+
+    stopGroupVideoCall() {
+      stream.getTracks().forEach(function (track) {
+        track.stop();
+      });
+
+      this.hasGroupVideoCallStarted = false;
     },
 
     async getActiveContactPeerId(username) {
@@ -753,12 +763,6 @@ export default {
         return 1;
       }
       return 0;
-    },
-
-    stopGroupVideoCall() {
-      this.srcStream.getTracks()[0].stop();
-
-      this.hasGroupVideoCallStarted = false;
     },
 
     // When user changes contact list, empty realtime message so that no notification is shown

@@ -116,7 +116,7 @@ export default {
     changeMicrophoneStatus(stream) {
       this.hasTurnedOffMicrophone = !this.hasTurnedOffMicrophone;
       stream.getAudioTracks().forEach((track) => {
-        track.enabled = !this.hasTurnedOffWebcam;
+        track.enabled = !this.hasTurnedOffMicrophone;
       });
     },
     stopWebcamAndMicrophone(stream) {
@@ -133,5 +133,18 @@ export default {
 <style scoped>
 .btn {
   width: 40px;
+}
+
+.video {
+  display: flex;
+  margin: auto;
+  justify-content: center;
+}
+
+.control-buttons {
+  display: flex;
+  margin: auto;
+  align-items: flex-end;
+  justify-content: center;
 }
 </style>

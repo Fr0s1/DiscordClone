@@ -96,7 +96,10 @@
 
         <div class="modal-body">
           <ul v-if="groupMembers">
-            <li v-for="(member, index) in groupMembers" :key="index">
+            <li
+              v-for="(member, index) in groupMembersWithoutCurrentUsername"
+              :key="index"
+            >
               <input
                 class="form-check-input"
                 type="checkbox"
@@ -200,6 +203,15 @@ export default {
             },
           });
         });
+      }
+    },
+  },
+  computed: {
+    groupMembersWithoutCurrentUsername() {
+      if (this.groupMembers) {
+        return this.groupMembers.filter(
+          (member) => member.username !== this.currentUsername
+        );
       }
     },
   },
