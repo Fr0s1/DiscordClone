@@ -342,10 +342,14 @@ async function updateUserInfo(parent, args, context) {
         })
 
         if (updatedInfo.accountStatus) {
-            pubsub.publish("ACCOUNT_STATUS_CHANGED", {
+            let publishInfo = {
                 username,
                 accountStatus: updatedInfo.accountStatus
-            })
+            }
+            
+            pubsub.publish("ACCOUNT_STATUS_CHANGED", publishInfo)
+
+            pubsub.publish("GROUP_MEMBERS_ACCOUNT_STATUS_CHANGED", publishInfo)
         }
 
         let data = await cognitoClient.adminUpdateUserAttributes(params).promise()
