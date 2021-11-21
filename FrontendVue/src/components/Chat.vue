@@ -4,7 +4,23 @@
       <div class="col-lg-12">
         <div class="card chat-app">
           <div id="plist" class="people-list">
-            <div class="input-group">
+            <div style="height:10vh; margin-top:-20px">
+              <b-dropdown offset="25" variant="light" class="m-3" right >
+                  <template #button-content>
+                    <b-avatar variant="info" :src="user.avatar" class="mr-4"></b-avatar>
+                    <span>{{user.name}}</span>
+                  </template>
+
+                  <b-dropdown-item @click="about()"><b-icon icon="house-door"></b-icon><span style="margin-left:10px">Home</span></b-dropdown-item>
+                  <b-dropdown-item @click="info()"><b-icon icon="person"></b-icon><span style="margin-left:10px">Profile</span></b-dropdown-item>
+                  <b-dropdown-item @click="signOut()"><b-icon icon="power"></b-icon><span style="margin-left:10px">Logout</span></b-dropdown-item>
+              </b-dropdown>
+              <!-- <b-list-group-item>
+                <b-avatar button @click="onClick" :src="user.avatar"></b-avatar>
+                {{ user.name }}
+              </b-list-group-item> -->
+            </div>
+            <div class="input-group" style="margin-bottom:20px">
               <div class="input-group-prepend">
                 <span class="input-group-text"
                   ><i class="fas fa-search" style="color: #007bff"></i
@@ -12,7 +28,8 @@
               </div>
               <input type="text" class="form-control" placeholder="Search..." />
             </div>
-            <contact-list
+            <div id="people-list-content" style="height:75vh; overflow-y: scroll;">
+              <contact-list
               :contactlist="user.contactlist"
               :contactIsGroup="contactIsGroup"
               @fetch-messages="fetchMessages"
@@ -24,6 +41,19 @@
               @fetch-group-messages="fetchGroupMessages"
               @joinSocketIORoom="joinSocketIORoom"
             ></group-list>
+            </div>
+            <!-- <contact-list
+              :contactlist="user.contactlist"
+              :contactIsGroup="contactIsGroup"
+              @fetch-messages="fetchMessages"
+            ></contact-list>
+
+            <group-list
+              :groups="user.groups"
+              :contactIsGroup="contactIsGroup"
+              @fetch-group-messages="fetchGroupMessages"
+              @joinSocketIORoom="joinSocketIORoom"
+            ></group-list> -->
           </div>
           <div class="chat">
             <div class="chat-header clearfix">
@@ -40,8 +70,8 @@
                     />
                   </a>
                   <div class="chat-about">
-                    <h6 class="m-b-0">{{ activeContactUsername }}</h6>
-                    <small>Last seen: 2 hours ago</small>
+                    <a style="text-decoration:none" target="_blank" :href="'/profile/'+ activeContactUsername" class="m-b-0">{{ activeContactUsername }}</a>
+                    <small style="display:block">Last seen: 2 hours ago</small>
                   </div>
                 </div>
                 <div class="col-lg-6 hidden-sm text-right">
@@ -55,7 +85,7 @@
                       class="fas fa-camera"
                     ></i>
                   </button>
-                  <button class="btn btn-outline-primary" data-toggle="tooltip" data-placement="auto" title="Profile" @click="info()">
+                  <!-- <button class="btn btn-outline-primary" data-toggle="tooltip" data-placement="auto" title="Profile" @click="info()">
                     <i
                       class="fas fa-user-alt"
                     ></i>
@@ -69,7 +99,8 @@
                     <i
                       class="fas fa-info"
                     ></i>
-                  </button>
+                  </button> -->
+                  
                 </div>
               </div>
             </div>
@@ -201,6 +232,7 @@ export default {
         query: gql`
           query Query($username: String) {
             user(username: $username) {
+              name
               avatar
               contactlist {
                 username
@@ -558,6 +590,11 @@ export default {
 </script>
 
 <style scoped>
+
+#people-list-content::-webkit-scrollbar {
+    width: 1px;
+    background-color: #F5F5F5;
+} 
 #menu .ul {
   padding: 0;
   list-style: none;

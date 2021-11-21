@@ -31,21 +31,21 @@
         <div class="row row-space-20">
             <div class="col-md-8">
                 <div class="tab-content p-0">
-
+<!-- :href="'/profile/'+ list.username" -->
                     <div class="tab-pane fade active show" id="profile-friends">
-                        <div class="m-b-10"><b>Friend List (9)</b></div>
+                        <div class="m-b-10"><b>Friend List ({{ user.friendlist.length }})</b></div>
 
                         <ul class="friend-list clearfix">
                             <li style="background-color: #242526" v-for="list in user.friendlist" v-bind:key="list.username">
-                                <a :href="'/profile/'+ list.username">
+                                <a >
                                     <div class="friend-img"><img v-bind:src="list.avatar" alt="" /></div>
                                     <div class="friend-info">
-                                        <h4>{{list.username}}</h4>
+                                        <h4 class="username-friend" @click="move(list)">{{list.username}}</h4>
                                         <p>392 friends</p>
                                     </div>
-                                   
+                                       
                                 </a>
-                                <button @click="addContact(list)" class="btn btn-primary">AddContact</button>
+                                
                             </li>
                         </ul>
                     </div>
@@ -101,14 +101,6 @@
 import gql from "graphql-tag";
 import { AuthState, onAuthUIStateChange } from '@aws-amplify/ui-components';
 import { Auth } from 'aws-amplify';
-export const ADD_CONTACT = gql`mutation ($username: String!) {
-  addUserToContactList(username: $username,) {
-   username
-  }
-}`;
-
-
-
 export default {
   inject: ["currentUsername"],
   data() {
@@ -147,9 +139,11 @@ export default {
     },
   },
   methods: {
+    move(list) {
+        this.$router.push('/profile/'+ list.username);
+    },
     f() {
       console.log(this.currentUsername);
-      // console.log(this.user);
     },
     async signOut() {
     try {
@@ -159,18 +153,6 @@ export default {
     }
     this.$router.push('/');
     }, 
-    
-    addContact(list) {
-        console.log(list.username);
-        this.$apollo.mutate({
-        mutation: ADD_CONTACT,
-        variables: {
-          username: list.username,
-        }
-      });
-    },
-
-    
   },
   
   mounted() {
@@ -181,6 +163,10 @@ export default {
 </script>
 
 <style scoped>
+.username-friend {
+    cursor: pointer;
+    width: 30%;
+}
 .body{
     background: #ffffff;
     margin-top:20px;

@@ -35,7 +35,10 @@ export default {
     this.loadUser()
   },
 
-  
+  // beforeMounted() {
+  //   location.reload()
+  // },
+
   methods: {
      loadUser() {
        console.log("abc")
@@ -56,17 +59,5 @@ export default {
      } 
 
   }
-
-  // beforeMount() {
-  //       this.$apollo.mutate({
-  //               mutation: ADD_USER,
-  //               variables: {
-  //               name: this.g_user.name,
-  //               email: this.g_user.email,
-  //               phone_number: this.g_user.phone_number,
-  //               username: this.g_user.username
-  //           }
-  //       });
-  // },
 };
 </script>

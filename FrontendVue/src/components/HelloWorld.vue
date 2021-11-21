@@ -31,8 +31,8 @@
         <a v-bind:href="'/chat'" style="cursor:pointer" class="btn btn-outline-primary">Chat</a>
       </li>
       <li>
-        <!-- <router-link  :to="'/user/'+currentUsername" style="cursor:pointer" class="btn btn-outline-primary">Profile</router-link> -->
-         <a v-bind:href="'/user/'+this.currentUsername" style="cursor:pointer" class="btn btn-outline-primary">Profile</a>
+        <router-link  :to="'/user/'+currentUsername" style="cursor:pointer" class="btn btn-outline-primary">Profile</router-link>
+         <!-- <a v-bind:href="'/user/'+this.currentUsername" style="cursor:pointer" class="btn btn-outline-primary">Profile</a> -->
       </li>
     </ul>
   </div>

@@ -6,7 +6,7 @@
           enctype="multipart/form-data"
           @submit.prevent="contactIsGroup ? sendGroupMessage() : sendMessage()"
         >
-          <div class="input-group-prepend">
+          <!-- <div class="input-group-prepend">
             <button class="btn-outline-primary btn">
               <i
                 class="fas fa-paper-plane"
@@ -19,7 +19,7 @@
             <input
               type="text"
               class="form-control"
-              style="border-color: #007bff"
+              style="border-color: #007bff; border-radius:50px"
               placeholder="Enter text here..."
               name="content"
               id="content"
@@ -35,7 +35,32 @@
             multiple
             @change="filesChange($event.target.files)"
             ref="messageFiles"
-          />
+          /> -->
+          <div class="input-group">
+            <div @click="$refs.messageFiles.click()" class="input-group-append">
+              <span class="input-group-text attach_btn">
+                <input
+                  type="file"
+                  ref="messageFiles"
+                  style="display: none"
+                  name="file"
+                  multiple
+                   @change="filesChange($event.target.files)"
+                />
+                <i class="fas fa-paperclip"></i>
+              </span>
+            </div>
+            <input
+              type="text"
+              class="form-control"
+              style="border-color: #007bff; border-radius:50px"
+              placeholder="Enter text here..."
+              name="content"
+              id="content"
+              v-model="messageContent"
+            >
+           
+          </div>
         </form>
       </div>
 
@@ -70,6 +95,7 @@ export default {
   },
   data() {
     return {
+      visible: true,
       messageContent: "", // Message input field
 
       messagesFilePreviewUrls: [], // An array contain img's src when user upload image for previewing

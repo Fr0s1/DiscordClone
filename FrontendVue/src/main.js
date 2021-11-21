@@ -4,7 +4,10 @@ import router from "./router";
 import Amplify, { Auth } from 'aws-amplify';
 import aws_exports from './aws-exports';
 import config from './config'
-
+import BootstrapVue3 from 'bootstrap-vue-3';
+import { BootstrapIconsPlugin } from 'bootstrap-icons-vue';
+import 'bootstrap/dist/css/bootstrap.css'
+import 'bootstrap-vue-3/dist/bootstrap-vue-3.css'
 import {
     applyPolyfills,
     defineCustomElements,
@@ -18,7 +21,6 @@ import { createApolloProvider } from '@vue/apollo-option'
 
 import axios from 'axios'
 import VueAxios from 'vue-axios'
-
 Amplify.configure(aws_exports);
 applyPolyfills().then(() => {
     defineCustomElements(window);
@@ -40,7 +42,8 @@ import { createStore } from 'vuex'
     })
     
     app.use(store)
-
+    app.use(BootstrapVue3)
+    app.use(BootstrapIconsPlugin);
     app.use(VueAxios, axios)
     app.use(router)
     app.provide('config', config)

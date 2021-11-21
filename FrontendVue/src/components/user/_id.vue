@@ -12,7 +12,7 @@
           <div class="profile-header-info">
             <h4 class="m-t-sm">{{ user.name }}</h4>
             <p class="m-b-sm">UXUI + Frontend Developer</p>
-            
+            <button @click="addContact(user)" class="btn btn-primary">Message</button>
           </div>
         </div>
 
@@ -46,7 +46,7 @@
           <div class="col-md-8">
             <div class="tab-content p-0">
               <div class="tab-pane fade active show" id="profile-friends">
-                <div class="m-b-10"><b>Friend List (9)</b></div>
+                <div class="m-b-10"><b>Friend List ({{ user.friendlist.length }})</b></div>
 
                 <ul class="friend-list clearfix">
                   <!-- <li  
@@ -146,7 +146,11 @@
 import { useRoute } from "vue-router";
 import gql from "graphql-tag";
 import { computed } from "@vue/reactivity";
-
+export const ADD_CONTACT = gql`mutation ($username: String!) {
+  addUserToContactList(username: $username,) {
+   username
+  }
+}`;
 export default {
   inject: ["currentUsername"],
   setup() {
@@ -188,6 +192,16 @@ export default {
   },
 
   methods: {
+    addContact(user) {
+        console.log(user.username);
+        this.$apollo.mutate({
+        mutation: ADD_CONTACT,
+        variables: {
+          username: user.username,
+        }
+      });
+      this.$router.push('/chat');
+    },
   },
 };
 </script>
