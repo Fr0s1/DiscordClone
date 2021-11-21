@@ -125,8 +125,6 @@ async function addUserToGroup(parent, args, context) {
                     new: true
                 })
 
-                console.log(result)
-
                 // Include this group to user list of group the user is in
                 await User.findOneAndUpdate({
                     username
@@ -346,7 +344,7 @@ async function updateUserInfo(parent, args, context) {
                 username,
                 accountStatus: updatedInfo.accountStatus
             }
-            
+
             pubsub.publish("ACCOUNT_STATUS_CHANGED", publishInfo)
 
             pubsub.publish("GROUP_MEMBERS_ACCOUNT_STATUS_CHANGED", publishInfo)
@@ -375,9 +373,10 @@ async function addUserToContactList(parent, args, context) {
                 username: currentUser
             }, {
                 $push: { contactlist: addedUser._id }
+            }, {
+                returnDocument: "after"
             })
 
-            console.log(result)
             return result
         } else {
             throw new Error(`User with username ${username} does not exist`)
@@ -385,7 +384,37 @@ async function addUserToContactList(parent, args, context) {
     } catch (e) {
         throw new Error(e)
     }
+}
 
+async function removeUserFromContactList(parent, args, context) {
+    let username = args.username
+
+    let User = context.mongo.User
+
+    try {
+        let userFound = await User.findOne({
+            username
+        })
+
+        if (!userFound) {
+            throw new Error(`User ${username} does not exist`)
+        } else {
+            let currentUser = context.tokenPayload.username
+
+            let result = await User.findOneAndUpdate({
+                username: currentUser
+            }, {
+                $pull: { contactlist: userFound._id }
+            }, {
+                returnDocument: "after"
+            })
+
+            return result
+        }
+    } catch (e) {
+        console.log(e)
+        throw new Error("Can't do that operation at the moment")
+    }
 }
 module.exports = {
     addUser,
@@ -396,5 +425,6 @@ module.exports = {
     deleteGroupMessage,
     updateUserInfo,
     addUserToContactList,
+    removeUserFromContactList,
     changeMessageInfo
 }

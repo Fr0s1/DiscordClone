@@ -59,6 +59,8 @@ type Mutation {
   # addUserToFriendList(username: String!): [String!]!
 
   addUserToContactList(username: String!): User!
+
+  removeUserFromContactList(username: String!): User!
 }
 
 type Subscription {
