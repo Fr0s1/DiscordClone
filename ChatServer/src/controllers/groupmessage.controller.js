@@ -15,12 +15,12 @@ exports.saveMessage = async (req, res) => {
     // File Urls to be sent by Socket.io
     let fileUrls = []
 
-    let sender = await User.findOne({
-        username: req.body.sender.trim()
+    let senderFound = await User.findOne({
+        username: req.body.sender
     })
 
     const newMessage = {
-        sender: sender._id,
+        sender: senderFound._id,
         group: req.body.group,
         content: req.body.content,
     }
@@ -40,8 +40,9 @@ exports.saveMessage = async (req, res) => {
     newMessage.files = files
 
     let savedMessage = await GroupMessage.create(newMessage)
+
     let FILE_SERVER_ENDPOINT = process.env.FILE_SERVER_ENDPOINT
-    let result = await axios.get(`${FILE_SERVER_ENDPOINT}/users/${req.body.sender}/avatar`)
+    let result = await axios.get(`${FILE_SERVER_ENDPOINT}/users/${senderFound.username}/avatar`)
 
     // Get signed url from s3 to send back to Client
     for (let i = 0; i < newMessage.files.length; i++) {
@@ -77,12 +78,12 @@ exports.saveMessage = async (req, res) => {
     let messageReturnedToClient = {
         _id: savedMessage._id,
         sender: {
-            username: savedMessage.sender,
+            username: senderFound.username,
             avatar: result.data.avatar
         },
         group: savedMessage.group,
         content: savedMessage.content,
-        fileUrls,
+        files: fileUrls,
         sentTime: savedMessage.sentTime
     }
 
