@@ -25,4 +25,4 @@ services:
       - discord-backend
 
 networks:
-  discord-backend:
+  discord-backend: null
