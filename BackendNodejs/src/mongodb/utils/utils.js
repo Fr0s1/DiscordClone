@@ -17,6 +17,5 @@ exports.ifUserInGroupWithId = async (groupId, username) => {
         username
     }).select("groups")
 
-    console.log(userGroupsList)
     return userGroupsList.groups.includes(groupId)
 }

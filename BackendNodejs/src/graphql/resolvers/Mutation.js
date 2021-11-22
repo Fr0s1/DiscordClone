@@ -126,12 +126,16 @@ async function addUserToGroup(parent, args, context) {
                     new: true
                 })
 
-                // Include this group to user list of group the user is in
-                await User.findOneAndUpdate({
-                    username
-                }, {
-                    $push: { groups: groupFound._id }
-                })
+                if (!userFound.groups.includes(groupFound._id)) {
+                    // Include this group to user list of group the user is in
+                    await User.findOneAndUpdate({
+                        username
+                    }, {
+                        $push: { groups: groupFound._id }
+                    }, {
+                        returnDocument: 'after'
+                    })
+                }
 
                 return result
             }
@@ -172,13 +176,7 @@ async function removeUserFromGroup(parent, args, context) {
                     members: groupFound.members
                 })
 
-                userFound.groups.splice(userFound.groups.indexOf(groupFound._id), 1)
-
-                await User.findOneAndUpdate({
-                    _id: userId
-                }, {
-                    groups: userFound.groups
-                })
+                pubsub.publish("MEMBER_LEAVES_GROUP", { type: "leave", user: userFound })
 
                 return groupFound
             } else {
@@ -259,8 +257,6 @@ async function deleteGroupMessage(parent, args, context) {
             _id: messageId
         }).populate('sender')
 
-        console.log(foundMessage)
-
         if (!foundMessage) {
             throw new Error(`Message with id ${messageId} does not exists`)
         }
@@ -293,6 +289,8 @@ async function updateUserInfo(parent, args, context) {
     let phone_number = args.phone_number
     let name = args.name
     let email = args.email
+    let birthdate = args.birthdate
+
     let User = context.mongo.User
 
     let accountStatus = args.accountStatus
@@ -323,6 +321,14 @@ async function updateUserInfo(parent, args, context) {
         })
 
         updatedInfo.email = email
+    }
+    if (birthdate) {
+        UserAttributes.push({
+            Name: "birthdate",
+            Value: birthdate
+        })
+
+        updatedInfo.birthdate = birthdate
     }
 
     if (accountStatus) {

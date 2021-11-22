@@ -17,7 +17,8 @@ const pubsub = new RedisPubSub({
 });
 
 function subscriptionEvents() {
-    return pubsub.asyncIterator(["ACCOUNT_STATUS_CHANGED", "GROUP_MEMBERS_ACCOUNT_STATUS_CHANGED", "GROUP_MESSAGE_DELETED"])
+    return pubsub.asyncIterator(["ACCOUNT_STATUS_CHANGED", "GROUP_MEMBERS_ACCOUNT_STATUS_CHANGED",
+        "GROUP_MESSAGE_DELETED", "MEMBER_LEAVES_GROUP"])
 }
 
 const mongoUtilFunctions = require('../../mongodb/utils/utils')
@@ -51,8 +52,18 @@ const groupMessageDeleted = {
     }
 }
 
+const memberLeavesGroup = {
+    subscribe: withFilter(subscriptionEvents, (payload, variables) => {
+        return payload.user.groups.includes(variables.groupId) && payload.type === "leave"
+    }),
+    resolve: payload => {
+        return payload.user
+    }
+}
+
 module.exports = {
     accountStatusInfo,
     groupMembersAccountStatus,
-    groupMessageDeleted
+    groupMessageDeleted,
+    memberLeavesGroup
 }

@@ -42,7 +42,6 @@ const { GraphQLFileLoader } = require('@graphql-tools/graphql-file-loader')
 const { execute, subscribe } = require('graphql')
 const { SubscriptionServer } = require('subscriptions-transport-ws')
 
-
 async function startApolloServer() {
     const resolvers = {
         Date: dateScalar,

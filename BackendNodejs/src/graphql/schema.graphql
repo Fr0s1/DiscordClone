@@ -56,6 +56,7 @@ type Mutation {
     phone_number: String
     accountStatus: AccountStatus
     lastOnlineTime: Date
+    birthdate: BirthDate
   ): User!
   # addUserToFriendList(username: String!): [String!]!
 
@@ -72,6 +73,8 @@ type Subscription {
   groupMembersAccountStatus(groupId: String!): AccountStatusInfo!
 
   groupMessageDeleted(groupId: String!): Message!
+
+  memberLeavesGroup(groupId: String!): User!
 }
 
 type AccountStatusInfo {
@@ -83,6 +86,11 @@ type AccountStatusInfo {
 enum AccountStatus {
   Online
   Offline
+}
+
+enum GroupMembershipOperation {
+  Leave
+  Join
 }
 
 type ExampleType {
@@ -130,7 +138,7 @@ type User {
   friendlist: [User!]
   groups: [GroupChat!]!
   contactlist: [User!]
-  avatar: String # S3 Image Url
+  avatar: String! # S3 Image Url
   accountStatus: AccountStatus
   lastOnlineTime: Date
 }
@@ -144,7 +152,6 @@ type Message {
   markedDeletedBySender: Boolean
   markedDeletedByReceiver: Boolean
   sentTime: Date!
-  seenStatus: Boolean
 }
 
 type GroupMessage {
@@ -167,9 +174,7 @@ type GroupChat {
   groupName: String!
   admin: User!
   members: [User!]!
-  # messages: [Message!]!
   groupAvatar: String!
-  # createdAt: Date!
 }
 
 type FriendRequest {
