@@ -43,7 +43,7 @@
             </b-dropdown-item>
           </b-dropdown>
         </div>
-        <div class="flex-shrink-1 bg-light rounded py-2 px-3 mr-3">
+        <div class="flex-shrink-1 bg-light rounded py-2 px-3">
           <div class="font-weight-bold mb-1">
             {{
               message.sender.username == currentUsername
@@ -172,13 +172,8 @@ import moment from "moment";
 
 import gql from "graphql-tag";
 
-import DeleteMessage from "../message-components/DeleteMessage.vue";
-
 export default {
   inject: ["currentUsername"],
-  components: {
-    DeleteMessage,
-  },
   props: {
     groupMessages: {
       type: Object,
