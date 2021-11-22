@@ -379,6 +379,7 @@ export default {
 .chat-history {
   padding: 20px;
   border-bottom: 2px solid #fff;
+  height: 73.4vh;
 }
 
 .chat-history ul::-webkit-scrollbar {
@@ -403,7 +404,7 @@ export default {
 
 .chat-history ul {
   width: auto;
-  height: 71vh;
+  height: 70vh;
   padding: 20px;
   overflow-y: auto;
   overflow-x: hidden;
@@ -435,7 +436,7 @@ export default {
 }
 
 .chat-history .message {
-  color: rgb(255, 255, 255);
+  color: #212529;
   padding: 18px 20px;
   line-height: 26px;
   font-size: 16px;
@@ -459,7 +460,7 @@ export default {
 }
 
 .chat-history .my-message {
-  background: #7289da;
+  background: #f8f9fa;
 }
 
 .chat-history .my-message:after {
@@ -477,7 +478,7 @@ export default {
 }
 
 .chat-history .other-message {
-  background: #7289da;
+  background: #f8f9fa;
   text-align: right;
 }
 
