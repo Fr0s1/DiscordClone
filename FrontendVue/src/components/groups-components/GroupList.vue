@@ -50,6 +50,12 @@ export default {
         this.$emit("change-contact-type");
       }
 
+      // Because now when user click delete message, only the content is changed to "Message deleted" so when user change to another contact
+      // Empty current real time messages array
+      if (this.activeGroupIndex && this.activeGroupId !== "") {
+        this.$emit("empty-realtime-group-messages", this.activeGroupId);
+      }
+
       this.activeGroupIndex = index;
 
       this.$emit("empty-realtime-group-messages", this.activeGroupId);

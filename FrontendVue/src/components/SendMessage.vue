@@ -8,7 +8,7 @@
           autocomplete="off"
         >
           <div class="input-group-prepend">
-            <button class="btn-outline-primary btn">
+            <button class="btn-outline-primary btn" :disabled="contactIsGroup && !userInGroup">
               <i
                 class="fas fa-paper-plane"
                 data-toggle="tooltip"
@@ -36,10 +36,15 @@
               type="text"
               class="form-control"
               style="border-color: #007bff"
-              placeholder="Enter text here..."
+              :placeholder="
+                contactIsGroup && !userInGroup
+                  ? 'You are not member of this group'
+                  : 'Enter text here...'
+              "
               name="content"
               id="content"
               v-model="messageContent"
+              :disabled="contactIsGroup && !userInGroup"
             />
           </div>
         </form>
@@ -72,6 +77,9 @@ export default {
     },
     currentUserAvatarUrl: {
       type: String,
+    },
+    groupsMembers: {
+      type: Array,
     },
   },
   data() {
@@ -163,7 +171,7 @@ export default {
         });
       }
 
-      if (message.content.length > 0 || message.files.length > 0) {
+      if ((message.content.length > 0 || message.files.length > 0) && this.userInGroup) {
         let sentMessage = new FormData();
 
         sentMessage.append("sender", this.currentUsername);
@@ -178,8 +186,7 @@ export default {
         this.axios
           .post(`${this.config.socketIO_HTTP}/groupmessage`, sentMessage)
           .then((res) => {
-
-            console.log(res.data)
+            console.log(res.data);
             this.$emit("realtime-group-message", res.data);
 
             this.$emit("groupChatMessage", res.data);
@@ -194,6 +201,15 @@ export default {
         this.messagesFilePreviewUrls = [];
         this.$refs.messageFiles.value = null;
       }
+    },
+  },
+  computed: {
+    userInGroup() {
+      return (
+        this.groupsMembers.findIndex(
+          (member) => member.username == this.currentUsername
+        ) !== -1
+      );
     },
   },
 };

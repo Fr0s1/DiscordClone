@@ -306,13 +306,17 @@ export default {
     deleteMessage(messageId, type) {
       if (type === "graphql") {
         // Delete message from messages list pre-fetched from GraphQL
-        this.graphql_messages = this.graphql_messages.filter(
-          (message) => message._id !== messageId
+        this.graphql_messages = this.graphql_messages.map((message) =>
+          message._id !== messageId
+            ? message
+            : { ...message, content: "Message deleted", files: [] }
         );
       } else if (type === "socketio") {
         // Delete message from realtime messages array
-        this.all_socketio_messages = this.all_socketio_messages.filter(
-          (message) => message._id !== messageId
+        this.all_socketio_messages = this.all_socketio_messages.map((message) =>
+          message._id !== messageId
+            ? message
+            : { ...message, content: "Message deleted", files: [] }
         );
       }
 

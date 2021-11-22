@@ -150,6 +150,7 @@
               :contactIsGroup="contactIsGroup"
               :activeGroupId="activeGroupId"
               :currentUserAvatarUrl="user.avatar"
+              :groupsMembers="group.members"
               @chatMessage="sendMessage"
               @realtime-message="addToRealtimeMessagesList"
               @realtime-group-message="addToRealTimeGroupMessages"
@@ -472,7 +473,6 @@ export default {
             return this.activeGroupId === "";
           },
           updateQuery: (previousResult, { subscriptionData }) => {
-            // Append next messages to current array messages fetched from GraphQL
             let groupMessageDeleted = subscriptionData.data.groupMessageDeleted;
 
             if (groupMessageDeleted) {
@@ -484,10 +484,14 @@ export default {
                   (message) => message._id === groupMessageDeleted._id
                 ) !== -1
               ) {
-                let messagesList = oldMessagesList.filter(
-                  (message) => message._id !== groupMessageDeleted._id
+                let messagesList = oldMessagesList.map((message) =>
+                  message._id !== groupMessageDeleted._id
+                    ? message
+                    : { ...message, content: "Message deleted", files: [] }
                 );
 
+                this.shouldScroll = false
+                
                 return {
                   groupMessages: {
                     ...previousResult.groupMessages,
@@ -497,8 +501,11 @@ export default {
               } else {
                 // Deleted messsages is in realtime group messages array
                 this.realtimeGroupMessages[this.activeGroupId] =
-                  this.realtimeGroupMessages[this.activeGroupId].filter(
-                    (message) => message._id !== groupMessageDeleted._id
+                  this.realtimeGroupMessages[this.activeGroupId].map(
+                    (message) =>
+                      message._id !== groupMessageDeleted._id
+                        ? message
+                        : { ...message, content: "Message deleted", files: [] }
                   );
               }
             }
@@ -527,52 +534,94 @@ export default {
         variables: {
           groupId: this.activeGroupId,
         },
-        subscribeToMore: {
-          document: gql`
-            subscription Subscription($groupId: String!) {
-              groupMembersAccountStatus(groupId: $groupId) {
-                username
-                accountStatus
+        subscribeToMore: [
+          {
+            document: gql`
+              subscription Subscription($groupId: String!) {
+                groupMembersAccountStatus(groupId: $groupId) {
+                  username
+                  accountStatus
+                }
               }
-            }
-          `,
-          variables() {
-            // This works just like regular queries
-            // and will re-subscribe with the right variables
-            // each time the values change
-            return {
-              groupId: this.activeGroupId,
-            };
-          },
-          skip() {
-            return this.activeGroupId === "";
-          },
-          updateQuery: (previousResult, { subscriptionData }) => {
-            // Append next messages to current array messages fetched from GraphQL
-            let groupMembersAccountStatusInfo =
-              subscriptionData.data.groupMembersAccountStatus;
-
-            if (groupMembersAccountStatusInfo) {
-              let oldListOfMembers = previousResult.group.members;
-              let newListsOfMembers = oldListOfMembers.map((contact) =>
-                contact.username === groupMembersAccountStatusInfo.username
-                  ? {
-                      ...contact,
-                      accountStatus:
-                        groupMembersAccountStatusInfo.accountStatus,
-                    }
-                  : contact
-              );
-
+            `,
+            variables() {
+              // This works just like regular queries
+              // and will re-subscribe with the right variables
+              // each time the values change
               return {
-                group: {
-                  ...previousResult.group,
-                  members: newListsOfMembers,
-                },
+                groupId: this.activeGroupId,
               };
-            }
+            },
+            skip() {
+              return this.activeGroupId === "";
+            },
+            updateQuery: (previousResult, { subscriptionData }) => {
+              // Append next messages to current array messages fetched from GraphQL
+              let groupMembersAccountStatusInfo =
+                subscriptionData.data.groupMembersAccountStatus;
+
+              if (groupMembersAccountStatusInfo) {
+                let oldListOfMembers = previousResult.group.members;
+                let newListsOfMembers = oldListOfMembers.map((contact) =>
+                  contact.username === groupMembersAccountStatusInfo.username
+                    ? {
+                        ...contact,
+                        accountStatus:
+                          groupMembersAccountStatusInfo.accountStatus,
+                      }
+                    : contact
+                );
+
+                return {
+                  group: {
+                    ...previousResult.group,
+                    members: newListsOfMembers,
+                  },
+                };
+              }
+            },
           },
-        },
+          {
+            document: gql`
+              subscription MemberLeavesGroup($groupId: String!) {
+                memberLeavesGroup(groupId: $groupId) {
+                  username
+                }
+              }
+            `,
+            variables() {
+              // This works just like regular queries
+              // and will re-subscribe with the right variables
+              // each time the values change
+              return {
+                groupId: this.activeGroupId,
+              };
+            },
+            skip() {
+              return this.activeGroupId === "";
+            },
+            updateQuery: (previousResult, { subscriptionData }) => {
+              // Append next messages to current array messages fetched from GraphQL
+              let memberLeavesGroupInfo =
+                subscriptionData.data.memberLeavesGroup;
+              console.log(previousResult);
+              console.log(subscriptionData.data);
+              if (memberLeavesGroupInfo) {
+                let oldListOfMembers = previousResult.group.members;
+                let newListsOfMembers = oldListOfMembers.filter(
+                  (member) => member.username !== memberLeavesGroupInfo.username
+                );
+
+                return {
+                  group: {
+                    ...previousResult.group,
+                    members: newListsOfMembers,
+                  },
+                };
+              }
+            },
+          },
+        ],
       };
     },
   },
@@ -593,8 +642,10 @@ export default {
     },
     deleteRealtimeGroupMessages(messageId) {
       this.realtimeGroupMessages[this.activeGroupId] =
-        this.realtimeGroupMessages[this.activeGroupId].filter(
-          (message) => message._id !== messageId
+        this.realtimeGroupMessages[this.activeGroupId].map((message) =>
+          message._id !== messageId
+            ? message
+            : { ...message, content: "Message deleted", files: [] }
         );
     },
     addToRealtimeMessagesList(message) {
@@ -615,6 +666,7 @@ export default {
       this.contactIsGroup = false;
       this.shouldScroll = data.shouldScroll;
       if (data.firstFetch) {
+        this.activeGroupId = "";
         // Empty realtime messages received from this new user when this username is not focused
         this.realtimeFetchedMessages[this.currentUsername] = [];
         this.realtimeFetchedMessages[data.username] = [];
