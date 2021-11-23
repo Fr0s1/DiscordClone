@@ -44,7 +44,7 @@ applyPolyfills().then(() => {
 
     app.use(BootstrapVue3)
     app.use(BootstrapIconsPlugin)
-    
+
     app.use(VueAxios, axios)
     app.use(router)
     app.provide('config', config)
@@ -59,17 +59,14 @@ applyPolyfills().then(() => {
 
     const cache = new InMemoryCache()
 
+    let authData = await getAuthData()
+
     const getHeaders = async () => {
 
         try {
-            let res = await Auth.currentSession()
-            let accessToken = res.getAccessToken()
-            let jwt = accessToken.getJwtToken()
-
-            let user = await Auth.currentUserInfo();
-            app.provide('currentUsername', user.username)
+            app.provide('currentUsername', authData.user.username)
             return {
-                authorization: `Bearer ${jwt}`
+                authorization: `Bearer ${authData.token}`
             }
         } catch (e) {
             console.log(e)
@@ -86,6 +83,9 @@ applyPolyfills().then(() => {
         uri: config.graphql_subscription_endpoint,
         options: {
             reconnect: true,
+            connectionParams: {
+                authToken: authData.token
+            }
         },
     })
 
@@ -114,3 +114,19 @@ applyPolyfills().then(() => {
     app.mount("#app");
 })()
 
+async function getAuthData() {
+    try {
+        let res = await Auth.currentSession()
+        let accessToken = res.getAccessToken()
+        let jwt = accessToken.getJwtToken()
+
+        let user = await Auth.currentUserInfo();
+
+        return {
+            token: jwt,
+            user
+        }
+    } catch (e) {
+        console.log(e)
+    }
+}
