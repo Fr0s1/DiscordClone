@@ -23,3 +23,21 @@ exports.isValidDate = (dateString) => {
     return day > 0 && day <= monthLength[month - 1];
 };
 
+const CognitoExpress = require("cognito-express")
+
+exports.validateToken = async (token) => {
+    const cognitoExpress = new CognitoExpress({
+        region: process.env.region,
+        cognitoUserPoolId: process.env.cognitoUserPoolId,
+        tokenUse: process.env.tokenUse, //Possible Values: access | id
+        tokenExpiration: parseInt(process.env.tokenExpiration) //Up to default expiration of 1 hour (3600000 ms)
+    })
+
+    try {
+        let tokenPayload = await cognitoExpress.validate(token)
+
+        return tokenPayload
+    } catch (e) {
+        throw new Error(e);
+    }
+}

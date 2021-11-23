@@ -42,6 +42,8 @@ const { GraphQLFileLoader } = require('@graphql-tools/graphql-file-loader')
 const { execute, subscribe } = require('graphql')
 const { SubscriptionServer } = require('subscriptions-transport-ws')
 
+const { validateToken } = require('./graphql/utils')
+
 async function startApolloServer() {
     const resolvers = {
         Date: dateScalar,
@@ -77,20 +79,13 @@ async function startApolloServer() {
     const server = new ApolloServer({
         schema,
         context: async ({ req }) => {
-            const cognitoExpress = new CognitoExpress({
-                region: process.env.region,
-                cognitoUserPoolId: process.env.cognitoUserPoolId,
-                tokenUse: process.env.tokenUse, //Possible Values: access | id
-                tokenExpiration: parseInt(process.env.tokenExpiration) //Up to default expiration of 1 hour (3600000 ms)
-            })
-
             if (req.headers.authorization) {
                 const authorizationHeader = req.headers.authorization || ''
 
                 const token = authorizationHeader.replace("Bearer ", "")
 
                 try {
-                    let tokenPayload = await cognitoExpress.validate(token)
+                    let tokenPayload = await validateToken(token)
 
                     return {
                         mongo,
@@ -122,6 +117,13 @@ async function startApolloServer() {
         // These are imported from `graphql`.
         execute,
         subscribe,
+        async onConnect(connectionParams, webSocket) {
+            if (connectionParams.authToken) {
+                const tokenPayload = await validateToken(connectionParams.authToken)
+                return { tokenPayload };
+            }
+            throw new Error('Missing auth token!');
+        }
     }, {
         // This is the `httpServer` we created in a previous step.
         server: httpServer,
