@@ -34,8 +34,6 @@ const { makeExecutableSchema } = require('@graphql-tools/schema')
 
 const { deprecatedDirectiveTypeDefs, deprecatedDirectiveTransformer } = deprecatedDirective('deprecated')
 
-const CognitoExpress = require("cognito-express")
-
 const { loadSchema } = require('@graphql-tools/load')
 const { GraphQLFileLoader } = require('@graphql-tools/graphql-file-loader')
 

@@ -32,7 +32,7 @@ const io = require("socket.io")(server, {
     cors: {
         origin: process.env.frontend_endpoint,
         methods: ["GET", "POST"],
-        credentials: true
+        credentials: true // Allow session affinity (forward "handshake" packet to same container)
     },
     allowEIO3: true
 });
