@@ -13,85 +13,16 @@
         "
         v-for="(message, index) in messages"
         :key="index"
-      >
-        <div>
-          <img
-            :src="message.sender.avatar"
-            class="rounded-circle mr-1"
-            :alt="message.sender.username"
-            width="40"
-            height="40"
-          />
-        </div>
-        <div
-          class="message-control-sender"
-          v-if="currentUsername === message.sender.username"
-        >
-          <b-dropdown
-            id="dropdown-1"
-            class="m-md-2"
-            toggle-class="text-decoration-none"
-            no-caret
-          >
-            <template class="btn btn-outline-primary" #button-content>
-              <i class="fas fa-ellipsis-h"></i>
-            </template>
-            <b-dropdown-item
-              @click="deleteGroupMessage(message._id, 'graphql')"
-            >
-              Delete message
-            </b-dropdown-item>
-          </b-dropdown>
-        </div>
-        <div class="flex-shrink-1 bg-light rounded py-2 px-3">
-          <div class="font-weight-bold mb-1">
-            {{
-              message.sender.username == currentUsername
-                ? "You"
-                : message.sender.username
-            }}
-            <div
-              class="text-muted small text-nowrap mt-2"
-              style="display: inline"
-            >
-              {{ formatTime(message.sentTime) }}
-            </div>
-          </div>
-
-          {{ message.content }}
-          <div
-            class="message-files"
-            v-if="message.files && message.files.length > 0"
-          >
-            <img
-              v-for="(file, index) in message.files"
-              :key="index"
-              :src="file.fileUrl"
-              width="100"
-              style="display: inline-block"
-              @click="zoomImage($event.target)"
-            />
-            <div id="myModal" class="modal" ref="modal">
-              <!-- The Close Button -->
-              <span class="close" ref="closeImageButton" @click="closeZoomImage"
-                >&times;</span
-              >
-
-              <!-- Modal Content (The Image) -->
-              <img class="modal-content" id="img01" ref="zoomImage" />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div
-        :class="
+        @mouseover="
           message.sender.username == currentUsername
-            ? 'chat-message-right pb-4'
-            : 'chat-message-left pb-4'
+            ? showButton(message._id)
+            : null
         "
-        v-for="(message, index) in realtimeGroupMessages[activeGroupId]"
-        :key="index"
+        @mouseleave="
+          message.sender.username == currentUsername
+            ? disableButton(message._id)
+            : null
+        "
       >
         <div>
           <img
@@ -103,26 +34,6 @@
           />
         </div>
 
-        <div
-          class="message-control-sender"
-          v-if="currentUsername === message.sender.username"
-        >
-          <b-dropdown
-            id="dropdown-1"
-            class="m-md-2"
-            toggle-class="text-decoration-none"
-            no-caret
-          >
-            <template class="btn btn-outline-primary" #button-content>
-              <i class="fas fa-ellipsis-h"></i>
-            </template>
-            <b-dropdown-item
-              @click="deleteGroupMessage(message._id, 'socketio')"
-            >
-              Delete message
-            </b-dropdown-item>
-          </b-dropdown>
-        </div>
         <div class="flex-shrink-1 rounded py-2 px-3">
           <div class="font-weight-bold mb-1">
             {{
@@ -161,6 +72,118 @@
               <img class="modal-content" id="img01" ref="zoomImage" />
             </div>
           </div>
+        </div>
+        <div
+          class="message-control-sender disabled"
+          v-if="currentUsername === message.sender.username"
+          :ref="`message-${message._id}`"
+        >
+          <b-dropdown
+            id="dropdown-1"
+            class="m-md-2"
+            toggle-class="text-decoration-none"
+            no-caret
+          >
+            <template class="btn btn-outline-primary" #button-content>
+              <i class="fas fa-ellipsis-h"></i>
+            </template>
+            <b-dropdown-item
+              @click="deleteGroupMessage(message._id, 'graphql')"
+            >
+              Delete message
+            </b-dropdown-item>
+          </b-dropdown>
+        </div>
+      </div>
+
+      <div
+        :class="
+          message.sender.username == currentUsername
+            ? 'chat-message-right pb-4'
+            : 'chat-message-left pb-4'
+        "
+        v-for="(message, index) in realtimeGroupMessages[activeGroupId]"
+        :key="index"
+        @mouseover="
+          message.sender.username == currentUsername
+            ? showButton(message._id)
+            : null
+        "
+        @mouseleave="
+          message.sender.username == currentUsername
+            ? disableButton(message._id)
+            : null
+        "
+      >
+        <div>
+          <img
+            :src="message.sender.avatar"
+            class="rounded-circle mr-1"
+            :alt="message.sender.username"
+            width="40"
+            height="40"
+          />
+        </div>
+
+        <div class="flex-shrink-1 rounded py-2 px-3">
+          <div class="font-weight-bold mb-1">
+            {{
+              message.sender.username == currentUsername
+                ? "You"
+                : message.sender.username
+            }}
+            <div
+              class="text-muted small text-nowrap mt-2"
+              style="display: inline"
+            >
+              {{ formatTime(message.sentTime) }}
+            </div>
+          </div>
+
+          {{ message.content }}
+          <div
+            class="message-files"
+            v-if="message.files && message.files.length > 0"
+          >
+            <img
+              v-for="(file, index) in message.files"
+              :key="index"
+              :src="file.fileUrl"
+              width="100"
+              style="display: inline-block"
+              @click="zoomImage($event.target)"
+            />
+            <div id="myModal" class="modal" ref="modal">
+              <!-- The Close Button -->
+              <span class="close" ref="closeImageButton" @click="closeZoomImage"
+                >&times;</span
+              >
+
+              <!-- Modal Content (The Image) -->
+              <img class="modal-content" id="img01" ref="zoomImage" />
+            </div>
+          </div>
+        </div>
+        <div
+          class="message-control-sender disabled"
+          v-if="currentUsername === message.sender.username"
+          :ref="`message-${message._id}`"
+        >
+          <b-dropdown
+            id="dropdown-1"
+            class="m-md-2"
+            toggle-class="text-decoration-none"
+            no-caret
+          >
+            <template class="btn btn-outline-primary" #button-content>
+              <i class="fas fa-ellipsis-h"></i>
+            </template>
+            <b-dropdown-item
+              @click="deleteGroupMessage(message._id, 'socketio')"
+            >
+              Delete message
+            </b-dropdown-item>
+          </b-dropdown>
         </div>
       </div>
     </div>
@@ -266,6 +289,13 @@ export default {
       let modal = this.$refs.modal;
       modal.style.display = "none";
     },
+    showButton(messageId) {
+      this.$refs[`message-${messageId}`].className = "message-control-sender";
+    },
+    disableButton(messageId) {
+      this.$refs[`message-${messageId}`].className =
+        "message-control-sender disabled";
+    },
   },
   computed: {
     messages() {
@@ -288,6 +318,14 @@ export default {
 };
 </script>
 <style scoped>
+.message-control-sender.disabled {
+  display: none;
+}
+
+.message-control-sender {
+  display: block;
+}
+
 body {
   margin-top: 20px;
 }
@@ -319,6 +357,16 @@ body {
   --webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
   border-radius: 10px;
   background-color: #f5f5f5;
+}
+
+.chat-message-right .flex-shrink-1 {
+  background-color: #e2ecee;
+  margin-right: 10px;
+}
+
+.chat-message-left .flex-shrink-1 {
+  background-color: #eef0f3;
+  margin-left: 10px;
 }
 
 .chat-message-left,

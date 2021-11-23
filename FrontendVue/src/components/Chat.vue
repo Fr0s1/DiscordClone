@@ -126,6 +126,7 @@
               :activeContactUsername="activeContactUsername"
               :currentUsername="currentUsername"
               :userAvatarUrl="user.avatar"
+              :contactAvatarUrl="activeContactAvatar"
               :hasFinishedLoadingMessages="hasFinishedLoadingMessages"
               :allRealtimeMessages="allRealtimeMessages"
               :scrollHeight="scrollHeight"
@@ -282,6 +283,8 @@ export default {
       dataConnections: {}, // Object to store data connection object to each group members when start group video call
 
       srcStream: null, // Media stream (webcam, microphone) to pass to group video call components
+
+      hasCallOtherMembers: false,
     };
   },
   sockets: {
@@ -847,6 +850,8 @@ export default {
 
       this.srcStream = null;
       this.hasGroupVideoCallStarted = false;
+
+      this.hasCallOtherMembers = false;
     },
 
     async getActiveContactPeerId(username) {
@@ -944,6 +949,9 @@ export default {
         (contact) => contact.username == this.activeContactUsername
       );
     },
+    activeContactAvatar() {
+      return this.user.contactlist[this.activeContactIndex]?.avatar;
+    },
     activeGroupGroupName() {
       return this.user.groups[this.activeGroupIndex]?.groupName;
     },
@@ -1036,7 +1044,10 @@ export default {
       this.answeringCall = answeringCall;
 
       if (this.contactIsGroup) {
-        await this.startGroupVideoCall();
+        if (!this.hasCallOtherMembers) {
+          await this.startGroupVideoCall();
+          this.hasCallOtherMembers = true;
+        }
         answeringCall.answer(this.srcStream);
       } else {
         this.isCaller = false;
@@ -1069,13 +1080,6 @@ export default {
 
     // Send new account status to GraphQL Server
     this.changeAccountStatus("Online");
-  },
-  watch: {
-    $route(to, from) {
-      // react to route changes...
-      console.log(to);
-      console.log(from);
-    },
   },
 };
 </script>
