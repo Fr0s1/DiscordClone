@@ -71,9 +71,6 @@ export default {
     groupMembers: {
       type: Array,
     },
-    answeringCall: {
-      default: null,
-    },
     srcStream: {
       default: null,
     },
@@ -163,6 +160,7 @@ export default {
 .video-chat {
   margin-top: 10px;
 }
+
 .member-video {
   display: inline-block;
 }

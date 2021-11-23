@@ -90,7 +90,6 @@ export default {
                   fileType
                   fileUrl
                 }
-                seenStatus
               }
               count
               nextCursor

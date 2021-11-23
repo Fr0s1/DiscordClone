@@ -460,7 +460,7 @@ export default {
 }
 
 .chat-history .my-message {
-  background: #f8f9fa;
+  background: #eef0f3;
 }
 
 .chat-history .my-message:after {
@@ -478,7 +478,7 @@ export default {
 }
 
 .chat-history .other-message {
-  background: #f8f9fa;
+  background: #e8f1f3;
   text-align: right;
 }
 

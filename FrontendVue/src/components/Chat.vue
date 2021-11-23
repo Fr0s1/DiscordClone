@@ -172,7 +172,6 @@
             "
             :groupMembersPeerIds="groupMembersPeerIds"
             :peer="peer"
-            :answeringCall="answeringCall"
             :groupMembers="group.members"
             :srcStream="srcStream"
             @stop-video-chat="stopGroupVideoCall"
@@ -490,8 +489,9 @@ export default {
                     : { ...message, content: "Message deleted", files: [] }
                 );
 
-                this.shouldScroll = false
-                
+                // Set to false so that the conversation won't scroll when updated() event fired
+                this.shouldScroll = false;
+
                 return {
                   groupMessages: {
                     ...previousResult.groupMessages,
@@ -812,6 +812,20 @@ export default {
             });
           }
 
+          // IMPORTANT NOTE: why webcam light does not turn off after clicking end group video call button
+          // navigator.mediaDevices.getUserMedia will return a new stream with every call, so the old stream is still there
+          // So if a user call a member and sending current stream, that member will call the current user back
+          // then current user will only need to send current stream but doesn't need to call getUserMedia again
+          // Ref: https://stackoverflow.com/questions/61842322/web-camera-light-stays-on-after-stream-is-stopped
+
+          if (this.srcStream === null) {
+            // The above condition guarantee that every member's computer only access webcam and microphone 1 TIME
+            this.srcStream = await navigator.mediaDevices.getUserMedia({
+              video: true,
+              audio: true,
+            });
+          }
+
           // Save data connection object to each group member
           let conn = (this.dataConnections[member.username] = this.peer.connect(
             result.data
@@ -821,20 +835,6 @@ export default {
             conn.send("Group video call");
           });
         }
-      }
-
-      // IMPORTANT NOTE: why webcam light does not turn off after clicking end group video call button
-      // navigator.mediaDevices.getUserMedia will return a new stream with every call, so the old stream is still there
-      // So if a user call a member and sending current stream, that member will call the current user back
-      // then current user will only need to send current stream but doesn't need to call getUserMedia again
-      // Ref: https://stackoverflow.com/questions/61842322/web-camera-light-stays-on-after-stream-is-stopped
-
-      if (!this.srcStream) {
-        // The above condition guarantee that every member's computer only access webcam and microphone 1 TIME
-        this.srcStream = await navigator.mediaDevices.getUserMedia({
-          video: true,
-          audio: true,
-        });
       }
 
       this.hasGroupVideoCallStarted = true;
@@ -1032,11 +1032,12 @@ export default {
     // Listen for video call
     peer.on("call", async (answeringCall) => {
       console.log("Called");
+
       this.answeringCall = answeringCall;
 
       if (this.contactIsGroup) {
         await this.startGroupVideoCall();
-        this.answeringCall.answer(this.srcStream);
+        answeringCall.answer(this.srcStream);
       } else {
         this.isCaller = false;
         this.hasVideoCallStarted = true;
@@ -1068,6 +1069,13 @@ export default {
 
     // Send new account status to GraphQL Server
     this.changeAccountStatus("Online");
+  },
+  watch: {
+    $route(to, from) {
+      // react to route changes...
+      console.log(to);
+      console.log(from);
+    },
   },
 };
 </script>
