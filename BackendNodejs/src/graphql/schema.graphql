@@ -141,6 +141,7 @@ type Message {
   markedDeletedBySender: Boolean
   markedDeletedByReceiver: Boolean
   sentTime: Date!
+  seenStatus: Boolean
 }
 
 type GroupMessage {

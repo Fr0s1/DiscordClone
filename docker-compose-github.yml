@@ -98,7 +98,6 @@ services:
 networks:
   discord-backend:
 
-    null
 volumes:
-  redis-data: null
-  mongodb-data: null
+  redis-data: 
+  mongodb-data: 

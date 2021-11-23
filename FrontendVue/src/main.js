@@ -4,6 +4,7 @@ import router from "./router";
 import Amplify, { Auth } from 'aws-amplify';
 import aws_exports from './aws-exports';
 import config from './config'
+import Toaster from '@meforma/vue-toaster';
 
 import {
     applyPolyfills,
@@ -43,7 +44,8 @@ applyPolyfills().then(() => {
     })
 
     app.use(BootstrapVue3)
-    app.use(BootstrapIconsPlugin)
+    app.use(BootstrapIconsPlugin);
+    app.use(Toaster)
 
     app.use(VueAxios, axios)
     app.use(router)

@@ -5,14 +5,23 @@
       <div class="profile-header">
         <div class="profile-header-cover"></div>
         <div class="profile-header-content">
-          <div class="profile-header-img mb-4">
-            <img v-bind:src="user.avatar" class="mb-4" alt="" />
+          <div v-if="user.avatar != ''" class="profile-header-img mb-4">
+            <b-avatar square v-bind:src="user.avatar" size="130px"></b-avatar>
+          </div>
+
+          <div v-else class="profile-header-img mb-4">
+            <b-avatar
+              square
+              src="https://thumbs.dreamstime.com/b/default-avatar-profile-icon-social-media-user-vector-image-icon-default-avatar-profile-icon-social-media-user-vector-image-209162840.jpg"
+              size="140px"
+            ></b-avatar>
           </div>
 
           <div class="profile-header-info">
             <h4 class="m-t-sm">{{ user.name }}</h4>
-            <p class="m-b-sm">UXUI + Frontend Developer</p>
-            
+            <button @click="addContact(user)" class="btn btn-primary">
+              Message
+            </button>
           </div>
         </div>
 
@@ -46,8 +55,6 @@
           <div class="col-md-8">
             <div class="tab-content p-0">
               <div class="tab-pane fade active show" id="profile-friends">
-                <div class="m-b-10"><b>Friend List (9)</b></div>
-
                 <ul class="friend-list clearfix">
                   <!-- <li  
                     style="background-color: #242526"
@@ -65,12 +72,15 @@
                       <i style="color: black" class="bi bi-three-dots"></i>
                     </a>
                   </li> -->
-                  <li  
+                  <li
                     style="background-color: #242526"
                     v-for="list in user.friendlist"
                     v-bind:key="list.username"
                   >
-                    <a v-if="list.username != currentUsername" :href="'/profile/'+ list.username">
+                    <a
+                      v-if="list.username != currentUsername"
+                      :href="'/profile/' + list.username"
+                    >
                       <div class="friend-img">
                         <img v-bind:src="list.avatar" alt="" />
                       </div>
@@ -80,7 +90,7 @@
                       </div>
                       <i style="color: black" class="bi bi-three-dots"></i>
                     </a>
-                    <a v-else :href="'/user/'+ currentUsername">
+                    <a v-else :href="'/user/' + currentUsername">
                       <div class="friend-img">
                         <img v-bind:src="list.avatar" alt="" />
                       </div>
@@ -146,7 +156,13 @@
 import { useRoute } from "vue-router";
 import gql from "graphql-tag";
 import { computed } from "@vue/reactivity";
-
+export const ADD_CONTACT = gql`
+  mutation ($username: String!) {
+    addUserToContactList(username: $username) {
+      username
+    }
+  }
+`;
 export default {
   inject: ["currentUsername"],
   setup() {
@@ -188,6 +204,15 @@ export default {
   },
 
   methods: {
+    addContact(user) {
+      console.log(user.username);
+      this.$apollo.mutate({
+        mutation: ADD_CONTACT,
+        variables: {
+          username: user.username,
+        },
+      });
+    },
   },
 };
 </script>

@@ -1,8 +1,6 @@
 <template>
   <div class="bgimg">
     <amplify-authenticator>
-      <!-- The rest of your app code -->
-
       <router-view />
       <amplify-sign-in
         header-text="Welcome to Discord Clone App"

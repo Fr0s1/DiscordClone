@@ -84,6 +84,7 @@ export default {
   },
   data() {
     return {
+      visible: true,
       messageContent: "", // Message input field
 
       messagesFilePreviewUrls: [], // An array contain img's src when user upload image for previewing

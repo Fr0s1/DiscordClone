@@ -74,6 +74,9 @@ export default {
     srcStream: {
       default: null,
     },
+    srcStream: {
+      default: null,
+    },
   },
 
   data() {

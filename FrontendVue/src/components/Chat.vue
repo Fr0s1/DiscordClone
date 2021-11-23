@@ -4,39 +4,200 @@
       <div class="col-lg-12">
         <div class="card chat-app">
           <div id="plist" class="people-list">
-            <div class="input-group">
-              <div class="input-group-prepend">
-                <span class="input-group-text"
-                  ><i class="fas fa-search" style="color: #007bff"></i
-                ></span>
+            <div style="height: 10vh; margin-bottom: 30px; margin-top: -20px">
+              <b-dropdown offset="25" variant="light" class="m-3" right>
+                <template #button-content>
+                  <b-avatar
+                    variant="info"
+                    :src="user.avatar"
+                    class="mr-4"
+                  ></b-avatar>
+                  <span style="margin-left: 5px">{{ user.name }}</span>
+                </template>
+
+                <b-dropdown-item @click="about()"
+                  ><b-icon icon="house-door"></b-icon
+                  ><span style="margin-left: 10px">Home</span></b-dropdown-item
+                >
+                <b-dropdown-item @click="info()"
+                  ><b-icon icon="person"></b-icon
+                  ><span style="margin-left: 10px"
+                    >Profile</span
+                  ></b-dropdown-item
+                >
+                <b-dropdown-item @click="signOut()"
+                  ><b-icon icon="power"></b-icon
+                  ><span style="margin-left: 10px"
+                    >Logout</span
+                  ></b-dropdown-item
+                >
+              </b-dropdown>
+            </div>
+            <div
+              class="input-group"
+              style="margin-bottom: 20px; margin-left: 20px"
+            >
+              <b-button-group>
+                <b-button
+                  style="margin-left: 20px"
+                  variant="primary"
+                  v-b-toggle.collapse-1
+                  class="m-1"
+                >
+                  <b-icon icon="search"></b-icon>
+                </b-button>
+                <b-button variant="primary" v-b-toggle.collapse-2 class="m-1">
+                  <b-icon icon="person-plus-fill"></b-icon>
+                </b-button>
+                <b-button
+                  style="margin-left: 5px; margin-top: 2.5%"
+                  variant="primary"
+                  data-bs-toggle="modal"
+                  data-bs-target="#exampleModal"
+                >
+                  <b-icon icon="people-fill"></b-icon>
+                </b-button>
+              </b-button-group>
+
+              <!-- Collapse -->
+              <b-collapse id="collapse-1">
+                <b-card>
+                  <b-input-group class="mb-2">
+                    <b-input-group-prepend is-text>
+                      <b-icon icon="search"></b-icon>
+                    </b-input-group-prepend>
+                    <b-form-input
+                      type="search"
+                      placeholder="Search contact"
+                    ></b-form-input>
+                  </b-input-group>
+                </b-card>
+              </b-collapse>
+
+              <b-collapse id="collapse-2">
+                <b-card>
+                  <b-input-group class="mb-2">
+                    <b-input-group-prepend is-text>
+                      <b-icon icon="person-fill"></b-icon>
+                    </b-input-group-prepend>
+                    <b-form-input
+                      type="text"
+                      placeholder="User ID"
+                    ></b-form-input>
+                  </b-input-group>
+                </b-card>
+              </b-collapse>
+              <!-- Modal -->
+              <div
+                class="modal fade"
+                id="exampleModal"
+                tabindex="-1"
+                aria-labelledby="exampleModalLabel"
+                aria-hidden="true"
+              >
+                <div class="modal-dialog">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title" id="exampleModalLabel">
+                        Create New Group Contact
+                      </h5>
+                      <button
+                        type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close"
+                      ></button>
+                    </div>
+                    <div class="modal-body">
+                      <form>
+                        <div class="mb-3">
+                          <label
+                            for="exampleFormControlInput1"
+                            class="form-label"
+                            >Group Name</label
+                          >
+                          <input
+                            type="text"
+                            class="form-control"
+                            id="exampleFormControlInput1"
+                          />
+                        </div>
+                        <div
+                          class="mb-3"
+                          style="height: 155px; overflow-y: auto"
+                        >
+                          <label
+                            for="exampleFormControlInput1"
+                            class="form-label"
+                            >Member</label
+                          >
+                          <ul
+                            class="list-group"
+                            v-for="list in user.friendlist"
+                            :key="list.username"
+                          >
+                            <li class="list-group-item">
+                              <div class="form-check">
+                                <input
+                                  style="line-height: 75px"
+                                  class="form-check-input"
+                                  type="checkbox"
+                                  value=""
+                                  id="flexCheckDefault"
+                                />
+                                <b-avatar
+                                  variant="info"
+                                  :src="list.avatar"
+                                  class="mr-3"
+                                ></b-avatar>
+                                <span
+                                  class="form-check-label"
+                                  for="flexCheckDefault"
+                                  >{{ list.name }}</span
+                                >
+                              </div>
+                            </li>
+                          </ul>
+                        </div>
+                      </form>
+                    </div>
+                    <div class="modal-footer">
+                      <button
+                        style="width: 30%"
+                        type="button"
+                        class="btn btn-primary"
+                      >
+                        Create
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <input type="text" class="form-control" placeholder="Search..." />
             </div>
 
-            <contact-list
-              :contactlist="user.contactlist"
-              :contactIsGroup="contactIsGroup"
-              @fetch-messages="fetchMessages"
-              @change-contact-type="
-                contactIsGroup = !contactIsGroup;
-                activeContactUsername = '';
-              "
-              @empty-current-realtime-messages="emptyRealtimeChatMessages"
-              :realtimeFetchedMessages="realtimeFetchedMessages"
-            ></contact-list>
+            <div
+              id="people-list-content"
+              style="height: 100%; overflow-y: scroll"
+            >
+              <contact-list
+                :contactlist="user.contactlist"
+                :contactIsGroup="contactIsGroup"
+                @fetch-messages="fetchMessages"
+                @change-contact-type="contactIsGroup = !contactIsGroup"
+                @empty-current-realtime-messages="emptyRealtimeChatMessages"
+                :realtimeFetchedMessages="realtimeFetchedMessages"
+              ></contact-list>
 
-            <group-list
-              :groups="user.groups"
-              :contactIsGroup="contactIsGroup"
-              :realtimeGroupMessages="realtimeGroupMessages"
-              @fetch-group-messages="fetchGroupMessages"
-              @change-contact-type="
-                contactIsGroup = !contactIsGroup;
-                activeGroupId = '';
-              "
-              @joinSocketIORoom="joinSocketIORoom"
-              @empty-realtime-group-messages="emptyRealtimeGroupsMessages"
-            ></group-list>
+              <group-list
+                :groups="user.groups"
+                :contactIsGroup="contactIsGroup"
+                :realtimeGroupMessages="realtimeGroupMessages"
+                @fetch-group-messages="fetchGroupMessages"
+                @change-contact-type="contactIsGroup = !contactIsGroup"
+                @joinSocketIORoom="joinSocketIORoom"
+                @empty-realtime-group-messages="emptyRealtimeGroupsMessages"
+              ></group-list>
+            </div>
           </div>
           <div
             class="chat"
@@ -89,15 +250,10 @@
                   >
                     <i class="fa fa-phone"></i>
                   </button>
-
-                  <button
-                    class="btn btn-outline-primary"
-                    data-toggle="tooltip"
-                    data-placement="auto"
-                    title="Profile"
-                    @click="info"
-                  >
-                    <i class="fas fa-user-alt"></i>
+                  <!-- <button class="btn btn-outline-primary" data-toggle="tooltip" data-placement="auto" title="Profile" @click="info()">
+                    <i
+                      class="fas fa-user-alt"
+                    ></i>
                   </button>
                   <button
                     class="btn btn-outline-primary"
@@ -108,15 +264,11 @@
                   >
                     <i class="fas fa-sign-out-alt"></i>
                   </button>
-                  <button
-                    class="btn btn-outline-primary"
-                    data-toggle="tooltip"
-                    data-placement="auto"
-                    title="About Us"
-                    @click="about"
-                  >
-                    <i class="fas fa-info"></i>
-                  </button>
+                  <button class="btn btn-outline-primary" data-toggle="tooltip" data-placement="auto" title="About Us" @click="about()">
+                    <i
+                      class="fas fa-info"
+                    ></i>
+                  </button> -->
                 </div>
               </div>
             </div>
@@ -173,6 +325,7 @@
             "
             :groupMembersPeerIds="groupMembersPeerIds"
             :peer="peer"
+            :answeringCall="answeringCall"
             :groupMembers="group.members"
             :srcStream="srcStream"
             @stop-video-chat="stopGroupVideoCall"
@@ -308,6 +461,7 @@ export default {
         query: gql`
           query Query($username: String) {
             user(username: $username) {
+              name
               avatar
               contactlist {
                 username
@@ -794,7 +948,6 @@ export default {
       let groupMembers = this.group.members;
       for (let i = 0; i < groupMembers.length; i++) {
         let member = groupMembers[i];
-
         if (
           member.username != this.currentUsername &&
           member.accountStatus === "Online"
@@ -1085,8 +1238,49 @@ export default {
 </script>
 
 <style scoped>
+#people-list-content::-webkit-scrollbar {
+  width: 1px;
+  background-color: #f5f5f5;
+}
+#menu .ul {
+  padding: 0;
+  list-style: none;
+  background: #f01f1f;
+}
+#menu.ul li {
+  display: inline-block;
+  position: relative;
+  line-height: 21px;
+  text-align: left;
+  list-style: none;
+}
+#menu ul li a {
+  display: block;
+  padding: 8px 25px;
+  color: rgb(0, 0, 0);
+  text-decoration: none;
+  list-style: none;
+}
+#menu ul li a:hover {
+  color: #fff;
+  background: #fcf700;
+}
+#menu ul.dropdown {
+  min-width: 100%; /* Set width of the dropdown */
+  background: #f2f2f2;
+  display: none;
+  position: absolute;
+  z-index: 999;
+  left: 0;
+  list-style: none;
+}
+#menu ul:hover .ul.dropdown {
+  display: block; /* Display the dropdown */
+}
+#menu ul.dropdown li {
+  display: block;
+}
 .btn {
-  text-align: center;
   margin-right: 5px;
   width: 40px;
   height: 40px;

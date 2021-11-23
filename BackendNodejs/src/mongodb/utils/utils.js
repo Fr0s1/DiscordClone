@@ -1,4 +1,4 @@
-const { User, Group } = require('../schemas')
+const { User } = require('../schemas')
 
 exports.ifInContactList = async (firstUser, secondUser) => {
     let secondUserInfo = await User.findOne({
