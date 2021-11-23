@@ -5,6 +5,7 @@
         <form
           enctype="multipart/form-data"
           @submit.prevent="contactIsGroup ? sendGroupMessage() : sendMessage()"
+          autocomplete="off"
         >
           <!-- <div class="input-group-prepend">
             <button class="btn-outline-primary btn">
@@ -125,44 +126,47 @@ export default {
         });
       }
 
-      this.$emit("realtime-message", message);
+      // The message must have at least 1 file or non empty content
+      if (message.content.length > 0 || message.files.length > 0) {
+        this.$emit("realtime-message", message);
 
-      let sentMessage = new FormData();
+        let sentMessage = new FormData();
 
-      sentMessage.append("sender", this.currentUsername);
-      sentMessage.append("receiver", this.activeContactUsername);
-      sentMessage.append("content", this.messageContent);
+        sentMessage.append("sender", this.currentUsername);
+        sentMessage.append("receiver", this.activeContactUsername);
+        sentMessage.append("content", this.messageContent);
 
-      if (this.messageFiles.length > 0) {
-        for (let fileIndex in this.messageFiles) {
-          sentMessage.append(`f${fileIndex}`, this.messageFiles[fileIndex]);
+        if (this.messageFiles.length > 0) {
+          for (let fileIndex in this.messageFiles) {
+            sentMessage.append(`f${fileIndex}`, this.messageFiles[fileIndex]);
+          }
+
+          this.axios
+            .post(`${this.config.socketIO_HTTP}/message`, sentMessage)
+            .then((res) => {
+              this.$emit("chatMessage", res.data);
+            })
+            .catch((e) => {
+              console.log(e);
+            });
+        } else {
+          this.axios
+            .post(`${this.config.socketIO_HTTP}/message`, sentMessage)
+            .then((res) => {
+              console.log(res);
+            })
+            .catch((e) => {
+              console.log(e);
+            });
+
+          this.$emit("chatMessage", message);
         }
+        this.messageContent = "";
 
-        this.axios
-          .post(`${this.config.socketIO_HTTP}/message`, sentMessage)
-          .then((res) => {
-            this.$emit("chatMessage", res.data);
-          })
-          .catch((e) => {
-            console.log(e);
-          });
-      } else {
-        this.axios
-          .post(`${this.config.socketIO_HTTP}/message`, sentMessage)
-          .then((res) => {
-            console.log(res);
-          })
-          .catch((e) => {
-            console.log(e);
-          });
-
-        this.$emit("chatMessage", message);
+        this.messageFiles = [];
+        this.messagesFilePreviewUrls = [];
+        this.$refs.messageFiles.value = null;
       }
-      this.messageContent = "";
-
-      this.messageFiles = [];
-      this.messagesFilePreviewUrls = [];
-      this.$refs.messageFiles.value = null;
     },
     filesChange(files) {
       this.messageFiles = files;
@@ -192,43 +196,45 @@ export default {
         });
       }
 
-      this.$emit("realtime-message", message);
+      if (message.content.length > 0 || message.files.length > 0) {
+        this.$emit("realtime-group-message", message);
 
-      let sentMessage = new FormData();
+        let sentMessage = new FormData();
 
-      sentMessage.append("sender", this.currentUsername);
-      sentMessage.append("content", this.messageContent);
-      sentMessage.append("group", this.activeGroupId);
-      if (this.messageFiles.length > 0) {
-        for (let fileIndex in this.messageFiles) {
-          sentMessage.append(`f${fileIndex}`, this.messageFiles[fileIndex]);
+        sentMessage.append("sender", this.currentUsername);
+        sentMessage.append("content", this.messageContent);
+        sentMessage.append("group", this.activeGroupId);
+        if (this.messageFiles.length > 0) {
+          for (let fileIndex in this.messageFiles) {
+            sentMessage.append(`f${fileIndex}`, this.messageFiles[fileIndex]);
+          }
+
+          this.axios
+            .post(`${this.config.socketIO_HTTP}/groupmessage`, sentMessage)
+            .then((res) => {
+              this.$emit("groupChatMessage", res.data);
+            })
+            .catch((e) => {
+              console.log(e);
+            });
+        } else {
+          this.axios
+            .post(`${this.config.socketIO_HTTP}/groupmessage`, sentMessage)
+            .then((res) => {
+              console.log(res);
+            })
+            .catch((e) => {
+              console.log(e);
+            });
+
+          this.$emit("groupChatMessage", message);
         }
+        this.messageContent = "";
 
-        this.axios
-          .post(`${this.config.socketIO_HTTP}/groupmessage`, sentMessage)
-          .then((res) => {
-            this.$emit("groupChatMessage", res.data);
-          })
-          .catch((e) => {
-            console.log(e);
-          });
-      } else {
-        this.axios
-          .post(`${this.config.socketIO_HTTP}/groupmessage`, sentMessage)
-          .then((res) => {
-            console.log(res);
-          })
-          .catch((e) => {
-            console.log(e);
-          });
-
-        this.$emit("groupChatMessage", message);
+        this.messageFiles = [];
+        this.messagesFilePreviewUrls = [];
+        this.$refs.messageFiles.value = null;
       }
-      this.messageContent = "";
-
-      this.messageFiles = [];
-      this.messagesFilePreviewUrls = [];
-      this.$refs.messageFiles.value = null;
     },
   },
 };

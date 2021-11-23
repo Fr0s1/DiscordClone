@@ -4,7 +4,7 @@ const bucketName = process.env.BUCKET_NAME
 
 const s3Config = {
     params: { Bucket: bucketName },
-    region: 'ap-southeast-1'
+    region: process.env.region
 }
 
 let env = process.env.ENV

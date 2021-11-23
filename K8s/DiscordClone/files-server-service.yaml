@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: discordclone-files-svc
+  namespace: discord-backend
+spec:
+  selector:
+    app: files-server
+  ports:
+    - name: files-server
+      port: 8000
+      targetPort: 8000
+      protocol: TCP
+  type: ClusterIP

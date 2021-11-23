@@ -9,11 +9,15 @@
         class="member-video"
         v-for="(member, index) in members"
         :key="index"
-        ref="contactVideo"
+        :id="member.username"
+        :ref="`contactVideo-${member.username}`"
       >
-        <video autoplay="true" :id="member.username" @click="setMainUserVideo">
-          <p>{{ member.name }}</p>
-        </video>
+        <video
+          autoplay="true"
+          :id="member.username"
+          @click="setMainUserVideo"
+        ></video>
+        <p>{{ member.name }}</p>
       </div>
     </div>
     <div class="control-buttons" style="margin-bottom: 20px">
@@ -33,7 +37,7 @@
         <i
           v-if="hasTurnedOffMicrophone"
           class="fas fa-microphone-slash"
-          style="color: red;margin-left: -3px;"
+          style="color: red; margin-left: -3px"
         ></i>
         <i v-else class="fas fa-microphone"></i>
       </button>
@@ -45,7 +49,7 @@
         <i
           v-if="hasTurnedOffWebcam"
           class="fas fa-video-slash"
-          style="color: red;margin-left: -1px;"
+          style="color: red; margin-left: -1px"
         ></i>
         <i v-else class="fas fa-video"></i>
       </button>
@@ -57,9 +61,6 @@
 export default {
   inject: ["currentUsername", "config"],
   props: {
-    isCaller: {
-      type: Boolean,
-    },
     peer: {
       default: null,
     },
@@ -73,75 +74,70 @@ export default {
     answeringCall: {
       default: null,
     },
+    srcStream: {
+      default: null,
+    },
   },
 
   data() {
     return {
       hasTurnedOffMicrophone: false,
       hasTurnedOffWebcam: false,
-      srcStream: null,
       call: null,
       groupMembersStream: [],
       groupMembersPeerCurrentCall: {},
+      groupMembersStream: {},
     };
   },
   methods: {
     startVideoChat() {
-      navigator.mediaDevices
-        .getUserMedia({ video: true, audio: true })
-        .then((stream) => {
-          let userWebcam = this.$refs.srcVideo;
-          let peer = this.peer;
-          let membersWebcam = this.$refs.contactVideo;
-          this.srcStream = stream;
-          userWebcam.srcObject = stream;
-          userWebcam.play();
-          if (this.isCaller) {
-            this.groupMembersPeerIds.forEach((member) => {
-              console.log(member.peerId);
-              this.groupMembersPeerCurrentCall[member.username] = peer.call(
-                member.peerId,
-                stream
-              );
-              this.groupMembersPeerCurrentCall[member.username].on(
-                "stream",
-                function (remoteStream) {
-                  // Show stream in some video/canvas element.
-                  console.log("Received stream");
-                  console.log(membersWebcam.childNodes[0]);
-                  membersWebcam.childNodes[0].srcObject = remoteStream;
-                  console.log(remoteStream);
-                }
-              );
-            });
-          } else {
-            this.call = this.answeringCall;
-            this.call.answer(stream); // Answer the call with an A/V stream.
+      let userWebcam = this.$refs.srcVideo;
+      let peer = this.peer;
+      userWebcam.srcObject = this.srcStream;
+      userWebcam.play();
+
+      this.groupMembersPeerIds.forEach((member) => {
+        // Call all online group members
+        this.groupMembersPeerCurrentCall[member.username] = peer.call(
+          member.peerId,
+          this.srcStream
+        );
+        this.groupMembersPeerCurrentCall[member.username].on(
+          "stream",
+          (remoteStream) => {
+            // Show stream in correct video element associated with group members
+            this.groupMembersStream[member.username] = remoteStream;
+            let membersWebcam = this.$refs[`contactVideo-${member.username}`];
+
+            membersWebcam.childNodes[0].srcObject = remoteStream;
           }
-        })
-        .catch(function (err) {
-          console.log("An error occurred: " + err);
-        });
+        );
+      });
     },
     endVideoCall() {
+      for (const [groupMembers, peerCall] of Object.entries(
+        this.groupMembersPeerCurrentCall
+      )) {
+        peerCall.close();
+      }
+      for (const [groupMembers, stream] of Object.entries(
+        this.groupMembersStream
+      )) {
+        stream.getTracks().forEach(function (track) {
+          track.stop();
+        });
+      }
       this.$emit("stop-video-chat");
-      this.stopWebcamAndMicrophone(this.srcStream);
-      this.stopWebcamAndMicrophone(this.contactStream);
-      this.currentCall.close();
     },
-    // stop only mic
-    changeWebcamStatus(stream) {
+    // Turn on/off webcam
+    changeWebcamStatus() {
       this.hasTurnedOffWebcam = !this.hasTurnedOffWebcam;
-      stream.getVideoTracks()[0].enabled = !this.hasTurnedOffWebcam;
+      this.$emit("change-webcam-status");
     },
-    changeMicrophoneStatus(stream) {
+    // Turn on/off mic
+    changeMicrophoneStatus() {
       this.hasTurnedOffMicrophone = !this.hasTurnedOffMicrophone;
-      stream.getAudioTracks()[0].enabled = !this.hasTurnedOffMicrophone;
-    },
-    stopWebcamAndMicrophone(stream) {
-      stream.getTracks().forEach(function (track) {
-        track.stop();
-      });
+      this.$emit("change-microphone-status");
     },
   },
   computed: {
@@ -156,8 +152,16 @@ export default {
   },
 };
 </script>
+
 <style scoped>
-.btn{
+.member-video {
+  display: inline-block;
+}
+
+.member-video video {
+  height: 200px;
+}
+.btn {
   width: 40px;
   margin-right: 5px;
 }

@@ -68,13 +68,15 @@ async function userMessages(parent, args, context) {
                 ]
             }]
         }
-    ).sort({ sentTime: 'desc' }).limit(limit)
+    ).sort({ sentTime: 'desc' }).limit(limit + 1)
+
+    let sentMessages = messages.slice(0, limit)
 
     let result = {
-        messages,
-        count: messages.length,
+        messages: sentMessages,
+        count: sentMessages.length,
         get nextCursor() {
-            return this.count > 0 ? messages[messages.length - 1].sentTime : ""
+            return messages[limit] ? messages[limit].sentTime : ""
         }
     }
     return result
@@ -93,13 +95,15 @@ async function groupMessages(parent, args, context) {
             sentTime: { $lt: nextCursor }
         }
         ]
-    }).sort({ sentTime: 'desc' }).limit(limit)
+    }).sort({ sentTime: 'desc' }).limit(limit + 1)
+
+    let sentGroupMessages = messages.slice(0, limit)
 
     let result = {
-        messages,
-        count: messages.length,
+        messages: sentGroupMessages,
+        count: sentGroupMessages.length,
         get nextCursor() {
-            return this.count > 0 ? messages[messages.length - 1].sentTime : ""
+            return messages[limit] ? messages[limit].sentTime : ""
         }
     }
     return result

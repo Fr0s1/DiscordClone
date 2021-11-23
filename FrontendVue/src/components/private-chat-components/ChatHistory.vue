@@ -78,12 +78,10 @@
         </div>
       </li>
 
-      <!-- This section is to display messages fetch from graphql -->
+      <!-- This section is to display messages fetch from socketio -->
       <li
         class="clearfix"
-        v-for="(message, index) in realtimeFetchedMessages[
-          activeContactUsername
-        ]"
+        v-for="(message, index) in allRealtimeMessages"
         :key="index"
       >
         <div v-if="currentUsername === message.sender.username">
@@ -185,8 +183,8 @@ export default {
     hasFinishedLoadingMessages: {
       type: Boolean,
     },
-    realtimeFetchedMessages: {
-      type: Object,
+    allRealtimeMessages: {
+      type: Array,
     },
     scrollHeight: {
       type: Number,
@@ -208,7 +206,7 @@ export default {
     },
     fetchMessages() {
       let chatHistory = this.$refs.chatHistory;
-      if (chatHistory.scrollTop == 0) {
+      if (chatHistory.scrollTop == 0 && this.userMessages.nextCursor !== "") {
         this.$emit("fetch-messages", {
           limit: this.limit,
           nextCursor: this.userMessages.nextCursor,
@@ -250,28 +248,38 @@ export default {
 };
 </script>
 <style scoped>
+.btn {
+  width: 40px;
+}
 
 .chat-history {
   padding: 20px;
   border-bottom: 2px solid #fff;
 }
+
 .chat-history ul::-webkit-scrollbar {
-	width: 10px;
-  }
+  width: 10px;
+}
+
 .chat-history ul::-webkit-scrollbar-thumb {
-	--webkit-box-shadow: inset 0 0 6px rgba(0,0,0,.3);
+  -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+  --webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
   border-radius: 10px;
   background-color: #007bff;
 }
+
 .chat-history ul::-webkit-scrollbar-track {
-	--webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
-	border-radius: 10px;
-	background-color: #F5F5F5;
+  -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+  border-radius: 10px;
+  background-color: #f5f5f5;
+  --webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+  border-radius: 10px;
+  background-color: #f5f5f5;
 }
 
 .chat-history ul {
   width: auto;
-  height: 65vh;
+  height: 71vh;
   padding: 20px;
   overflow-y: auto;
   overflow-x: hidden;

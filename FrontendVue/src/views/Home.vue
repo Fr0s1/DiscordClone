@@ -10,12 +10,13 @@
 import HelloWorld from "@/components/HelloWorld.vue";
 import { Auth } from 'aws-amplify';
 import gql from "graphql-tag";
-export const ADD_USER = gql`mutation ($email: String!, $name: String!, $phone_number: String!, $username: String!) {
-  addUser(email: $email, name: $name, phone_number: $phone_number, username: $username) {
+export const ADD_USER = gql`mutation ($email: String!, $name: String!, $phone_number: String!, $username: String!, $birthdate: BirthDate!) {
+  addUser(email: $email, name: $name, phone_number: $phone_number, username: $username, birthdate: $birthdate) {
     email,
     name,
     phone_number,
     username
+    birthdate
   }
 }`;
 
@@ -51,7 +52,8 @@ export default {
                 name: result.attributes.name,
                 email: result.attributes.email,
                 phone_number: result.attributes.phone_number,
-                username: result.username
+                username: result.username,
+                birthdate: result.attributes.birthdate
               }
             });
         })
@@ -78,3 +80,8 @@ export default {
   }
 };
 </script>
+<style>
+  .home{
+    background: white;
+  }
+</style>

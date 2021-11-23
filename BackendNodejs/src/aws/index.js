@@ -24,9 +24,6 @@ if (env === "DOCKER") {
     cognitoConfig.secretAccessKey = secretAccessKey
 }
 
-console.log(s3Config)
-console.log(cognitoConfig)
-
 const s3 = new AWS.S3(s3Config);
 
 const cognitoClient = new AWS.CognitoIdentityServiceProvider(cognitoConfig)

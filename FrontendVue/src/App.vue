@@ -1,6 +1,7 @@
 <template>
-  <amplify-authenticator>
-    <!-- The rest of your app code -->
+  <div class="bgimg">
+    <amplify-authenticator>
+      <!-- The rest of your app code -->
 
     <router-view />
     <!-- <amplify-sign-in
@@ -14,6 +15,7 @@
     ></amplify-sign-up>
 
   </amplify-authenticator>
+  </div>
 </template>
 
 <script>
@@ -96,6 +98,7 @@ export default {
   
 }
 </script>
+
 <style>
   :root{
     --amplify-primary-color: #007bff;

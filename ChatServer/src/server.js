@@ -9,7 +9,11 @@ const bodyParser = require('body-parser')
 const { createClient } = require("redis");
 const redisAdapter = require('@socket.io/redis-adapter');
 
-require('dotenv').config({ path: path.join(process.cwd(), 'env/.env') })
+let ENV = process.env.ENV
+
+if (ENV !== "AWS") {
+    require('dotenv').config({ path: path.join(process.cwd(), 'env/.env') })
+}
 
 let corsOptions = {
     origin: "*"
@@ -26,10 +30,11 @@ let userSessionController = require('./controllers/user-session.controller')
 
 const io = require("socket.io")(server, {
     cors: {
-        origin: "*",
-        methods: ["GET", "POST"]
+        origin: process.env.frontend_endpoint,
+        methods: ["GET", "POST"],
+        credentials: true
     },
-    allowEIO3: true,
+    allowEIO3: true
 });
 
 const pubClient = createClient({ host: process.env.redisHost, port: process.env.redisPort });
@@ -63,6 +68,15 @@ nsp.on('connection', (socket) => {
     socket.on("groupMessage", data => {
         // console.log(`Received data from socket ${socket.id}`)
         socket.to(data.group).emit("groupMessage", data)
+    })
+
+    socket.on("delete-user-session", data => {
+        console.log("disconnected")
+        userSessionController.deleteUserSession(data.username)
+    })
+
+    socket.on("disconnect", () => {
+        console.log(`Socket with id ${socket.id} disconnected`)
     })
 });
 

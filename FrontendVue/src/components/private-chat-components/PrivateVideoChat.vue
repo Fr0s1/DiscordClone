@@ -22,7 +22,7 @@
         <i
           v-if="hasTurnedOffMicrophone"
           class="fas fa-microphone-slash"
-          style="color: red; margin-left: -3px;"
+          style="color: red"
         ></i>
         <i v-else class="fas fa-microphone"></i>
       </button>
@@ -34,7 +34,7 @@
         <i
           v-if="hasTurnedOffWebcam"
           class="fas fa-video-slash"
-          style="color: red; margin-left: -1px;"
+          style="color: red"
         ></i>
         <i v-else class="fas fa-video"></i>
       </button>
@@ -70,32 +70,34 @@ export default {
   },
   methods: {
     async startVideoChat() {
-      navigator.mediaDevices
-        .getUserMedia({ video: true, audio: true })
-        .then((stream) => {
-          let userWebcam = this.$refs.srcVideo;
-          let peer = this.peer;
-          let contactWebcam = this.$refs.contactVideo;
-          this.srcStream = stream;
-          userWebcam.srcObject = stream;
-          userWebcam.play();
-
-          if (this.isCaller) {
-            this.call = peer.call(this.activeContactPeerId, stream);
-          } else {
-            this.call = this.answeringCall;
-            this.call.answer(stream); // Answer the call with an A/V stream.
-          }
-
-          this.call.on("stream", function (remoteStream) {
-            // Show stream in some video/canvas element.
-            contactWebcam.srcObject = remoteStream;
-            contactWebcam.play();
-          });
-        })
-        .catch(function (err) {
-          console.log("An error occurred: " + err);
+      try {
+        this.srcStream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: true,
         });
+
+        let userWebcam = this.$refs.srcVideo;
+        let peer = this.peer;
+        let contactWebcam = this.$refs.contactVideo;
+        userWebcam.srcObject = this.srcStream;
+        userWebcam.play();
+
+        if (this.isCaller) {
+          this.call = peer.call(this.activeContactPeerId, this.srcStream);
+        } else {
+          this.call = this.answeringCall;
+          this.call.answer(this.srcStream); // Answer the call with an A/V stream.
+        }
+
+        this.call.on("stream", function (remoteStream) {
+          // Show stream in some video/canvas element.
+          this.contactStream = remoteStream;
+          contactWebcam.srcObject = remoteStream;
+          contactWebcam.play();
+        });
+      } catch (e) {
+        console.log(e);
+      }
     },
 
     endVideoCall() {
@@ -107,11 +109,15 @@ export default {
     // stop only mic
     changeWebcamStatus(stream) {
       this.hasTurnedOffWebcam = !this.hasTurnedOffWebcam;
-      stream.getVideoTracks()[0].enabled = !this.hasTurnedOffWebcam;
+      stream.getVideoTracks().forEach((track) => {
+        track.enabled = !this.hasTurnedOffWebcam;
+      });
     },
     changeMicrophoneStatus(stream) {
       this.hasTurnedOffMicrophone = !this.hasTurnedOffMicrophone;
-      stream.getAudioTracks()[0].enabled = !this.hasTurnedOffMicrophone;
+      stream.getAudioTracks().forEach((track) => {
+        track.enabled = !this.hasTurnedOffWebcam;
+      });
     },
     stopWebcamAndMicrophone(stream) {
       stream.getTracks().forEach(function (track) {
@@ -125,8 +131,7 @@ export default {
 };
 </script>
 <style scoped>
-.btn{
+.btn {
   width: 40px;
-  margin-right: 5px;
 }
 </style>

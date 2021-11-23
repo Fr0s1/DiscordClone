@@ -5,6 +5,7 @@ import Amplify, { Auth } from 'aws-amplify';
 import aws_exports from './aws-exports';
 import config from './config'
 import BootstrapVue3 from 'bootstrap-vue-3';
+import Toaster from '@meforma/vue-toaster';
 import { BootstrapIconsPlugin } from 'bootstrap-icons-vue';
 import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap-vue-3/dist/bootstrap-vue-3.css'
@@ -33,17 +34,18 @@ import { createStore } from 'vuex'
         render: () => h(App),
     })
 
-    const store = createStore({
-        state() {
-            return {
+    // const store = createStore({
+    //     state() {
+    //         return {
 
-            }
-        }
-    })
+    //         }
+    //     }
+    // })
     
-    app.use(store)
+    // app.use(store)
     app.use(BootstrapVue3)
     app.use(BootstrapIconsPlugin);
+    app.use(Toaster)
     app.use(VueAxios, axios)
     app.use(router)
     app.provide('config', config)
@@ -97,4 +99,3 @@ import { createStore } from 'vuex'
 
     app.mount("#app");
 })()
-

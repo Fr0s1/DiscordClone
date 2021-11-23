@@ -18,6 +18,9 @@ const userSchema = new Schema({
         type: String,
         unique: true,
     },
+    birthdate: {
+        type: Schema.Types.String
+    },
     friendlist: [{
         type: Schema.Types.ObjectId,
         ref: 'User'

@@ -1,4 +1,3 @@
-const fs = require('fs')
 const path = require('path')
 const axios = require('axios')
 
@@ -9,7 +8,11 @@ const http = require('http')
 
 const cors = require('cors')
 
-require('dotenv').config({ path: path.join(process.cwd(), 'env/.env') })
+let ENV = process.env.ENV
+
+if (ENV !== "AWS") {
+    require('dotenv').config({ path: path.join(process.cwd(), 'env/.env') })
+}
 
 const aws = require('./aws')
 
@@ -77,7 +80,7 @@ async function startApolloServer() {
                 region: process.env.region,
                 cognitoUserPoolId: process.env.cognitoUserPoolId,
                 tokenUse: process.env.tokenUse, //Possible Values: access | id
-                tokenExpiration: process.env.tokenExpiration //Up to default expiration of 1 hour (3600000 ms)
+                tokenExpiration: parseInt(process.env.tokenExpiration) //Up to default expiration of 1 hour (3600000 ms)
             })
 
             if (req.headers.authorization) {
