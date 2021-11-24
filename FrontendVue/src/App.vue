@@ -1,7 +1,6 @@
 <template>
   <div class="bgimg">
     <amplify-authenticator>
-      <router-view />
       <amplify-sign-in
         header-text="Welcome to Discord Clone App"
         slot="sign-in"
@@ -10,15 +9,32 @@
       <amplify-sign-up slot="sign-up" :formFields="formFields2">
         <div slot="federated-buttons"></div
       ></amplify-sign-up>
+
+      <div v-if="authState === 'signedin' && user">
+        <router-view />
+      </div>
     </amplify-authenticator>
   </div>
 </template>
 
 <script>
+import { onAuthUIStateChange } from "@aws-amplify/ui-components";
 export default {
   name: "AuthWithSlots",
+  created() {
+    this.unsubscribeAuth = onAuthUIStateChange((authState, authData) => {
+      this.authState = authState;
+      this.user = authData;
+    });
+  },
+  beforeUnmount() {
+    this.unsubscribeAuth();
+  },
   data() {
     return {
+      user: undefined,
+      authState: undefined,
+      unsubscribeAuth: undefined,
       formFields1: [
         {
           type: "username",

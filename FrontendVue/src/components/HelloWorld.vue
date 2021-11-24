@@ -55,9 +55,11 @@
 <script>
 export default {
   name: "Discord Clone",
-  inject: ["currentUsername"],
   props: {
     msg: String,
+    currentUsername: {
+      type: String,
+    },
   },
 };
 </script>

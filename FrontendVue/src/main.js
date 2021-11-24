@@ -37,85 +37,6 @@ applyPolyfills().then(() => {
     defineCustomElements(window);
 });
 
-
-(async () => {
-    const app = createApp({
-        render: () => h(App),
-    })
-
-    app.use(BootstrapVue3)
-    app.use(BootstrapIconsPlugin);
-    app.use(Toaster)
-
-    app.use(VueAxios, axios)
-    app.use(router)
-    app.provide('config', config)
-
-    app.use(new VueSocketIO({
-        debug: true,
-        connection: config.socketIO_Endpoint,
-        options: {
-            withCredentials: false,
-        },
-    }))
-
-    const cache = new InMemoryCache()
-
-    let authData = await getAuthData()
-
-    const getHeaders = async () => {
-
-        try {
-            app.provide('currentUsername', authData.user.username)
-            return {
-                authorization: `Bearer ${authData.token}`
-            }
-        } catch (e) {
-            console.log(e)
-        }
-    };
-
-    const httpLink = new HttpLink({
-        // You should use an absolute URL here
-        uri: config.graphQL_Endpoint,
-        headers: await getHeaders()
-    })
-
-    const wsLink = new WebSocketLink({
-        uri: config.graphql_subscription_endpoint,
-        options: {
-            reconnect: true,
-            connectionParams: {
-                authToken: authData.token
-            }
-        },
-    })
-
-    const link = split(
-        // split based on operation type
-        ({ query }) => {
-            const definition = getMainDefinition(query)
-            return definition.kind === 'OperationDefinition' &&
-                definition.operation === 'subscription'
-        },
-        wsLink,
-        httpLink
-    )
-
-    const apolloClient = new ApolloClient({
-        link,
-        cache,
-    })
-
-    const apolloProvider = createApolloProvider({
-        defaultClient: apolloClient,
-    })
-
-    app.use(apolloProvider)
-
-    app.mount("#app");
-})()
-
 async function getAuthData() {
     try {
         let res = await Auth.currentSession()
@@ -132,3 +53,79 @@ async function getAuthData() {
         console.log(e)
     }
 }
+
+(async () => {
+    const app = createApp({
+        render: () => h(App),
+    })
+
+    app.use(BootstrapVue3)
+    app.use(BootstrapIconsPlugin);
+    app.use(Toaster)
+    app.use(VueAxios, axios)
+    app.use(router)
+    app.provide('config', config)
+
+    try {
+        app.use(new VueSocketIO({
+            debug: true,
+            connection: config.socketIO_Endpoint,
+            options: {
+                withCredentials: false,
+            },
+        }))
+
+        const cache = new InMemoryCache()
+
+        let authData = await getAuthData()
+
+        app.provide('currentUsername', authData.user.username)
+
+        const httpLink = new HttpLink({
+            // You should use an absolute URL here
+            uri: config.graphQL_Endpoint,
+            headers: {
+                authorization: `Bearer ${authData.token}`
+            }
+        })
+
+        const wsLink = new WebSocketLink({
+            uri: config.graphql_subscription_endpoint,
+            options: {
+                reconnect: true,
+                connectionParams: {
+                    authToken: authData.token
+                }
+            },
+        })
+
+        const link = split(
+            // split based on operation type
+            ({ query }) => {
+                const definition = getMainDefinition(query)
+                return definition.kind === 'OperationDefinition' &&
+                    definition.operation === 'subscription'
+            },
+            wsLink,
+            httpLink
+        )
+
+        const apolloClient = new ApolloClient({
+            link,
+            cache,
+        })
+
+        const apolloProvider = createApolloProvider({
+            defaultClient: apolloClient,
+        })
+
+        app.use(apolloProvider)
+
+    } catch (e) {
+        console.log(e)
+    }
+
+    app.mount("#app");
+
+})()
+

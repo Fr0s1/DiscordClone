@@ -4,7 +4,7 @@
       <div class="col-lg-12">
         <div class="card chat-app">
           <div id="plist" class="people-list">
-            <div style="height: 10vh; margin-bottom: 30px; margin-top: -20px">
+            <div style="height: 10vh; margin-bottom: 10px; margin-top: -20px">
               <b-dropdown offset="25" variant="light" class="m-3" right>
                 <template #button-content>
                   <b-avatar
@@ -33,152 +33,10 @@
                 >
               </b-dropdown>
             </div>
-            <div
-              class="input-group"
-              style="margin-bottom: 20px; margin-left: 20px"
-            >
-              <b-button-group>
-                <b-button
-                  style="margin-left: 20px"
-                  variant="primary"
-                  v-b-toggle.collapse-1
-                  class="m-1"
-                >
-                  <b-icon icon="search"></b-icon>
-                </b-button>
-                <b-button variant="primary" v-b-toggle.collapse-2 class="m-1">
-                  <b-icon icon="person-plus-fill"></b-icon>
-                </b-button>
-                <b-button
-                  style="margin-left: 5px; margin-top: 2.5%"
-                  variant="primary"
-                  data-bs-toggle="modal"
-                  data-bs-target="#exampleModal"
-                >
-                  <b-icon icon="people-fill"></b-icon>
-                </b-button>
-              </b-button-group>
 
-              <!-- Collapse -->
-              <b-collapse id="collapse-1">
-                <b-card>
-                  <b-input-group class="mb-2">
-                    <b-input-group-prepend is-text>
-                      <b-icon icon="search"></b-icon>
-                    </b-input-group-prepend>
-                    <b-form-input
-                      type="search"
-                      placeholder="Search contact"
-                    ></b-form-input>
-                  </b-input-group>
-                </b-card>
-              </b-collapse>
+            <chat-util :user="user"></chat-util>
 
-              <b-collapse id="collapse-2">
-                <b-card>
-                  <b-input-group class="mb-2">
-                    <b-input-group-prepend is-text>
-                      <b-icon icon="person-fill"></b-icon>
-                    </b-input-group-prepend>
-                    <b-form-input
-                      type="text"
-                      placeholder="User ID"
-                    ></b-form-input>
-                  </b-input-group>
-                </b-card>
-              </b-collapse>
-              <!-- Modal -->
-              <div
-                class="modal fade"
-                id="exampleModal"
-                tabindex="-1"
-                aria-labelledby="exampleModalLabel"
-                aria-hidden="true"
-              >
-                <div class="modal-dialog">
-                  <div class="modal-content">
-                    <div class="modal-header">
-                      <h5 class="modal-title" id="exampleModalLabel">
-                        Create New Group Contact
-                      </h5>
-                      <button
-                        type="button"
-                        class="btn-close"
-                        data-bs-dismiss="modal"
-                        aria-label="Close"
-                      ></button>
-                    </div>
-                    <div class="modal-body">
-                      <form>
-                        <div class="mb-3">
-                          <label
-                            for="exampleFormControlInput1"
-                            class="form-label"
-                            >Group Name</label
-                          >
-                          <input
-                            type="text"
-                            class="form-control"
-                            id="exampleFormControlInput1"
-                          />
-                        </div>
-                        <div
-                          class="mb-3"
-                          style="height: 155px; overflow-y: auto"
-                        >
-                          <label
-                            for="exampleFormControlInput1"
-                            class="form-label"
-                            >Member</label
-                          >
-                          <ul
-                            class="list-group"
-                            v-for="list in user.friendlist"
-                            :key="list.username"
-                          >
-                            <li class="list-group-item">
-                              <div class="form-check">
-                                <input
-                                  style="line-height: 75px"
-                                  class="form-check-input"
-                                  type="checkbox"
-                                  value=""
-                                  id="flexCheckDefault"
-                                />
-                                <b-avatar
-                                  variant="info"
-                                  :src="list.avatar"
-                                  class="mr-3"
-                                ></b-avatar>
-                                <span
-                                  class="form-check-label"
-                                  for="flexCheckDefault"
-                                  >{{ list.name }}</span
-                                >
-                              </div>
-                            </li>
-                          </ul>
-                        </div>
-                      </form>
-                    </div>
-                    <div class="modal-footer">
-                      <button
-                        style="width: 30%"
-                        type="button"
-                        class="btn btn-primary"
-                      >
-                        Create
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div
-              id="people-list-content"
-              style="height: 100%; overflow-y: scroll"
-            >
+            <div id="people-list-content" style="height: 72vh; overflow-y: scroll">
               <contact-list
                 :contactlist="user.contactlist"
                 :contactIsGroup="contactIsGroup"
@@ -250,25 +108,6 @@
                   >
                     <i class="fa fa-phone"></i>
                   </button>
-                  <!-- <button class="btn btn-outline-primary" data-toggle="tooltip" data-placement="auto" title="Profile" @click="info()">
-                    <i
-                      class="fas fa-user-alt"
-                    ></i>
-                  </button>
-                  <button
-                    class="btn btn-outline-primary"
-                    data-toggle="tooltip"
-                    data-placement="auto"
-                    title="Sign Out"
-                    @click="signOut"
-                  >
-                    <i class="fas fa-sign-out-alt"></i>
-                  </button>
-                  <button class="btn btn-outline-primary" data-toggle="tooltip" data-placement="auto" title="About Us" @click="about()">
-                    <i
-                      class="fas fa-info"
-                    ></i>
-                  </button> -->
                 </div>
               </div>
             </div>
@@ -367,6 +206,8 @@ import GroupVideoChat from "./groups-components/GroupVideoChat.vue";
 import GroupInfo from "./groups-components/GroupInfo.vue";
 import GroupMembersControl from "./groups-components/GroupMembersControl.vue";
 
+import ChatUtil from "./ChatUtil.vue";
+
 import SendMessage from "./SendMessage.vue";
 
 export default {
@@ -381,6 +222,7 @@ export default {
     GroupVideoChat,
     GroupInfo,
     GroupMembersControl,
+    ChatUtil,
   },
   data() {
     return {
@@ -1307,8 +1149,9 @@ export default {
   position: absolute;
   left: 0;
   top: 0;
-  padding: 20px;
+  padding-top: 20px;
 }
+
 .chat-app .chat {
   margin-left: 280px;
   border-left: 1px solid #eaeaea;

@@ -98,6 +98,16 @@ export default {
 </script>
 
 <style scoped>
+
+ul li:first-child {
+  margin-top: 5px;
+}
+
+ul li {
+  width: 250px;
+  margin: auto;
+}
+
 .badge {
   height: 15px;
   width: 15px;

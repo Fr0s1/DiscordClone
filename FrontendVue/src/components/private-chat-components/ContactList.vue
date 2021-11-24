@@ -180,6 +180,19 @@ export default {
   border-radius: 50%;
 }
 
+ul {
+  
+}
+
+ul li:first-child {
+  margin-top: 5px;
+}
+
+ul li {
+  width: 250px;
+  margin: auto;
+}
+
 .badge:empty {
   display: block;
 

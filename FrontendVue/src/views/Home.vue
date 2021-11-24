@@ -1,35 +1,50 @@
 <template>
-  <div class="home" style="text-align:center">
-    <img style="width:14%" alt="Vue logo" src="../assets/logo.png"/>
-    <HelloWorld msg="Welcome to Discord Clone App" />
+  <div class="home" style="text-align: center">
+    <img style="width: 14%" alt="Vue logo" src="../assets/logo.png" />
+    <HelloWorld
+      msg="Welcome to Discord Clone App"
+      :currentUsername="userInfo?.username"
+    />
   </div>
 </template>
 
 <script>
 // @ is an alias to /src
 import HelloWorld from "@/components/HelloWorld.vue";
-import { Auth } from 'aws-amplify';
+import { Auth } from "aws-amplify";
 import gql from "graphql-tag";
-export const ADD_USER = gql`mutation ($email: String!, $name: String!, $phone_number: String!, $username: String!, $birthdate: BirthDate!) {
-  addUser(email: $email, name: $name, phone_number: $phone_number, username: $username, birthdate: $birthdate) {
-    email,
-    name,
-    phone_number,
-    username
-    birthdate
+export const ADD_USER = gql`
+  mutation (
+    $email: String!
+    $name: String!
+    $phone_number: String!
+    $username: String!
+    $birthdate: BirthDate!
+  ) {
+    addUser(
+      email: $email
+      name: $name
+      phone_number: $phone_number
+      username: $username
+      birthdate: $birthdate
+    ) {
+      email
+      name
+      phone_number
+      username
+      birthdate
+    }
   }
-}`;
+`;
 
 export default {
   name: "Home",
   components: {
     HelloWorld,
   },
-  inject: ["currentUsername"],
-
   data() {
     return {
-      
+      userInfo: null,
     };
   },
   mounted() {
@@ -41,22 +56,23 @@ export default {
   beforeMounted() {
     // location.reload()
   },
-  created() {
-    var name = Auth.currentUserInfo()
-        console.log(name)
-        name.then(result => {
-          console.log(result)
-          this.$apollo.mutate({
-              mutation: ADD_USER,
-              variables: {
-                name: result.attributes.name,
-                email: result.attributes.email,
-                phone_number: result.attributes.phone_number,
-                username: result.username,
-                birthdate: result.attributes.birthdate
-              }
-            });
-        })
+  async created() {
+    try {
+      var userInfo = await Auth.currentUserInfo();
+
+      this.$apollo.mutate({
+        mutation: ADD_USER,
+        variables: {
+          name: userInfo.attributes.name,
+          email: userInfo.attributes.email,
+          phone_number: userInfo.attributes.phone_number,
+          username: userInfo.username,
+          birthdate: userInfo.attributes.birthdate,
+        },
+      });
+    } catch (e) {
+      console.log(e);
+    }
   },
   methods: {
     //  loadUser() {
@@ -75,13 +91,12 @@ export default {
     //           }
     //         });
     //     })
-    //  } 
-
-  }
+    //  }
+  },
 };
 </script>
 <style>
-  .home{
-    background: white;
-  }
+.home {
+  background: white;
+}
 </style>
