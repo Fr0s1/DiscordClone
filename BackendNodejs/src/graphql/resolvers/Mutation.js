@@ -43,7 +43,7 @@ async function addUser(parent, args, context) {
 
 // Create group chat
 async function createGroup(parent, args, context) {
-    let admin = args.username
+    let admin = context.tokenPayload.username
     let Group = context.mongo.Group
 
     try {
@@ -51,6 +51,7 @@ async function createGroup(parent, args, context) {
     } catch (e) {
         throw new Error(e)
     }
+
     // Fetch information of user who created this group
     let userFound = await User.findOne({
         username: admin

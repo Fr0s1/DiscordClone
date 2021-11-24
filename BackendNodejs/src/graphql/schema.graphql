@@ -34,7 +34,7 @@ type Mutation {
     birthdate: BirthDate!
   ): User!
 
-  createGroup(groupName: String!, username: String!): GroupChat
+  createGroup(groupName: String!): GroupChat
 
   addUserToGroup(groupId: String!, username: String!): GroupChat
 
