@@ -26,9 +26,12 @@ spec:
           image: 207986101045.dkr.ecr.ap-southeast-1.amazonaws.com/discordclone-graphql:eks
           imagePullPolicy: Always
           resources:
-            limits:
+            requests:
+              cpu: "520m"
               memory: "128Mi"
-              cpu: "500m"
+            limits:
+              memory: "256Mi"
+              cpu: "750m"
           ports:
             - containerPort: 4000
           env:

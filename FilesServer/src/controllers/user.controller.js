@@ -8,7 +8,7 @@ exports.uploadUserAvatar = async (req, res) => {
 
     const username = req.body.username
 
-    const file = req.file
+    const file = req.file // file object receive from input form field
 
     let BucketName = process.env.BUCKET_NAME
 

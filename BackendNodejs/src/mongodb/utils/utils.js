@@ -12,3 +12,10 @@ exports.ifInContactList = async (firstUser, secondUser) => {
     return firstUserContactList.contactlist.includes(secondUserInfo._id)
 }
 
+exports.ifUserInGroupWithId = async (groupId, username) => {
+    let userGroupsList = await User.findOne({
+        username
+    }).select("groups")
+
+    return userGroupsList.groups.includes(groupId)
+}

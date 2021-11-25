@@ -1,19 +1,39 @@
 <template>
   <div class="chat-history">
     <ul class="m-b-0" ref="chatHistory" @scroll="fetchMessages">
-      <!-- <div class="loader"></div> -->
-
       <!-- This section is to display messages fetch from graphql -->
-      <li class="clearfix" v-for="(message, index) in messages" :key="index">
-        <div v-if="currentUsername === message.sender.username">
+      <li
+        :class="
+          currentUsername === message.sender.username
+            ? 'clearfix right'
+            : 'clearfix'
+        "
+        v-for="(message, index) in messages"
+        :key="index"
+        @mouseenter="
+          showButton(
+            message._id,
+            currentUsername === message.sender.username
+              ? 'message-control-sender right'
+              : 'message-control-sender left'
+          )
+        "
+        @mouseleave="disableButton(message._id)"
+      >
+        <div
+          v-if="currentUsername === message.sender.username"
+          class="graphql-messages"
+        >
           <div class="message-data text-right">
             <span class="message-data-time">{{
               formatTime(message.sentTime)
             }}</span>
             <img :src="userAvatarUrl" alt="avatar" />
           </div>
+
           <div class="message other-message float-right">
             {{ message.content }}
+
             <div
               class="message-files"
               v-if="message.files && message.files.length > 0"
@@ -40,13 +60,57 @@
               </div>
             </div>
           </div>
+          <div
+            class="message-control-sender right disabled"
+            :ref="`message-${message._id}`"
+          >
+            <b-dropdown
+              id="dropdown-1"
+              class="m-2"
+              toggle-class="text-decoration-none"
+              no-caret
+              size="sm"
+            >
+              <template
+                class="btn btn-outline-primary"
+                style="height: 20px; position: relative"
+                #button-content
+              >
+                <i class="fas fa-ellipsis-h"></i>
+              </template>
+              <b-dropdown-item @click="deleteMessage(message._id, 'graphql')">
+                Delete message
+              </b-dropdown-item>
+            </b-dropdown>
+          </div>
         </div>
         <div v-else>
           <div class="message-data">
+            <img :src="contactAvatarUrl" alt="avatar" />
             <span class="message-data-time">{{
               formatTime(message.sentTime)
             }}</span>
+            <div
+              class="message-control-sender disabled"
+              :ref="`message-${message._id}`"
+            >
+              <b-dropdown
+                id="dropdown-1"
+                class="m-2"
+                toggle-class="text-decoration-none"
+                no-caret
+                size="sm"
+              >
+                <template class="btn btn-outline-primary" #button-content>
+                  <i class="fas fa-ellipsis-h"></i>
+                </template>
+                <b-dropdown-item @click="deleteMessage(message._id, 'graphql')">
+                  Delete message
+                </b-dropdown-item>
+              </b-dropdown>
+            </div>
           </div>
+
           <div class="message my-message">
             {{ message.content }}
             <div
@@ -74,21 +138,62 @@
                 <img class="modal-content" id="img01" ref="zoomImage" />
               </div>
             </div>
+          </div>
+          <div
+            class="message-control-sender disabled"
+            :ref="`message-${message._id}`"
+          >
+            <b-dropdown
+              id="dropdown-1"
+              class="m-2"
+              toggle-class="text-decoration-none"
+              no-caret
+              size="sm"
+            >
+              <template
+                class="btn btn-outline-primary"
+                style="height: 20px; position: relative"
+                #button-content
+              >
+                <i class="fas fa-ellipsis-h"></i>
+              </template>
+              <b-dropdown-item @click="deleteMessage(message._id, 'graphql')">
+                Delete message
+              </b-dropdown-item>
+            </b-dropdown>
           </div>
         </div>
       </li>
 
       <!-- This section is to display messages fetch from socketio -->
       <li
-        class="clearfix"
-        v-for="(message, index) in allRealtimeMessages"
+        :class="
+          currentUsername === message.sender.username
+            ? 'clearfix right'
+            : 'clearfix'
+        "
+        v-for="(message, index) in all_socketio_messages"
         :key="index"
+        @mouseenter="
+          showButton(
+            message._id,
+            currentUsername === message.sender.username
+              ? 'message-control-sender right'
+              : 'message-control-sender left'
+          )
+        "
+        @mouseleave="disableButton(message._id)"
       >
         <div v-if="currentUsername === message.sender.username">
           <div class="message-data text-right">
+            <div
+              class="message-control-sender right disabled"
+              :ref="`message-${message._id}`"
+            ></div>
             <span class="message-data-time">{{
               formatTime(message.sentTime)
             }}</span>
+
             <img :src="userAvatarUrl" alt="avatar" />
           </div>
           <div class="message other-message float-right">
@@ -119,12 +224,61 @@
               </div>
             </div>
           </div>
+          <div
+            class="message-control-sender disabled"
+            :ref="`message-${message._id}`"
+          >
+            <b-dropdown
+              id="dropdown-1"
+              class="m-2"
+              toggle-class="text-decoration-none"
+              no-caret
+              size="sm"
+            >
+              <template
+                class="btn btn-outline-primary"
+                style="height: 20px; position: relative"
+                #button-content
+              >
+                <i class="fas fa-ellipsis-h"></i>
+              </template>
+              <b-dropdown-item @click="deleteMessage(message._id, 'socketio')">
+                Delete message
+              </b-dropdown-item>
+            </b-dropdown>
+          </div>
         </div>
         <div v-else>
           <div class="message-data">
+            <img :src="contactAvatarUrl" alt="avatar" />
             <span class="message-data-time">{{
               formatTime(message.sentTime)
             }}</span>
+            <div
+              class="message-control-sender disabled"
+              :ref="`message-${message._id}`"
+            >
+              <b-dropdown
+                id="dropdown-1"
+                class="m-2"
+                toggle-class="text-decoration-none"
+                no-caret
+                size="sm"
+              >
+                <template
+                  class="btn btn-outline-primary"
+                  style="height: 20px; position: relative"
+                  #button-content
+                >
+                  <i class="fas fa-ellipsis-h"></i>
+                </template>
+                <b-dropdown-item
+                  @click="deleteMessage(message._id, 'socketio')"
+                >
+                  Delete message
+                </b-dropdown-item>
+              </b-dropdown>
+            </div>
           </div>
           <div class="message my-message">
             {{ message.content }}
@@ -153,6 +307,29 @@
                 <img class="modal-content" id="img01" ref="zoomImage" />
               </div>
             </div>
+          </div>
+          <div
+            class="message-control-sender disabled"
+            :ref="`message-${message._id}`"
+          >
+            <b-dropdown
+              id="dropdown-1"
+              class="m-2"
+              toggle-class="text-decoration-none"
+              no-caret
+              size="sm"
+            >
+              <template
+                class="btn btn-outline-primary"
+                style="height: 20px; position: relative"
+                #button-content
+              >
+                <i class="fas fa-ellipsis-h"></i>
+              </template>
+              <b-dropdown-item @click="deleteMessage(message._id, 'socketio')">
+                Delete message
+              </b-dropdown-item>
+            </b-dropdown>
           </div>
         </div>
       </li>
@@ -162,6 +339,7 @@
 
 <script>
 import moment from "moment";
+import gql from "graphql-tag";
 
 export default {
   props: {
@@ -178,6 +356,9 @@ export default {
       type: String,
     },
     userAvatarUrl: {
+      type: String,
+    },
+    contactAvatarUrl: {
       type: String,
     },
     hasFinishedLoadingMessages: {
@@ -197,9 +378,18 @@ export default {
     return {
       nextCursor: new Date().toISOString(),
       limit: 10,
+      graphql_messages: [],
+      all_socketio_messages: [],
     };
   },
   methods: {
+    showButton(messageId, className) {
+      this.$refs[`message-${messageId}`].className = className;
+    },
+    disableButton(messageId) {
+      this.$refs[`message-${messageId}`].className =
+        "message-control-sender disabled";
+    },
     scrollDown(scrollHeight) {
       let chatHistory = this.$refs.chatHistory;
       chatHistory.scrollTop = scrollHeight;
@@ -230,10 +420,42 @@ export default {
       let modal = this.$refs.modal;
       modal.style.display = "none";
     },
+
+    deleteMessage(messageId, type) {
+      if (type === "graphql") {
+        // Delete message from messages list pre-fetched from GraphQL
+        this.graphql_messages = this.graphql_messages.map((message) =>
+          message._id !== messageId
+            ? message
+            : { ...message, content: "Message deleted", files: [] }
+        );
+      } else if (type === "socketio") {
+        // Delete message from realtime messages array
+        this.all_socketio_messages = this.all_socketio_messages.map((message) =>
+          message._id !== messageId
+            ? message
+            : { ...message, content: "Message deleted", files: [] }
+        );
+      }
+
+      // Delete message saved in database
+      this.$apollo.mutate({
+        mutation: gql`
+          mutation DeleteMessage($messageId: String!) {
+            deleteMessage(messageId: $messageId) {
+              _id
+            }
+          }
+        `,
+        variables: {
+          messageId,
+        },
+      });
+    },
   },
   computed: {
     messages() {
-      return this.userMessages.messages.slice().reverse();
+      return this.graphql_messages.slice().reverse();
     },
   },
   updated() {
@@ -245,9 +467,34 @@ export default {
       }
     }
   },
+  watch: {
+    userMessages(newList, oldList) {
+      this.graphql_messages = newList.messages;
+    },
+    allRealtimeMessages(newList, oldList) {
+      this.all_socketio_messages = newList;
+    },
+  },
 };
 </script>
+
 <style scoped>
+.message-control-sender.disabled {
+  display: none;
+}
+
+.message-control-sender {
+  display: inline-block;
+}
+
+.message-control-sender.right {
+  float: right;
+}
+
+.chat-history ul li {
+  margin-bottom: 0px;
+}
+
 .btn {
   width: 40px;
 }
@@ -255,6 +502,7 @@ export default {
 .chat-history {
   padding: 20px;
   border-bottom: 2px solid #fff;
+  height: 73.4vh;
 }
 
 .chat-history ul::-webkit-scrollbar {
@@ -279,13 +527,13 @@ export default {
 
 .chat-history ul {
   width: auto;
-  height: 71vh;
+  height: 70vh;
   padding: 20px;
   overflow-y: auto;
   overflow-x: hidden;
 }
 
-.chat-history ul li {
+.chat-history ul li.clearfix {
   list-style: none;
   margin-bottom: 30px;
 }
@@ -311,7 +559,7 @@ export default {
 }
 
 .chat-history .message {
-  color: rgb(255, 255, 255);
+  color: #212529;
   padding: 18px 20px;
   line-height: 26px;
   font-size: 16px;
@@ -335,7 +583,7 @@ export default {
 }
 
 .chat-history .my-message {
-  background: #7289da;
+  background: #eef0f3;
 }
 
 .chat-history .my-message:after {
@@ -353,7 +601,7 @@ export default {
 }
 
 .chat-history .other-message {
-  background: #7289da;
+  background: #e8f1f3;
   text-align: right;
 }
 

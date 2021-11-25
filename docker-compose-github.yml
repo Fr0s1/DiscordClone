@@ -2,7 +2,7 @@ version: "3.9"
 services:
   graphql:
     build: BackendNodejs
-    command: ["run", "dev"]
+    command: [ "run", "dev" ]
     ports:
       - 4000:4000
     networks:
@@ -30,7 +30,7 @@ services:
   socketio:
     build: ChatServer
     image: frost2203/discordclone-socketio:local
-    command: ["run", "dev"]
+    command: [ "run", "dev" ]
     ports:
       - 3000:3000
     environment:
@@ -55,7 +55,7 @@ services:
   files:
     build: FilesServer
     image: frost2203/discordclone-filesserver:local
-    command: ["run", "dev"]
+    command: [ "run", "dev" ]
     ports:
       - 8000:8000
     environment:
@@ -99,5 +99,5 @@ networks:
   discord-backend:
 
 volumes:
-  redis-data:
-  mongodb-data:
+  redis-data: 
+  mongodb-data: 

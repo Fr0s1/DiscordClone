@@ -7,7 +7,10 @@
       @click="setActiveGroup(index)"
       :key="index"
     >
-      <img :src="group.groupAvatar" alt="avatar" />
+      <img
+        :src="group.groupAvatar === '' ? default_avatar : group.groupAvatar"
+        alt="avatar"
+      />
       <div class="about">
         <div class="name">{{ group.groupName }}</div>
       </div>
@@ -42,12 +45,19 @@ export default {
     return {
       activeGroupIndex: null,
       limit: 10,
+      default_avatar: require("@/assets/images/default_avatar.jpg"),
     };
   },
   methods: {
     setActiveGroup(index) {
       if (!this.contactIsGroup) {
         this.$emit("change-contact-type");
+      }
+
+      // Because now when user click delete message, only the content is changed to "Message deleted" so when user change to another contact
+      // Empty current real time messages array
+      if (this.activeGroupIndex && this.activeGroupId !== "") {
+        this.$emit("empty-realtime-group-messages", this.activeGroupId);
       }
 
       this.activeGroupIndex = index;
@@ -92,11 +102,25 @@ export default {
 </script>
 
 <style scoped>
+ul li:first-child {
+  margin-top: 5px;
+}
+
+ul li {
+  width: 250px;
+  margin: auto;
+}
+
+.badge {
+  height: 15px;
+  width: 15px;
+  border-radius: 50%;
+}
+
 .badge:empty {
-  display: inline-block;
-  height: 10px;
+  display: block;
+
   color: #86c541;
-  vertical-align: middle;
 }
 
 .btn {

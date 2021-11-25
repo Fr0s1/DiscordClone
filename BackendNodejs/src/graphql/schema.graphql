@@ -31,9 +31,10 @@ type Mutation {
     email: String!
     name: String!
     phone_number: String!
+    birthdate: BirthDate!
   ): User!
 
-  createGroup(groupName: String!, username: String!): GroupChat
+  createGroup(groupName: String!): GroupChat
 
   addUserToGroup(groupId: String!, username: String!): GroupChat
 
@@ -55,20 +56,31 @@ type Mutation {
     phone_number: String
     accountStatus: AccountStatus
     lastOnlineTime: Date
+    birthdate: BirthDate
   ): User!
   # addUserToFriendList(username: String!): [String!]!
 
   addUserToContactList(username: String!): User!
+
+  removeUserFromContactList(username: String!): User!
 }
 
 type Subscription {
-  # To avoid confusion: loggedInUsername is the username of client who subscribe to account status in his/her contactlist
-  accountStatusInfo(loggedInUsername: String!): AccountStatusInfo
+  # To avoid confusion: loggedInUsername is the username of client who subscribe to account status of his/her contactlist
+  accountStatusInfo(loggedInUsername: String!): AccountStatusInfo!
+
+  # Subscribe to group members account status when on/offline
+  groupMembersAccountStatus(groupId: String!): AccountStatusInfo!
+
+  groupMessageDeleted(groupId: String!): Message!
+
+  memberLeavesGroup(groupId: String!): User!
 }
 
 type AccountStatusInfo {
   username: String!
-  accountStatus: AccountStatus
+  accountStatus: AccountStatus!
+  lastOnlineTime: AccountStatus
 }
 
 enum AccountStatus {
@@ -79,12 +91,6 @@ enum AccountStatus {
 type ExampleType {
   newField: String
   oldField: String @deprecated(reason: "Use 'newField'.")
-}
-
-enum Role {
-  Owner
-  Friend
-  Public
 }
 
 type MessagesList {
@@ -106,19 +112,22 @@ enum OperationStatus {
 
 scalar Date
 
+scalar BirthDate
+
 type User {
   # The following fields are saved in AWS Cognito
   username: String!
   email: String!
   name: String!
   phone_number: String!
+  birthdate: BirthDate!
 
   # The following fields are saved in MongoDB
   _id: String!
   friendlist: [User!]
   groups: [GroupChat!]!
   contactlist: [User!]
-  avatar: String # S3 Image Url
+  avatar: String! # S3 Image Url
   accountStatus: AccountStatus
   lastOnlineTime: Date
 }
@@ -155,9 +164,7 @@ type GroupChat {
   groupName: String!
   admin: User!
   members: [User!]!
-  # messages: [Message!]!
   groupAvatar: String!
-  # createdAt: Date!
 }
 
 type FriendRequest {

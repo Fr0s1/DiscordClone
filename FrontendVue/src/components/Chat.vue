@@ -4,32 +4,61 @@
       <div class="col-lg-12">
         <div class="card chat-app">
           <div id="plist" class="people-list">
-            <div class="input-group">
-              <div class="input-group-prepend">
-                <span class="input-group-text"
-                  ><i class="fas fa-search" style="color: #007bff"></i
-                ></span>
-              </div>
-              <input type="text" class="form-control" placeholder="Search..." />
-            </div>
-            <contact-list
-              :contactlist="user.contactlist"
-              :contactIsGroup="contactIsGroup"
-              @fetch-messages="fetchMessages"
-              @change-contact-type="contactIsGroup = !contactIsGroup"
-              @empty-current-realtime-messages="emptyRealtimeChatMessages"
-              :realtimeFetchedMessages="realtimeFetchedMessages"
-            ></contact-list>
+            <div style="height: 10vh; margin-bottom: 10px; margin-top: -20px">
+              <b-dropdown offset="25" variant="light" class="m-3" right>
+                <template #button-content>
+                  <b-avatar
+                    variant="info"
+                    :src="user.avatar"
+                    class="mr-4"
+                  ></b-avatar>
+                  <span style="margin-left: 5px">{{ user.name }}</span>
+                </template>
 
-            <group-list
-              :groups="user.groups"
-              :contactIsGroup="contactIsGroup"
-              :realtimeGroupMessages="realtimeGroupMessages"
-              @fetch-group-messages="fetchGroupMessages"
-              @change-contact-type="contactIsGroup = !contactIsGroup"
-              @joinSocketIORoom="joinSocketIORoom"
-              @empty-realtime-group-messages="emptyRealtimeGroupsMessages"
-            ></group-list>
+                <b-dropdown-item @click="about()"
+                  ><b-icon icon="house-door"></b-icon
+                  ><span style="margin-left: 10px">Home</span></b-dropdown-item
+                >
+                <b-dropdown-item @click="info()"
+                  ><b-icon icon="person"></b-icon
+                  ><span style="margin-left: 10px"
+                    >Profile</span
+                  ></b-dropdown-item
+                >
+                <b-dropdown-item @click="signOut()"
+                  ><b-icon icon="power"></b-icon
+                  ><span style="margin-left: 10px"
+                    >Logout</span
+                  ></b-dropdown-item
+                >
+              </b-dropdown>
+            </div>
+
+            <chat-util :user="user"></chat-util>
+
+            <div
+              id="people-list-content"
+              style="height: 72vh; overflow-y: scroll"
+            >
+              <contact-list
+                :contactlist="user.contactlist"
+                :contactIsGroup="contactIsGroup"
+                @fetch-messages="fetchMessages"
+                @change-contact-type="contactIsGroup = !contactIsGroup"
+                @empty-current-realtime-messages="emptyRealtimeChatMessages"
+                :realtimeFetchedMessages="realtimeFetchedMessages"
+              ></contact-list>
+
+              <group-list
+                :groups="user.groups"
+                :contactIsGroup="contactIsGroup"
+                :realtimeGroupMessages="realtimeGroupMessages"
+                @fetch-group-messages="fetchGroupMessages"
+                @change-contact-type="contactIsGroup = !contactIsGroup"
+                @joinSocketIORoom="joinSocketIORoom"
+                @empty-realtime-group-messages="emptyRealtimeGroupsMessages"
+              ></group-list>
+            </div>
           </div>
           <div
             class="chat"
@@ -45,8 +74,12 @@
                     <img
                       :src="
                         contactIsGroup
-                          ? activeGroupAvatar
-                          : user.contactlist[activeContactIndex]?.avatar
+                          ? activeGroupAvatar === ''
+                            ? default_avatar
+                            : activeGroupAvatar
+                          : user.contactlist[activeContactIndex]?.avatar !== ''
+                          ? user.contactlist[activeContactIndex]?.avatar
+                          : default_avatar
                       "
                       alt="avatar"
                     />
@@ -59,15 +92,17 @@
                           : activeContactUsername
                       }}
                     </h6>
-                    <small>Last seen: 2 hours ago</small>
+                    <small>Last seen: {{ lastOnlineDuration }} hours ago</small>
                   </div>
                 </div>
                 <div class="col-lg-6 hidden-sm text-right">
-                  <add-group-members
+                  <group-members-control
                     v-if="contactIsGroup"
                     :friendlist="user.friendlist"
                     :activeGroupId="activeGroupId"
-                  ></add-group-members>
+                    :groupAdmin="group.admin"
+                    :groupMembers="group.members"
+                  ></group-members-control>
 
                   <button
                     class="btn btn-outline-primary"
@@ -80,42 +115,16 @@
                   >
                     <i class="fa fa-phone"></i>
                   </button>
-
-                  <button
-                    class="btn btn-outline-primary"
-                    data-toggle="tooltip"
-                    data-placement="auto"
-                    title="Profile"
-                    @click="info"
-                  >
-                    <i class="fas fa-user-alt"></i>
-                  </button>
-                  <button
-                    class="btn btn-outline-primary"
-                    data-toggle="tooltip"
-                    data-placement="auto"
-                    title="Sign Out"
-                    @click="signOut"
-                  >
-                    <i class="fas fa-sign-out-alt"></i>
-                  </button>
-                  <button
-                    class="btn btn-outline-primary"
-                    data-toggle="tooltip"
-                    data-placement="auto"
-                    title="About Us"
-                    @click="about"
-                  >
-                    <i class="fas fa-info"></i>
-                  </button>
                 </div>
               </div>
             </div>
+
             <chat-history
               :userMessages="userMessages"
               :activeContactUsername="activeContactUsername"
               :currentUsername="currentUsername"
               :userAvatarUrl="user.avatar"
+              :contactAvatarUrl="activeContactAvatar"
               :hasFinishedLoadingMessages="hasFinishedLoadingMessages"
               :allRealtimeMessages="allRealtimeMessages"
               :scrollHeight="scrollHeight"
@@ -132,6 +141,7 @@
               :shouldScroll="shouldScroll"
               :hasFinishedLoadingGroupMessages="hasFinishedLoadingGroupMessages"
               @fetch-group-messages="fetchGroupMessages"
+              @delete-realtime-group-messages="deleteRealtimeGroupMessages"
             ></group-chat-history>
 
             <send-message
@@ -139,6 +149,7 @@
               :contactIsGroup="contactIsGroup"
               :activeGroupId="activeGroupId"
               :currentUserAvatarUrl="user.avatar"
+              :groupsMembers="group.members"
               @chatMessage="sendMessage"
               @realtime-message="addToRealtimeMessagesList"
               @realtime-group-message="addToRealTimeGroupMessages"
@@ -178,6 +189,7 @@
             :groupMembers="group.members"
             v-if="contactIsGroup"
             :activeGroupAvatar="activeGroupAvatar"
+            :activeGroupId="activeGroupId"
           ></group-info>
         </div>
       </div>
@@ -199,7 +211,9 @@ import GroupList from "./groups-components/GroupList.vue";
 import GroupChatHistory from "./groups-components/GroupChatHistory.vue";
 import GroupVideoChat from "./groups-components/GroupVideoChat.vue";
 import GroupInfo from "./groups-components/GroupInfo.vue";
-import AddGroupMembers from "./groups-components/AddGroupMembers.vue";
+import GroupMembersControl from "./groups-components/GroupMembersControl.vue";
+
+import ChatUtil from "./ChatUtil.vue";
 
 import SendMessage from "./SendMessage.vue";
 
@@ -214,7 +228,8 @@ export default {
     GroupChatHistory,
     GroupVideoChat,
     GroupInfo,
-    AddGroupMembers,
+    GroupMembersControl,
+    ChatUtil,
   },
   data() {
     return {
@@ -223,12 +238,13 @@ export default {
         contactlist: [],
         groups: [],
       },
+      default_avatar: require("@/assets/images/default_avatar.jpg"),
 
       activeContactUsername: null,
 
       activeGroupIndex: null,
 
-      activeGroupId: null,
+      activeGroupId: "",
 
       userMessages: {
         messages: [],
@@ -261,7 +277,7 @@ export default {
 
       scrollHeight: 0,
       shouldScroll: null,
-      /* 
+      /*
       The 2 above variables is set in followings case:
       + First fetch: true and scroll all the way to bottom of chat box
       + Fetch older messages when user scroll up
@@ -269,9 +285,9 @@ export default {
 
       dataConnections: {}, // Object to store data connection object to each group members when start group video call
 
-      srcStream: null, // Media stream (webcam, microphone) to pass to video call components
+      srcStream: null, // Media stream (webcam, microphone) to pass to group video call components
 
-      incomingCallType: "", // Whether if incoming call is from user or from group chat
+      hasCallOtherMembers: false,
     };
   },
   sockets: {
@@ -295,12 +311,15 @@ export default {
         query: gql`
           query Query($username: String) {
             user(username: $username) {
+              _id
+              name
               avatar
               contactlist {
                 username
                 name
                 avatar
                 accountStatus
+                lastOnlineTime
               }
               groups {
                 _id
@@ -324,6 +343,7 @@ export default {
               accountStatusInfo(loggedInUsername: $loggedInUsername) {
                 username
                 accountStatus
+                lastOnlineTime
               }
             }
           `,
@@ -336,21 +356,26 @@ export default {
           updateQuery: (previousResult, { subscriptionData }) => {
             // Append next messages to current array messages fetched from GraphQL
             let accountStatusInfo = subscriptionData.data.accountStatusInfo;
-            let oldContactList = previousResult.user.contactlist;
-            let contactlist = oldContactList.map((contact) =>
-              contact.username === accountStatusInfo.username
-                ? {
-                    ...contact,
-                    accountStatus: accountStatusInfo.accountStatus,
-                  }
-                : contact
-            );
-            return {
-              user: {
-                ...previousResult.user,
-                contactlist,
-              },
-            };
+
+            if (accountStatusInfo) {
+              let oldContactList = previousResult.user.contactlist;
+              let contactlist = oldContactList.map((contact) =>
+                contact.username === accountStatusInfo.username
+                  ? {
+                      ...contact,
+                      accountStatus: accountStatusInfo.accountStatus,
+                      lastOnlineTime: accountStatusInfo.lastOnlineTime,
+                    }
+                  : contact
+              );
+
+              return {
+                user: {
+                  ...previousResult.user,
+                  contactlist,
+                },
+              };
+            }
           },
         },
       };
@@ -371,6 +396,7 @@ export default {
               limit: $limit
             ) {
               messages {
+                _id
                 sender {
                   username
                 }
@@ -409,6 +435,7 @@ export default {
               limit: $limit
             ) {
               messages {
+                _id
                 sender {
                   username
                   avatar
@@ -432,6 +459,66 @@ export default {
           groupId: null,
         },
         skip: true,
+        subscribeToMore: {
+          document: gql`
+            subscription Subscription($groupId: String!) {
+              groupMessageDeleted(groupId: $groupId) {
+                _id
+                content
+              }
+            }
+          `,
+          variables() {
+            // This works just like regular queries
+            // and will re-subscribe with the right variables
+            // each time the values change
+            return {
+              groupId: this.activeGroupId,
+            };
+          },
+          skip() {
+            return this.activeGroupId === "";
+          },
+          updateQuery: (previousResult, { subscriptionData }) => {
+            let groupMessageDeleted = subscriptionData.data.groupMessageDeleted;
+
+            if (groupMessageDeleted) {
+              let oldMessagesList = previousResult.groupMessages.messages;
+
+              // Check if deleted message is in pre-fetched group messages list from GraphQL
+              if (
+                oldMessagesList.findIndex(
+                  (message) => message._id === groupMessageDeleted._id
+                ) !== -1
+              ) {
+                let messagesList = oldMessagesList.map((message) =>
+                  message._id !== groupMessageDeleted._id
+                    ? message
+                    : { ...message, content: "Message deleted", files: [] }
+                );
+
+                // Set to false so that the conversation won't scroll when updated() event fired
+                this.shouldScroll = false;
+
+                return {
+                  groupMessages: {
+                    ...previousResult.groupMessages,
+                    messages: messagesList,
+                  },
+                };
+              } else {
+                // Deleted messsages is in realtime group messages array
+                this.realtimeGroupMessages[this.activeGroupId] =
+                  this.realtimeGroupMessages[this.activeGroupId].map(
+                    (message) =>
+                      message._id !== groupMessageDeleted._id
+                        ? message
+                        : { ...message, content: "Message deleted", files: [] }
+                  );
+              }
+            }
+          },
+        },
       };
     },
     group() {
@@ -445,17 +532,104 @@ export default {
                 accountStatus
                 avatar
               }
+
+              admin {
+                username
+              }
             }
           }
         `,
-        variables() {
-          return {
-            groupId: this.activeGroupId,
-          };
+        variables: {
+          groupId: this.activeGroupId,
         },
-        skip() {
-          return !this.activeGroupId;
-        },
+        subscribeToMore: [
+          {
+            document: gql`
+              subscription Subscription($groupId: String!) {
+                groupMembersAccountStatus(groupId: $groupId) {
+                  username
+                  accountStatus
+                }
+              }
+            `,
+            variables() {
+              // This works just like regular queries
+              // and will re-subscribe with the right variables
+              // each time the values change
+              return {
+                groupId: this.activeGroupId,
+              };
+            },
+            skip() {
+              return this.activeGroupId === "";
+            },
+            updateQuery: (previousResult, { subscriptionData }) => {
+              // Append next messages to current array messages fetched from GraphQL
+              let groupMembersAccountStatusInfo =
+                subscriptionData.data.groupMembersAccountStatus;
+
+              if (groupMembersAccountStatusInfo) {
+                let oldListOfMembers = previousResult.group.members;
+                let newListsOfMembers = oldListOfMembers.map((contact) =>
+                  contact.username === groupMembersAccountStatusInfo.username
+                    ? {
+                        ...contact,
+                        accountStatus:
+                          groupMembersAccountStatusInfo.accountStatus,
+                      }
+                    : contact
+                );
+
+                return {
+                  group: {
+                    ...previousResult.group,
+                    members: newListsOfMembers,
+                  },
+                };
+              }
+            },
+          },
+          {
+            document: gql`
+              subscription MemberLeavesGroup($groupId: String!) {
+                memberLeavesGroup(groupId: $groupId) {
+                  username
+                }
+              }
+            `,
+            variables() {
+              // This works just like regular queries
+              // and will re-subscribe with the right variables
+              // each time the values change
+              return {
+                groupId: this.activeGroupId,
+              };
+            },
+            skip() {
+              return this.activeGroupId === "";
+            },
+            updateQuery: (previousResult, { subscriptionData }) => {
+              // Append next messages to current array messages fetched from GraphQL
+              let memberLeavesGroupInfo =
+                subscriptionData.data.memberLeavesGroup;
+              console.log(previousResult);
+              console.log(subscriptionData.data);
+              if (memberLeavesGroupInfo) {
+                let oldListOfMembers = previousResult.group.members;
+                let newListsOfMembers = oldListOfMembers.filter(
+                  (member) => member.username !== memberLeavesGroupInfo.username
+                );
+
+                return {
+                  group: {
+                    ...previousResult.group,
+                    members: newListsOfMembers,
+                  },
+                };
+              }
+            },
+          },
+        ],
       };
     },
   },
@@ -467,6 +641,20 @@ export default {
         this.realtimeGroupMessages[groupId] = [];
       }
       this.realtimeGroupMessages[groupId].push(message);
+
+      if (this.contactIsGroup && groupId === this.activeGroupId) {
+        this.shouldScroll = true;
+
+        this.scrollHeight = 0;
+      }
+    },
+    deleteRealtimeGroupMessages(messageId) {
+      this.realtimeGroupMessages[this.activeGroupId] =
+        this.realtimeGroupMessages[this.activeGroupId].map((message) =>
+          message._id !== messageId
+            ? message
+            : { ...message, content: "Message deleted", files: [] }
+        );
     },
     addToRealtimeMessagesList(message) {
       let sender = message.sender.username;
@@ -476,16 +664,21 @@ export default {
       }
       this.realtimeFetchedMessages[sender].push(message);
 
-      this.shouldScroll = true;
+      if (sender === this.activeContactUsername) {
+        this.shouldScroll = true;
 
-      this.scrollHeight = 0;
+        this.scrollHeight = 0;
+      }
     },
     fetchMessages(data) {
       this.contactIsGroup = false;
       this.shouldScroll = data.shouldScroll;
       if (data.firstFetch) {
+        this.activeGroupId = "";
+        // Empty realtime messages received from this new user when this username is not focused
         this.realtimeFetchedMessages[this.currentUsername] = [];
         this.realtimeFetchedMessages[data.username] = [];
+
         this.scrollHeight = data.scrollHeight;
         this.activeContactUsername = data.username;
         this.$apollo.queries.userMessages.setVariables({
@@ -534,6 +727,7 @@ export default {
 
         this.activeGroupIndex = data.activeGroupIndex;
 
+        // Empty realtime messages received from this group when this group is not focused
         this.realtimeGroupMessages[this.activeGroupId] = [];
 
         this.$apollo.queries.group.refetch({
@@ -625,6 +819,20 @@ export default {
             });
           }
 
+          // IMPORTANT NOTE: why webcam light does not turn off after clicking end group video call button
+          // navigator.mediaDevices.getUserMedia will return a new stream with every call, so the old stream is still there
+          // So if a user call a member and sending current stream, that member will call the current user back
+          // then current user will only need to send current stream but doesn't need to call getUserMedia again
+          // Ref: https://stackoverflow.com/questions/61842322/web-camera-light-stays-on-after-stream-is-stopped
+
+          if (this.srcStream === null) {
+            // The above condition guarantee that every member's computer only access webcam and microphone 1 TIME
+            this.srcStream = await navigator.mediaDevices.getUserMedia({
+              video: true,
+              audio: true,
+            });
+          }
+
           // Save data connection object to each group member
           let conn = (this.dataConnections[member.username] = this.peer.connect(
             result.data
@@ -636,12 +844,18 @@ export default {
         }
       }
 
-      this.srcStream = await navigator.mediaDevices.getUserMedia({
-        video: true,
-        audio: true,
+      this.hasGroupVideoCallStarted = true;
+    },
+
+    stopGroupVideoCall() {
+      this.srcStream.getTracks().forEach(function (track) {
+        track.stop();
       });
 
-      this.hasGroupVideoCallStarted = true;
+      this.srcStream = null;
+      this.hasGroupVideoCallStarted = false;
+
+      this.hasCallOtherMembers = false;
     },
 
     async getActiveContactPeerId(username) {
@@ -679,6 +893,20 @@ export default {
       this.$socket.emit("delete-user-session", {
         username: this.currentUsername,
       });
+
+      this.$apollo.mutate({
+        mutation: gql`
+          mutation UpdateUserInfo($lastOnlineTime: Date) {
+            updateUserInfo(lastOnlineTime: $lastOnlineTime) {
+              username
+              lastOnlineTime
+            }
+          }
+        `,
+        variables: {
+          lastOnlineTime: new Date().toISOString(),
+        },
+      });
     },
 
     compareMessageSentTime(firstMessage, secondMessage) {
@@ -691,12 +919,6 @@ export default {
       return 0;
     },
 
-    stopGroupVideoCall() {
-      this.srcStream.getTracks()[0].stop();
-
-      this.hasGroupVideoCallStarted = false;
-    },
-
     // When user changes contact list, empty realtime message so that no notification is shown
     emptyRealtimeChatMessages() {
       this.realtimeFetchedMessages[this.activeContactUsername] = [];
@@ -704,10 +926,25 @@ export default {
 
     /*
     The below function is trigged when user selects between group chat or from contact to group
-    Empty real time messages so that the messages are not duplicated in chat conversation and disable notification of new messages 
+    Empty real time messages so that the messages are not duplicated in chat conversation and disable notification of new messages
     */
     emptyRealtimeGroupsMessages(groupId) {
       this.realtimeGroupMessages[groupId] = [];
+    },
+
+    about() {
+      this.$router.push("/");
+    },
+    info() {
+      this.$router.push("/user/" + this.currentUsername);
+    },
+    async signOut() {
+      try {
+        await Auth.signOut();
+      } catch (error) {
+        console.log("error signing out: ", error);
+      }
+      this.$router.push("/");
     },
   },
   computed: {
@@ -715,6 +952,9 @@ export default {
       return this.user.contactlist.findIndex(
         (contact) => contact.username == this.activeContactUsername
       );
+    },
+    activeContactAvatar() {
+      return this.user.contactlist[this.activeContactIndex]?.avatar;
     },
     activeGroupGroupName() {
       return this.user.groups[this.activeGroupIndex]?.groupName;
@@ -729,7 +969,7 @@ export default {
       return !this.$apollo.queries.groupMessages.loading;
     },
 
-    /* 
+    /*
     The array containing realtime messages from SocketIO server include messages sent by current logged in user
     and messages sent by current contact
     */
@@ -749,19 +989,30 @@ export default {
       return allMessages.sort(this.compareMessageSentTime);
     },
 
-    about() {
-      this.$router.push("/");
-    },
-    info() {
-      this.$router.push("/user/" + this.currentUsername);
-    },
-    async signOut() {
-      try {
-        await Auth.signOut();
-      } catch (error) {
-        console.log("error signing out: ", error);
+    lastOnlineDuration() {
+      if (this.activeContactUsername) {
+        let activeContactIndex = this.user.contactlist.findIndex(
+          (contact) => contact.username === this.activeContactUsername
+        );
+
+        let accountStatus =
+          this.user.contactlist[activeContactIndex].accountStatus;
+        let userLastOnlineTime =
+          this.user.contactlist[activeContactIndex].lastOnlineTime;
+
+        if (accountStatus === "Offline") {
+          return moment
+            .duration(
+              moment(new Date().toISOString(), "YYYY/MM/DD HH:mm").diff(
+                moment(userLastOnlineTime, "YYYY/MM/DD HH:mm")
+              )
+            )
+            .asHours()
+            .toFixed(2);
+        }
+
+        return 0;
       }
-      this.$router.push("/");
     },
   },
   created() {
@@ -771,6 +1022,12 @@ export default {
     });
 
     this.peer = new Peer();
+    // this.peer = new Peer(undefined, {
+    //   host: "turn.frostdevops.com",
+    //   port: 9000,
+    //   path: "/myapp",
+    //   secure: true,
+    // });
 
     this.peer.on("open", (id) => {
       console.log("My peer ID is: " + id);
@@ -793,11 +1050,15 @@ export default {
     // Listen for video call
     peer.on("call", async (answeringCall) => {
       console.log("Called");
+
       this.answeringCall = answeringCall;
 
       if (this.contactIsGroup) {
-        await this.startGroupVideoCall();
-        this.answeringCall.answer(this.srcStream);
+        if (!this.hasCallOtherMembers) {
+          await this.startGroupVideoCall();
+          this.hasCallOtherMembers = true;
+        }
+        answeringCall.answer(this.srcStream);
       } else {
         this.isCaller = false;
         this.hasVideoCallStarted = true;
@@ -834,8 +1095,49 @@ export default {
 </script>
 
 <style scoped>
+#people-list-content::-webkit-scrollbar {
+  width: 1px;
+  background-color: #f5f5f5;
+}
+#menu .ul {
+  padding: 0;
+  list-style: none;
+  background: #f01f1f;
+}
+#menu.ul li {
+  display: inline-block;
+  position: relative;
+  line-height: 21px;
+  text-align: left;
+  list-style: none;
+}
+#menu ul li a {
+  display: block;
+  padding: 8px 25px;
+  color: rgb(0, 0, 0);
+  text-decoration: none;
+  list-style: none;
+}
+#menu ul li a:hover {
+  color: #fff;
+  background: #fcf700;
+}
+#menu ul.dropdown {
+  min-width: 100%; /* Set width of the dropdown */
+  background: #f2f2f2;
+  display: none;
+  position: absolute;
+  z-index: 999;
+  left: 0;
+  list-style: none;
+}
+#menu ul:hover .ul.dropdown {
+  display: block; /* Display the dropdown */
+}
+#menu ul.dropdown li {
+  display: block;
+}
 .btn {
-  text-align: center;
   margin-right: 5px;
   width: 40px;
   height: 40px;
@@ -862,8 +1164,9 @@ export default {
   position: absolute;
   left: 0;
   top: 0;
-  padding: 20px;
+  padding-top: 20px;
 }
+
 .chat-app .chat {
   margin-left: 280px;
   border-left: 1px solid #eaeaea;

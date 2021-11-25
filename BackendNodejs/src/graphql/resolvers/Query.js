@@ -69,7 +69,9 @@ async function userMessages(parent, args, context) {
             }]
         }
     ).sort({ sentTime: 'desc' }).limit(limit + 1)
-
+    // Get one more message so that if there aren't any message left
+    // Next cursor is empty
+    
     let sentMessages = messages.slice(0, limit)
 
     let result = {
@@ -96,6 +98,8 @@ async function groupMessages(parent, args, context) {
         }
         ]
     }).sort({ sentTime: 'desc' }).limit(limit + 1)
+    // Get one more message so that if there aren't any message left
+    // Next cursor is empty
 
     let sentGroupMessages = messages.slice(0, limit)
 

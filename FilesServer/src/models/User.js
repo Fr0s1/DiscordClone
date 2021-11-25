@@ -3,20 +3,23 @@ const { Schema } = mongoose;
 
 const userSchema = new Schema({
     username: {
-        type: String,
+        type: Schema.Types.String,
         unique: true
     },
     email: {
-        type: String,
+        type: Schema.Types.String,
         unique: true
     },
     phone_number: {
-        type: String,
+        type: Schema.Types.String,
         unique: true
     },
     name: {
-        type: String,
+        type: Schema.Types.String,
         unique: true,
+    },
+    birthdate: {
+        type: Schema.Types.String
     },
     friendlist: [{
         type: Schema.Types.ObjectId,
@@ -30,6 +33,12 @@ const userSchema = new Schema({
         type: Schema.Types.ObjectId,
         ref: 'Group'
     }],
+    accountStatus: {
+        type: Schema.Types.String
+    },
+    lastOnlineTime: {
+        type: Schema.Types.Date
+    },
     avatar: {
         type: Schema.Types.String
     }

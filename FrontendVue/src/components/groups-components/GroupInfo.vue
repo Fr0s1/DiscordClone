@@ -26,10 +26,66 @@
         </li>
       </ul>
     </div>
+
+    <button
+      class="btn btn-danger"
+      data-toggle="modal"
+      data-target="#leaveGroup"
+    >
+      Leave Group
+    </button>
+
+    <!-- Modal -->
+    <div
+      class="modal fade"
+      id="leaveGroup"
+      tabindex="-1"
+      role="dialog"
+      aria-labelledby="exampleModalCenterTitle"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="exampleModalLongTitle">
+              Are You Sure?
+            </h5>
+          </div>
+
+          <div class="modal-body">
+            <p>
+              The group won't be shown in your contact list and you can't see
+              group conversation anymore
+            </p>
+          </div>
+
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-dismiss="modal"
+            >
+              Close
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary"
+              data-dismiss="modal"
+              @click="leaveGroup"
+            >
+              Leave Group
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 <script>
+import gql from "graphql-tag";
+
 export default {
+  inject: ["currentUsername"],
   props: {
     groupMembers: {
       type: Array,
@@ -37,9 +93,32 @@ export default {
     activeGroupAvatar: {
       type: String,
     },
+    activeGroupId: {
+      type: String,
+    },
   },
   data() {
     return {};
+  },
+  methods: {
+    leaveGroup() {
+      this.$apollo.mutate({
+        mutation: gql`
+          mutation RemoveUserFromGroup($groupId: String!, $username: String!) {
+            removeUserFromGroup(groupId: $groupId, username: $username) {
+              groupName
+              members {
+                username
+              }
+            }
+          }
+        `,
+        variables: {
+          groupId: this.activeGroupId,
+          username: this.currentUsername,
+        },
+      });
+    },
   },
   computed: {
     onlineMembers() {
@@ -62,11 +141,15 @@ export default {
 
       return members;
     },
-  }
+  },
 };
 </script>
 
 <style scoped>
+.fade:not(.show) {
+  opacity: 1;
+}
+
 .online-members ul h1,
 .offline-members ul h1 {
   font-size: 18px;

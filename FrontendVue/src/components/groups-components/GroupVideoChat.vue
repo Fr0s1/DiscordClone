@@ -71,7 +71,7 @@ export default {
     groupMembers: {
       type: Array,
     },
-    answeringCall: {
+    srcStream: {
       default: null,
     },
     srcStream: {
@@ -112,6 +112,12 @@ export default {
             membersWebcam.childNodes[0].srcObject = remoteStream;
           }
         );
+
+        this.groupMembersPeerCurrentCall[member.username].on("close", () => {
+          let membersWebcam = this.$refs[`contactVideo-${member.username}`];
+
+          membersWebcam.childNodes[0].srcObject = null;
+        });
       });
     },
     endVideoCall() {
@@ -154,6 +160,10 @@ export default {
 </script>
 
 <style scoped>
+.video-chat {
+  margin-top: 10px;
+}
+
 .member-video {
   display: inline-block;
 }
@@ -164,5 +174,18 @@ export default {
 .btn {
   width: 40px;
   margin-right: 5px;
+}
+
+.control-buttons {
+  display: flex;
+  margin: auto;
+  align-items: center;
+  justify-content: center;
+}
+
+#userWebcam {
+  position: relative;
+  left: 50%;
+  transform: translateX(-50%);
 }
 </style>

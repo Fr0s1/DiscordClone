@@ -7,7 +7,10 @@
       @click="setActiveContact(index)"
       :key="index"
     >
-      <img :src="contact.avatar" alt="avatar" />
+      <img
+        :src="contact.avatar === '' ? default_avatar : contact.avatar"
+        alt="avatar"
+      />
       <div
         class="badge bg-success float-right"
         v-if="
@@ -57,6 +60,7 @@ export default {
         messages: [],
       },
       contactlistMessages: {},
+      default_avatar: require("@/assets/images/default_avatar.jpg"),
     };
   },
   apollo: {
@@ -90,7 +94,6 @@ export default {
                   fileType
                   fileUrl
                 }
-                seenStatus
               }
               count
               nextCursor
@@ -129,11 +132,11 @@ export default {
     },
   },
   watch: {
-    activeContactUsername(newVal, oldVal) {
+    activeContactUsername(newUsername, oldVal) {
       this.$emit("fetch-messages", {
         limit: this.limit,
         nextCursor: new Date().toISOString(),
-        username: newVal,
+        username: newUsername,
         firstFetch: true,
         activeContactIndex: this.activeContactIndex,
         contactIsGroup: false,
@@ -175,6 +178,30 @@ export default {
 </script>
 
 <style scoped>
+.badge {
+  height: 15px;
+  width: 15px;
+  border-radius: 50%;
+}
+
+ul {
+}
+
+ul li:first-child {
+  margin-top: 5px;
+}
+
+ul li {
+  width: 250px;
+  margin: auto;
+}
+
+.badge:empty {
+  display: block;
+
+  color: #86c541;
+}
+
 .chat-list li {
   padding: 10px 15px;
   list-style: none;

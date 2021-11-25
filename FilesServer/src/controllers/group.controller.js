@@ -64,7 +64,7 @@ exports.getGroupAvatar = async (req, res) => {
 
     if (contentLength == 0) {
         res.json({
-            groupAvatar: " "
+            groupAvatar: ""
         })
     } else {
         let groupAvatarRedisKey = `groups:${groupId}:avatar`

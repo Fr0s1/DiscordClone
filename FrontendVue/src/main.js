@@ -4,6 +4,7 @@ import router from "./router";
 import Amplify, { Auth } from 'aws-amplify';
 import aws_exports from './aws-exports';
 import config from './config'
+import Toaster from '@meforma/vue-toaster';
 
 import {
     applyPolyfills,
@@ -25,94 +26,106 @@ import { WebSocketLink } from 'apollo-link-ws'
 import { getMainDefinition } from 'apollo-utilities'
 import { HttpLink } from 'apollo-link-http'
 
+// Import Bootstrap Vue
+import BootstrapVue3 from 'bootstrap-vue-3';
+import { BootstrapIconsPlugin } from 'bootstrap-icons-vue';
+import 'bootstrap/dist/css/bootstrap.css'
+import 'bootstrap-vue-3/dist/bootstrap-vue-3.css'
+
 Amplify.configure(aws_exports);
 applyPolyfills().then(() => {
     defineCustomElements(window);
 });
 
-import { createStore } from 'vuex'
+async function getAuthData() {
+    try {
+        let res = await Auth.currentSession()
+        let accessToken = res.getAccessToken()
+        let jwt = accessToken.getJwtToken()
+
+        let user = await Auth.currentUserInfo();
+
+        return {
+            token: jwt,
+            user
+        }
+    } catch (e) {
+        console.log(e)
+    }
+}
 
 (async () => {
     const app = createApp({
         render: () => h(App),
     })
 
-    const store = createStore({
-        state() {
-            return {
-
-            }
-        }
-    })
-
-    app.use(store)
-
+    app.use(BootstrapVue3)
+    app.use(BootstrapIconsPlugin);
+    app.use(Toaster)
     app.use(VueAxios, axios)
     app.use(router)
     app.provide('config', config)
 
-    app.use(new VueSocketIO({
-        debug: true,
-        connection: config.socketIO_Endpoint,
-        options: {
-            withCredentials: false,
-        },
-    }))
+    try {
+        app.use(new VueSocketIO({
+            debug: true,
+            connection: config.socketIO_Endpoint,
+            options: {
+                withCredentials: process.env.NODE_ENV !== "development",
+            },
+        }))
 
-    const cache = new InMemoryCache()
+        const cache = new InMemoryCache()
 
-    const getHeaders = async () => {
+        let authData = await getAuthData()
 
-        try {
-            let res = await Auth.currentSession()
-            let accessToken = res.getAccessToken()
-            let jwt = accessToken.getJwtToken()
+        app.provide('currentUsername', authData.user.username)
 
-            let user = await Auth.currentUserInfo();
-            app.provide('currentUsername', user.username)
-            return {
-                authorization: `Bearer ${jwt}`
+        const httpLink = new HttpLink({
+            // You should use an absolute URL here
+            uri: config.graphQL_Endpoint,
+            headers: {
+                authorization: `Bearer ${authData.token}`
             }
-        } catch (e) {
-            console.log(e)
-        }
-    };
+        })
 
-    const httpLink = new HttpLink({
-        // You should use an absolute URL here
-        uri: config.graphQL_Endpoint,
-        headers: await getHeaders()
-    })
+        const wsLink = new WebSocketLink({
+            uri: config.graphql_subscription_endpoint,
+            options: {
+                reconnect: true,
+                connectionParams: {
+                    authToken: authData.token
+                }
+            },
+        })
 
-    const wsLink = new WebSocketLink({
-        uri: config.graphql_subscription_endpoint,
-        options: {
-            reconnect: true,
-        },
-    })
+        const link = split(
+            // split based on operation type
+            ({ query }) => {
+                const definition = getMainDefinition(query)
+                return definition.kind === 'OperationDefinition' &&
+                    definition.operation === 'subscription'
+            },
+            wsLink,
+            httpLink
+        )
 
-    const link = split(
-        // split based on operation type
-        ({ query }) => {
-            const definition = getMainDefinition(query)
-            return definition.kind === 'OperationDefinition' &&
-                definition.operation === 'subscription'
-        },
-        wsLink,
-        httpLink
-    )
+        const apolloClient = new ApolloClient({
+            link,
+            cache,
+        })
 
-    const apolloClient = new ApolloClient({
-        link,
-        cache,
-    })
+        const apolloProvider = createApolloProvider({
+            defaultClient: apolloClient,
+        })
 
-    const apolloProvider = createApolloProvider({
-        defaultClient: apolloClient,
-    })
+        app.use(apolloProvider)
 
-    app.use(apolloProvider)
+    } catch (e) {
+        console.log(e)
+    }
 
     app.mount("#app");
+
 })()
 

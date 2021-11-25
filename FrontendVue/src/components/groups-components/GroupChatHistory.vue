@@ -13,6 +13,16 @@
         "
         v-for="(message, index) in messages"
         :key="index"
+        @mouseover="
+          message.sender.username == currentUsername
+            ? showButton(message._id)
+            : null
+        "
+        @mouseleave="
+          message.sender.username == currentUsername
+            ? disableButton(message._id)
+            : null
+        "
       >
         <div>
           <img
@@ -23,7 +33,8 @@
             height="40"
           />
         </div>
-        <div class="flex-shrink-1 bg-light rounded py-2 px-3 mr-3">
+
+        <div class="flex-shrink-1 rounded py-2 px-3">
           <div class="font-weight-bold mb-1">
             {{
               message.sender.username == currentUsername
@@ -61,6 +72,27 @@
               <img class="modal-content" id="img01" ref="zoomImage" />
             </div>
           </div>
+        </div>
+        <div
+          class="message-control-sender disabled"
+          v-if="currentUsername === message.sender.username"
+          :ref="`message-${message._id}`"
+        >
+          <b-dropdown
+            id="dropdown-1"
+            class="m-md-2"
+            toggle-class="text-decoration-none"
+            no-caret
+          >
+            <template class="btn btn-outline-primary" #button-content>
+              <i class="fas fa-ellipsis-h"></i>
+            </template>
+            <b-dropdown-item
+              @click="deleteGroupMessage(message._id, 'graphql')"
+            >
+              Delete message
+            </b-dropdown-item>
+          </b-dropdown>
         </div>
       </div>
 
@@ -72,6 +104,16 @@
         "
         v-for="(message, index) in realtimeGroupMessages[activeGroupId]"
         :key="index"
+        @mouseover="
+          message.sender.username == currentUsername
+            ? showButton(message._id)
+            : null
+        "
+        @mouseleave="
+          message.sender.username == currentUsername
+            ? disableButton(message._id)
+            : null
+        "
       >
         <div>
           <img
@@ -82,7 +124,8 @@
             height="40"
           />
         </div>
-        <div class="flex-shrink-1 bg-light rounded py-2 px-3 mr-3">
+
+        <div class="flex-shrink-1 rounded py-2 px-3">
           <div class="font-weight-bold mb-1">
             {{
               message.sender.username == currentUsername
@@ -121,6 +164,27 @@
             </div>
           </div>
         </div>
+        <div
+          class="message-control-sender disabled"
+          v-if="currentUsername === message.sender.username"
+          :ref="`message-${message._id}`"
+        >
+          <b-dropdown
+            id="dropdown-1"
+            class="m-md-2"
+            toggle-class="text-decoration-none"
+            no-caret
+          >
+            <template class="btn btn-outline-primary" #button-content>
+              <i class="fas fa-ellipsis-h"></i>
+            </template>
+            <b-dropdown-item
+              @click="deleteGroupMessage(message._id, 'socketio')"
+            >
+              Delete message
+            </b-dropdown-item>
+          </b-dropdown>
+        </div>
       </div>
     </div>
   </div>
@@ -128,6 +192,8 @@
 
 <script>
 import moment from "moment";
+
+import gql from "graphql-tag";
 
 export default {
   inject: ["currentUsername"],
@@ -158,6 +224,7 @@ export default {
     return {
       nextCursor: new Date().toISOString(),
       limit: 10,
+      graphql_group_messages: [],
     };
   },
   methods: {
@@ -167,7 +234,10 @@ export default {
     },
     fetchGroupMessages() {
       let groupChatHistory = this.$refs.groupChatHistory;
-      if (groupChatHistory.scrollTop == 0 && this.groupMessages.nextCursor !== "") {
+      if (
+        groupChatHistory.scrollTop == 0 &&
+        this.groupMessages.nextCursor !== ""
+      ) {
         this.$emit("fetch-group-messages", {
           limit: this.limit,
           nextCursor: this.groupMessages.nextCursor,
@@ -177,6 +247,34 @@ export default {
           shouldScroll: true,
         });
       }
+    },
+    deleteGroupMessage(messageId, messageType) {
+      if (messageType === "graphql") {
+        // Delete message from messages list pre-fetched from GraphQL
+        this.graphql_group_messages = this.graphql_group_messages.map(
+          (message) =>
+            message._id !== messageId
+              ? message
+              : { ...message, content: "Message deleted", files: [] }
+        );
+      } else if (messageType === "socketio") {
+        // Delete message from realtime messages array
+        this.$emit("delete-realtime-group-messages", messageId);
+      }
+
+      // Delete message saved in database
+      this.$apollo.mutate({
+        mutation: gql`
+          mutation Mutation($messageId: String!) {
+            deleteGroupMessage(messageId: $messageId) {
+              _id
+            }
+          }
+        `,
+        variables: {
+          messageId,
+        },
+      });
     },
     formatTime(timeString) {
       return moment(String(timeString)).format("DD/MM/YYYY HH:mm");
@@ -191,10 +289,17 @@ export default {
       let modal = this.$refs.modal;
       modal.style.display = "none";
     },
+    showButton(messageId) {
+      this.$refs[`message-${messageId}`].className = "message-control-sender";
+    },
+    disableButton(messageId) {
+      this.$refs[`message-${messageId}`].className =
+        "message-control-sender disabled";
+    },
   },
   computed: {
     messages() {
-      return this.groupMessages.messages.slice().reverse();
+      return this.graphql_group_messages.slice().reverse();
     },
   },
   updated() {
@@ -205,9 +310,22 @@ export default {
       }
     }
   },
+  watch: {
+    groupMessages(newGroupMessagesList, oldGroupMessagesList) {
+      this.graphql_group_messages = newGroupMessagesList.messages;
+    },
+  },
 };
 </script>
 <style scoped>
+.message-control-sender.disabled {
+  display: none;
+}
+
+.message-control-sender {
+  display: block;
+}
+
 body {
   margin-top: 20px;
 }
@@ -228,17 +346,27 @@ body {
   margin-bottom: 1rem;
 }
 .chat-messages::-webkit-scrollbar {
-	width: 10px;
-  }
+  width: 10px;
+}
 .chat-messages::-webkit-scrollbar-thumb {
-	--webkit-box-shadow: inset 0 0 6px rgba(0,0,0,.3);
+  --webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
   border-radius: 10px;
   background-color: #007bff;
 }
 .chat-messages::-webkit-scrollbar-track {
-	--webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
-	border-radius: 10px;
-	background-color: #F5F5F5;
+  --webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+  border-radius: 10px;
+  background-color: #f5f5f5;
+}
+
+.chat-message-right .flex-shrink-1 {
+  background-color: #e2ecee;
+  margin-right: 10px;
+}
+
+.chat-message-left .flex-shrink-1 {
+  background-color: #eef0f3;
+  margin-left: 10px;
 }
 
 .chat-message-left,
