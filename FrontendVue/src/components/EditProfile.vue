@@ -13,7 +13,6 @@
           <b-button :href='"/user/"+g_user.username' variant="primary" class="mb-2">
             <b-icon icon="chevron-compact-left" aria-hidden="true"></b-icon> Back
           </b-button>
-          <p class="text-center">Form Edir User Info</p>
         </b-card-header>
       <b-form>
         <b-form-group

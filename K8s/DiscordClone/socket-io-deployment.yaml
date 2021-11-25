@@ -23,7 +23,7 @@ spec:
               secretProviderClass: "discord-clone-mongodb-atlas-secrets"
       containers:
         - name: socketio
-          image: 207986101045.dkr.ecr.ap-southeast-1.amazonaws.com/discordclone-socketio:sticky
+          image: 207986101045.dkr.ecr.ap-southeast-1.amazonaws.com/discordclone-socketio:eks
           imagePullPolicy: Always
           resources:
             limits:

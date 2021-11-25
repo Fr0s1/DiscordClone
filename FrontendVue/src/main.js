@@ -71,7 +71,7 @@ async function getAuthData() {
             debug: true,
             connection: config.socketIO_Endpoint,
             options: {
-                withCredentials: false,
+                withCredentials: process.env.NODE_ENV !== "development",
             },
         }))
 
