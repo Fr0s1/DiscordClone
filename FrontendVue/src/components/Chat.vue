@@ -36,7 +36,10 @@
 
             <chat-util :user="user"></chat-util>
 
-            <div id="people-list-content" style="height: 72vh; overflow-y: scroll">
+            <div
+              id="people-list-content"
+              style="height: 72vh; overflow-y: scroll"
+            >
               <contact-list
                 :contactlist="user.contactlist"
                 :contactIsGroup="contactIsGroup"
@@ -71,8 +74,12 @@
                     <img
                       :src="
                         contactIsGroup
-                          ? activeGroupAvatar
-                          : user.contactlist[activeContactIndex]?.avatar
+                          ? activeGroupAvatar === ''
+                            ? default_avatar
+                            : activeGroupAvatar
+                          : user.contactlist[activeContactIndex]?.avatar !== ''
+                          ? user.contactlist[activeContactIndex]?.avatar
+                          : default_avatar
                       "
                       alt="avatar"
                     />
@@ -231,6 +238,7 @@ export default {
         contactlist: [],
         groups: [],
       },
+      default_avatar: require("@/assets/images/default_avatar.jpg"),
 
       activeContactUsername: null,
 
@@ -303,6 +311,7 @@ export default {
         query: gql`
           query Query($username: String) {
             user(username: $username) {
+              _id
               name
               avatar
               contactlist {
@@ -1013,6 +1022,12 @@ export default {
     });
 
     this.peer = new Peer();
+    // this.peer = new Peer(undefined, {
+    //   host: "turn.frostdevops.com",
+    //   port: 9000,
+    //   path: "/myapp",
+    //   secure: true,
+    // });
 
     this.peer.on("open", (id) => {
       console.log("My peer ID is: " + id);

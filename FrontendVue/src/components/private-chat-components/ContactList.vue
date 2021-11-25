@@ -7,7 +7,10 @@
       @click="setActiveContact(index)"
       :key="index"
     >
-      <img :src="contact.avatar" alt="avatar" />
+      <img
+        :src="contact.avatar === '' ? default_avatar : contact.avatar"
+        alt="avatar"
+      />
       <div
         class="badge bg-success float-right"
         v-if="
@@ -57,6 +60,7 @@ export default {
         messages: [],
       },
       contactlistMessages: {},
+      default_avatar: require("@/assets/images/default_avatar.jpg"),
     };
   },
   apollo: {
@@ -181,7 +185,6 @@ export default {
 }
 
 ul {
-  
 }
 
 ul li:first-child {

@@ -7,7 +7,10 @@
       @click="setActiveGroup(index)"
       :key="index"
     >
-      <img :src="group.groupAvatar" alt="avatar" />
+      <img
+        :src="group.groupAvatar === '' ? default_avatar : group.groupAvatar"
+        alt="avatar"
+      />
       <div class="about">
         <div class="name">{{ group.groupName }}</div>
       </div>
@@ -42,6 +45,7 @@ export default {
     return {
       activeGroupIndex: null,
       limit: 10,
+      default_avatar: require("@/assets/images/default_avatar.jpg"),
     };
   },
   methods: {
@@ -98,7 +102,6 @@ export default {
 </script>
 
 <style scoped>
-
 ul li:first-child {
   margin-top: 5px;
 }

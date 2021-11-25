@@ -72,7 +72,7 @@
                         :id="friend.username"
                         v-model="friendToAddToGroups"
                       />
-                      <label class="form-check-label" :for="friend.username">{{
+                      <label class="form-check-label" :for="friend.username" style="margin-right: 5px">{{
                         friend.name
                       }}</label>
                       <b-avatar

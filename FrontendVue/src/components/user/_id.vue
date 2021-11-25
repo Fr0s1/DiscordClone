@@ -74,28 +74,28 @@
                   </li> -->
                   <li
                     style="background-color: #242526"
-                    v-for="list in user.friendlist"
-                    v-bind:key="list.username"
+                    v-for="friend in user.friendlist"
+                    v-bind:key="friend.username"
                   >
                     <a
-                      v-if="list.username != currentUsername"
-                      :href="'/profile/' + list.username"
+                      v-if="friend.username != currentUsername"
+                      :href="'/profile/' + friend.username"
                     >
                       <div class="friend-img">
-                        <img v-bind:src="list.avatar" alt="" />
+                        <img v-bind:src="friend.avatar" alt="" />
                       </div>
                       <div class="friend-info">
-                        <h4>{{ list.username }}</h4>
+                        <h4>{{ friend.username }}</h4>
                         <p>392 friends</p>
                       </div>
                       <i style="color: black" class="bi bi-three-dots"></i>
                     </a>
                     <a v-else :href="'/user/' + currentUsername">
                       <div class="friend-img">
-                        <img v-bind:src="list.avatar" alt="" />
+                        <img v-bind:src="friend.avatar" alt="" />
                       </div>
                       <div class="friend-info">
-                        <h4>{{ list.username }}</h4>
+                        <h4>{{ friend.username }}</h4>
                         <p>392 friends</p>
                       </div>
                       <i style="color: black" class="bi bi-three-dots"></i>
