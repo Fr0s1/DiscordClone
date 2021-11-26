@@ -1,5 +1,8 @@
 <template>
-  <div class="input-group" style="width: 260px; margin: auto; border-bottom: 1px solid #eaeaea;">
+  <div
+    class="input-group"
+    style="width: 260px; margin: auto; border-bottom: 1px solid #eaeaea"
+  >
     <b-button-group>
       <b-input-group class="mb-2">
         <b-input-group-prepend is-text>
@@ -30,9 +33,7 @@
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title" id="exampleModalLabel">
-              Create New Group Contact
-            </h5>
+            <h5 class="modal-title" id="exampleModalLabel">Create New Group</h5>
             <button
               type="button"
               class="btn-close"
@@ -52,7 +53,6 @@
                   :id="`group-${groupName}`"
                   v-model="groupName"
                 />
-                {{ groupName }}
               </div>
               <div class="mb-3">
                 <label for="exampleFormControlInput1" class="form-label"
@@ -72,9 +72,12 @@
                         :id="friend.username"
                         v-model="friendToAddToGroups"
                       />
-                      <label class="form-check-label" :for="friend.username" style="margin-right: 10px">{{
-                        friend.name
-                      }}</label>
+                      <label
+                        class="form-check-label"
+                        :for="friend.username"
+                        style="margin-right: 5px"
+                        >{{ friend.name }}</label
+                      >
                       <b-avatar
                         variant="info"
                         :src="friend.avatar"
