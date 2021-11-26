@@ -32,7 +32,7 @@
           </div>
         </div>
 
-        <ul class="profile-header-tab nav nav-tabs">
+        <ul class="profile-header-tab nav nav-tabs" style="background-color:#23272a">
           <li class="nav-item">
             <a href="#profile-post" class="nav-link" data-toggle="tab">POSTS</a>
           </li>
@@ -67,7 +67,7 @@
           <div class="col-md-8">
             <div class="tab-content p-0">
               <div class="tab-pane fade active show" id="profile-friends">
-                <div class="m-b-10"><b>Friend List (9)</b></div>
+                <div class="m-b-10" style="color:#fff"><b>Friend List (9)</b></div>
 
                 <ul class="friend-list clearfix">
                   <li
@@ -197,9 +197,9 @@ export default {
 </script>
 
 <style scoped>
-body {
-  background: #eaeaea;
-  margin-top: 20px;
+
+.container {
+  background-color: #2c2f33;
 }
 .btn-xs {
   margin-right: 1vw;
@@ -217,7 +217,7 @@ body {
 .profile-info-list > li.title {
   font-size: 0.825rem;
   font-weight: 700;
-  color: #8a8a8f;
+  color: #fff;
   padding: 0 0 0.3125rem;
 }
 .profile-info-list > li + li.title {
@@ -230,7 +230,7 @@ body {
   font-weight: 700;
 }
 .profile-info-list > li .value {
-  color: #666;
+  color: #2c2f33;
 }
 .profile-info-list > li.img-list a {
   display: inline-block;
@@ -255,13 +255,13 @@ body {
   padding-top: 0;
 }
 .table.table-profile td {
-  border-color: #c8c7cc;
+  border-color: #2c2f33;
 }
 .table.table-profile tbody + thead > tr > th {
   padding-top: 1.5625rem;
 }
 .table.table-profile .field {
-  color: #666;
+  color: #fff;
   font-weight: 600;
   width: 25%;
   text-align: right;
@@ -313,9 +313,10 @@ body .fc-icon {
   display: inline-block;
   margin: 0;
 }
+
 .profile-header .profile-header-tab > li > a {
   display: block;
-  color: #000;
+  color: #fff;
   line-height: 1.25rem;
   padding: 0.625rem 1.25rem;
   text-decoration: none;
@@ -325,7 +326,7 @@ body .fc-icon {
 }
 .profile-header .profile-header-tab > li.active > a,
 .profile-header .profile-header-tab > li > a.active {
-  color: #007aff;
+  color: #23272a;
 }
 .profile-header .profile-header-content:after,
 .profile-header .profile-header-content:before {
@@ -417,7 +418,7 @@ body .fc-widget-header a {
 .profile-info-list > li.title {
   font-size: 0.625rem;
   font-weight: 700;
-  color: #8a8a8f;
+  color: #2c2f33;
   padding: 0 0 0.3125rem;
 }
 .profile-info-list > li + li.title {
@@ -428,9 +429,10 @@ body .fc-widget-header a {
 }
 .profile-info-list > li .field {
   font-weight: 700;
+  color: #fff;
 }
 .profile-info-list > li .value {
-  color: #666;
+  color: #fff;
 }
 .profile-info-list > li.img-list a {
   display: inline-block;
@@ -461,7 +463,7 @@ body .fc-widget-header a {
   padding-top: 1.5625rem;
 }
 .table.table-profile .field {
-  color: #666;
+  color: #fff;
   font-weight: 600;
   width: 25%;
   text-align: right;
@@ -479,10 +481,10 @@ body .fc-widget-header a {
 .friend-list > li > a {
   display: block;
   text-decoration: none;
-  color: #000;
+  color: #fff;
   padding: 0.625rem;
   margin: 1px;
-  background: #fff;
+  background: #2c2f33;
 }
 .friend-list > li > a:after,
 .friend-list > li > a:before {
@@ -495,7 +497,7 @@ body .fc-widget-header a {
   width: 3rem;
   height: 3rem;
   overflow: hidden;
-  background: #efeff4;
+  background: #2c2f33;
 }
 .friend-list .friend-info {
   margin-left: 3.625rem;
@@ -506,7 +508,7 @@ body .fc-widget-header a {
   font-weight: 600;
 }
 .friend-list .friend-info p {
-  color: #666;
+  color: #fff;
   margin: 0;
 }
 </style>

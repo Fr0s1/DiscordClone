@@ -1096,7 +1096,20 @@ export default {
 
 <style scoped>
 #people-list-content::-webkit-scrollbar {
-  width: 1px;
+  width: 5px;
+}
+#people-list-content::-webkit-scrollbar-thumb {
+  -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+  --webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+  border-radius: 5px;
+  background-color: #007bff;
+}
+#people-list-content::-webkit-scrollbar-track {
+  -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+  border-radius: 10px;
+  background-color: #f5f5f5;
+  --webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+  border-radius: 5px;
   background-color: #f5f5f5;
 }
 #menu .ul {
