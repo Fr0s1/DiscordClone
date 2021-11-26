@@ -20,7 +20,7 @@
               <chat-util :user="user"/>
             </div>
             
-            <div id="people-list-content" style="height:75vh; overflow-y: scroll;">
+            <div id="people-list-content" style="height:75vh; overflow-y: auto;">
               <contact-list
               :contactlist="user.contactlist"
               :contactIsGroup="contactIsGroup"

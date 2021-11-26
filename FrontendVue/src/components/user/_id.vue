@@ -167,7 +167,6 @@ export default {
   inject: ["currentUsername"],
   setup() {
     const route = useRoute();
-
     const id = computed(() => route.params.id);
     return { id };
   },
@@ -203,6 +202,12 @@ export default {
     },
   },
 
+  mounted() {
+    const route = useRoute();
+    if(route.params.id == this.currentUsername) {
+      this.$router.push('/user/'+this.currentUsername);
+    }
+  },
   methods: {
     addContact(user) {
       console.log(user.username);
