@@ -67,21 +67,28 @@
           <div class="col-md-8">
             <div class="tab-content p-0">
               <div class="tab-pane fade active show" id="profile-friends">
-                <div class="m-b-10"><b>Friend List (9)</b></div>
+                <div class="m-b-10">
+                  <b>Friend List ({{ user.friendlist.length }})</b>
+                </div>
 
                 <ul class="friend-list clearfix">
                   <li
                     style="background-color: #242526"
-                    v-for="list in user.friendlist"
-                    v-bind:key="list.username"
+                    v-for="friend in user.friendlist"
+                    v-bind:key="friend.username"
                   >
-                    <a :href="'/profile/' + list.username">
+                    <a :href="'/profile/' + friend.username">
                       <div class="friend-img">
-                        <img v-bind:src="list.avatar" alt="" />
+                        <img v-bind:src="friend.avatar" alt="" />
                       </div>
                       <div class="friend-info">
-                        <h4>{{ list.username }}</h4>
-                        <p>392 friends</p>
+                        <h4>{{ friend.username }}</h4>
+                        <p>
+                          {{ friend.friendlist.length }}
+                          {{
+                            friend.friendlist.length > 1 ? "friends" : "friend"
+                          }}
+                        </p>
                       </div>
                       <i style="color: black" class="bi bi-three-dots"></i>
                     </a>
@@ -139,16 +146,15 @@
 
 <script>
 import gql from "graphql-tag";
-import { AuthState, onAuthUIStateChange } from "@aws-amplify/ui-components";
 import { Auth } from "aws-amplify";
 
 export default {
   inject: ["currentUsername"],
   data() {
     return {
-      //   user: {},
-      friendlist: [],
-      user: {},
+      user: {
+        friendlist: [],
+      },
     };
   },
   apollo: {
@@ -165,6 +171,9 @@ export default {
               friendlist {
                 username
                 avatar
+                friendlist {
+                  username
+                }
               }
             }
           }

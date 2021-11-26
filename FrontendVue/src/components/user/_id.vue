@@ -1,6 +1,6 @@
 <template>
   <div class="container">
-    <div>{{ username }}</div>
+    <div>{{ user.username }}</div>
     <div id="content" class="content p-0">
       <div class="profile-header">
         <div class="profile-header-cover"></div>
@@ -56,22 +56,7 @@
             <div class="tab-content p-0">
               <div class="tab-pane fade active show" id="profile-friends">
                 <ul class="friend-list clearfix">
-                  <!-- <li  
-                    style="background-color: #242526"
-                    v-for="list in user.friendlist"
-                    v-bind:key="list.username"
-                  >
-                    <a :href="'/profile/'+ list.username">
-                      <div class="friend-img">
-                        <img v-bind:src="list.avatar" alt="" />
-                      </div>
-                      <div class="friend-info">
-                        <h4>{{ list.username }}</h4>
-                        <p>392 friends</p>
-                      </div>
-                      <i style="color: black" class="bi bi-three-dots"></i>
-                    </a>
-                  </li> -->
+                 
                   <li
                     style="background-color: #242526"
                     v-for="friend in user.friendlist"
@@ -86,7 +71,6 @@
                       </div>
                       <div class="friend-info">
                         <h4>{{ friend.username }}</h4>
-                        <p>392 friends</p>
                       </div>
                       <i style="color: black" class="bi bi-three-dots"></i>
                     </a>
@@ -96,7 +80,12 @@
                       </div>
                       <div class="friend-info">
                         <h4>{{ friend.username }}</h4>
-                        <p>392 friends</p>
+                        <p>
+                          {{ friend.friendlist.length }}
+                          {{
+                            friend.friendlist.length > 1 ? "friends" : "friend"
+                          }}
+                        </p>
                       </div>
                       <i style="color: black" class="bi bi-three-dots"></i>
                     </a>
@@ -174,8 +163,9 @@ export default {
 
   data() {
     return {
-      friendlist: [],
-      user: {},
+      user: {
+        friendlist: [],
+      },
     };
   },
   apollo: {
@@ -192,6 +182,9 @@ export default {
               friendlist {
                 username
                 avatar
+                friendlist {
+                  username
+                }
               }
             }
           }
