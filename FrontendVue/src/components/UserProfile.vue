@@ -130,11 +130,18 @@
 </template>
 
 <script>
+import { useRoute } from "vue-router";
 import gql from "graphql-tag";
 import { AuthState, onAuthUIStateChange } from "@aws-amplify/ui-components";
 import { Auth } from "aws-amplify";
 export default {
   inject: ["currentUsername"],
+  setup() {
+    const route = useRoute();
+    // const id = computed(() => route.params.id);
+    // return { id };
+    console.log(route.params.username);
+  },
   data() {
     return {
       //   user: {},
@@ -173,7 +180,7 @@ export default {
   },
   methods: {
     f() {
-      console.log(this.currentUsername);
+      // console.log(this.currentUsername);
       // console.log(this.user);
     },
     async signOut() {
@@ -187,6 +194,13 @@ export default {
   },
 
   mounted() {
+    const route = useRoute();
+    // const id = computed(() => route.params.id);
+    // return { id };
+    console.log(route.params.username);
+    if(route.params.username != this.currentUsername) {
+      this.$router.push('/profile/'+ route.params.username);
+    }
     this.f();
   },
 };
