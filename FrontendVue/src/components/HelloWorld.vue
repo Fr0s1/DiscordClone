@@ -58,9 +58,9 @@ export default {
   inject: ["currentUsername"],
   props: {
     msg: String,
-    currentUsername: {
-      type: String,
-    },
+  },
+  mounted() {
+    console.log(this.currentUsername);
   },
 };
 </script>

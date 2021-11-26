@@ -33,7 +33,8 @@ async function addUser(parent, args, context) {
             email: args.email,
             name: args.name,
             birthdate: args.birthdate,
-            accountStatus: "Online" // This mutation only called once from frontend when user first sign up, so account status is online
+            accountStatus: "Online", // This mutation only called once from frontend when user first sign up, so account status is online
+            lastOnlineTime: new Date().toISOString()
         })
 
         return newUser
