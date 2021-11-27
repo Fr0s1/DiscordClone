@@ -1,5 +1,6 @@
 const { RedisPubSub } = require('graphql-redis-subscriptions')
 const Redis = require('ioredis');
+const { withFilter } = require('graphql-subscriptions');
 
 const options = {
     host: process.env.redisHost,
@@ -15,17 +16,54 @@ const pubsub = new RedisPubSub({
     subscriber: new Redis(options)
 });
 
-function accountStatusSubscribe() {
-    return pubsub.asyncIterator(["ACCOUNT_STATUS_CHANGED"])
+function subscriptionEvents() {
+    return pubsub.asyncIterator(["ACCOUNT_STATUS_CHANGED", "GROUP_MEMBERS_ACCOUNT_STATUS_CHANGED",
+        "GROUP_MESSAGE_DELETED", "MEMBER_LEAVES_GROUP"])
 }
 
+const mongoUtilFunctions = require('../../mongodb/utils/utils')
+
 const accountStatusInfo = {
-    subscribe: accountStatusSubscribe,
+    subscribe: withFilter(subscriptionEvents,
+        async (payload, variables) => {
+            return await mongoUtilFunctions.ifInContactList(payload.username, variables.loggedInUsername)
+        }
+    ),
     resolve: payload => {
         return payload
     }
 }
 
+const groupMembersAccountStatus = {
+    subscribe: withFilter(subscriptionEvents, async (payload, variables) => {
+        return await mongoUtilFunctions.ifUserInGroupWithId(variables.groupId, payload.username)
+    }),
+    resolve: payload => {
+        return payload
+    }
+}
+
+const groupMessageDeleted = {
+    subscribe: withFilter(subscriptionEvents, (payload, variables) => {
+        return payload.group === variables.groupId
+    }),
+    resolve: payload => {
+        return payload
+    }
+}
+
+const memberLeavesGroup = {
+    subscribe: withFilter(subscriptionEvents, (payload, variables) => {
+        return payload.user.groups.includes(variables.groupId) && payload.type === "leave"
+    }),
+    resolve: payload => {
+        return payload.user
+    }
+}
+
 module.exports = {
-    accountStatusInfo
+    accountStatusInfo,
+    groupMembersAccountStatus,
+    groupMessageDeleted,
+    memberLeavesGroup
 }

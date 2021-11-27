@@ -3,7 +3,7 @@ const { Schema } = mongoose;
 
 const groupSchema = new Schema({
     groupName: {
-        type: String,
+        type: Schema.Types.String,
     },
     admin: {
         type: Schema.Types.ObjectId,
@@ -18,7 +18,7 @@ const groupSchema = new Schema({
         default: mongoose.now()
     },
     groupAvatar: {
-        type: String
+        type: Schema.Types.String
     }
 }, { versionKey: false })
 

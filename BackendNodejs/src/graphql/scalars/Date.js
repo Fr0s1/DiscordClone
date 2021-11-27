@@ -1,5 +1,4 @@
 const { GraphQLScalarType, Kind } = require('graphql');
-const mongoose = require('mongoose')
 
 const dateScalar = new GraphQLScalarType({
   name: 'Date',

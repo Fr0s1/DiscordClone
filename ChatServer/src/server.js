@@ -32,7 +32,7 @@ const io = require("socket.io")(server, {
     cors: {
         origin: process.env.frontend_endpoint,
         methods: ["GET", "POST"],
-        credentials: true
+        credentials: true // Allow session affinity (forward "handshake" packet to same container)
     },
     allowEIO3: true
 });
@@ -68,6 +68,15 @@ nsp.on('connection', (socket) => {
     socket.on("groupMessage", data => {
         // console.log(`Received data from socket ${socket.id}`)
         socket.to(data.group).emit("groupMessage", data)
+    })
+
+    socket.on("delete-user-session", data => {
+        console.log("disconnected")
+        userSessionController.deleteUserSession(data.username)
+    })
+
+    socket.on("disconnect", () => {
+        console.log(`Socket with id ${socket.id} disconnected`)
     })
 });
 

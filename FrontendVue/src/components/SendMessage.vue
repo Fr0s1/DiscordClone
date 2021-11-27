@@ -5,9 +5,10 @@
         <form
           enctype="multipart/form-data"
           @submit.prevent="contactIsGroup ? sendGroupMessage() : sendMessage()"
+          autocomplete="off"
         >
           <div class="input-group-prepend">
-            <button class="btn-outline-primary btn">
+            <button class="btn-outline-primary btn" :disabled="contactIsGroup && !userInGroup">
               <i
                 class="fas fa-paper-plane"
                 data-toggle="tooltip"
@@ -16,26 +17,36 @@
                 style="color: #oo7bff"
               ></i>
             </button>
+            <span
+              class="input-group-text attach_btn"
+              @click="$refs.messageFiles.click()"
+            >
+              <input
+                type="file"
+                ref="messageFiles"
+                style="display: none"
+                name="file"
+                multiple
+                @change="filesChange($event.target.files)"
+              />
+
+              <i class="fas fa-paperclip"></i>
+            </span>
             <input
               type="text"
               class="form-control"
               style="border-color: #007bff"
-              placeholder="Enter text here..."
+              :placeholder="
+                contactIsGroup && !userInGroup
+                  ? 'You are not member of this group'
+                  : 'Enter text here...'
+              "
               name="content"
               id="content"
               v-model="messageContent"
+              :disabled="contactIsGroup && !userInGroup"
             />
           </div>
-          <input
-            type="file"
-            class="form-control-file"
-            style="margin-top: 5px"
-            id="files"
-            name="files"
-            multiple
-            @change="filesChange($event.target.files)"
-            ref="messageFiles"
-          />
         </form>
       </div>
 
@@ -67,9 +78,13 @@ export default {
     currentUserAvatarUrl: {
       type: String,
     },
+    groupsMembers: {
+      type: Array,
+    },
   },
   data() {
     return {
+      visible: true,
       messageContent: "", // Message input field
 
       messagesFilePreviewUrls: [], // An array contain img's src when user upload image for previewing
@@ -99,44 +114,35 @@ export default {
         });
       }
 
-      this.$emit("realtime-message", message);
+      // The message must have at least 1 file or non empty content
+      if (message.content.length > 0 || message.files.length > 0) {
+        let sentMessage = new FormData();
 
-      let sentMessage = new FormData();
+        sentMessage.append("sender", this.currentUsername);
+        sentMessage.append("receiver", this.activeContactUsername);
+        sentMessage.append("content", this.messageContent);
 
-      sentMessage.append("sender", this.currentUsername);
-      sentMessage.append("receiver", this.activeContactUsername);
-      sentMessage.append("content", this.messageContent);
-
-      if (this.messageFiles.length > 0) {
-        for (let fileIndex in this.messageFiles) {
-          sentMessage.append(`f${fileIndex}`, this.messageFiles[fileIndex]);
+        if (this.messageFiles.length > 0) {
+          for (let fileIndex in this.messageFiles) {
+            sentMessage.append(`f${fileIndex}`, this.messageFiles[fileIndex]);
+          }
         }
-
         this.axios
           .post(`${this.config.socketIO_HTTP}/message`, sentMessage)
           .then((res) => {
             this.$emit("chatMessage", res.data);
-          })
-          .catch((e) => {
-            console.log(e);
-          });
-      } else {
-        this.axios
-          .post(`${this.config.socketIO_HTTP}/message`, sentMessage)
-          .then((res) => {
-            console.log(res);
+            this.$emit("realtime-message", res.data);
           })
           .catch((e) => {
             console.log(e);
           });
 
-        this.$emit("chatMessage", message);
+        this.messageContent = "";
+
+        this.messageFiles = [];
+        this.messagesFilePreviewUrls = [];
+        this.$refs.messageFiles.value = null;
       }
-      this.messageContent = "";
-
-      this.messageFiles = [];
-      this.messagesFilePreviewUrls = [];
-      this.$refs.messageFiles.value = null;
     },
     filesChange(files) {
       this.messageFiles = files;
@@ -166,43 +172,45 @@ export default {
         });
       }
 
-      this.$emit("realtime-message", message);
+      if ((message.content.length > 0 || message.files.length > 0) && this.userInGroup) {
+        let sentMessage = new FormData();
 
-      let sentMessage = new FormData();
-
-      sentMessage.append("sender", this.currentUsername);
-      sentMessage.append("content", this.messageContent);
-      sentMessage.append("group", this.activeGroupId);
-      if (this.messageFiles.length > 0) {
-        for (let fileIndex in this.messageFiles) {
-          sentMessage.append(`f${fileIndex}`, this.messageFiles[fileIndex]);
+        sentMessage.append("sender", this.currentUsername);
+        sentMessage.append("content", this.messageContent);
+        sentMessage.append("group", this.activeGroupId);
+        if (this.messageFiles.length > 0) {
+          for (let fileIndex in this.messageFiles) {
+            sentMessage.append(`f${fileIndex}`, this.messageFiles[fileIndex]);
+          }
         }
 
         this.axios
           .post(`${this.config.socketIO_HTTP}/groupmessage`, sentMessage)
           .then((res) => {
+            console.log(res.data);
+            this.$emit("realtime-group-message", res.data);
+
             this.$emit("groupChatMessage", res.data);
           })
           .catch((e) => {
             console.log(e);
           });
-      } else {
-        this.axios
-          .post(`${this.config.socketIO_HTTP}/groupmessage`, sentMessage)
-          .then((res) => {
-            console.log(res);
-          })
-          .catch((e) => {
-            console.log(e);
-          });
 
-        this.$emit("groupChatMessage", message);
+        this.messageContent = "";
+
+        this.messageFiles = [];
+        this.messagesFilePreviewUrls = [];
+        this.$refs.messageFiles.value = null;
       }
-      this.messageContent = "";
-
-      this.messageFiles = [];
-      this.messagesFilePreviewUrls = [];
-      this.$refs.messageFiles.value = null;
+    },
+  },
+  computed: {
+    userInGroup() {
+      return (
+        this.groupsMembers.findIndex(
+          (member) => member.username == this.currentUsername
+        ) !== -1
+      );
     },
   },
 };

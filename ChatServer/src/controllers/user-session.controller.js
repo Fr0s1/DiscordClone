@@ -5,7 +5,12 @@ const redisClient = require('../redis/redisClient')
 async function saveSocketID(data) {
     let user_session = `chat:user:${data.user}`
 
-    let result = redisClient.hsetAsync(user_session, "socketId", data.id)
+    try {
+        let result = redisClient.hsetAsync(user_session, "socketId", data.id)
+
+    } catch (e) {
+        console.log(e)
+    }
 }
 
 async function getSocketId(username) {
@@ -59,9 +64,20 @@ async function getPeerJsId(req, res) {
     }
 }
 
+function deleteUserSession(username) {
+    let user_session = `chat:user:${username}`
+    try {
+        redisClient.delAsync(user_session);
+
+    } catch (e) {
+        console.log(e)
+    }
+}
+
 module.exports = {
     saveSocketID,
     getSocketId,
     savePeerJsId,
-    getPeerJsId
+    getPeerJsId,
+    deleteUserSession
 }

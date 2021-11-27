@@ -12,9 +12,9 @@ Group:
 
    ```html
    <form enctype="multipart/form-data" method="post">
-       <input type="file" name="groupAvatar" id="groupAvatar">
-       <input type="text" name="groupId" id="groupId">
-       <button type="submit">Send</button>
+     <input type="file" name="groupAvatar" id="groupAvatar" />
+     <input type="text" name="groupId" id="groupId" />
+     <button type="submit">Send</button>
    </form>
    ```
 
@@ -29,12 +29,11 @@ User:
 1. POST /users/avatar: upload user avatar
 
    ```html
-    <form enctype="multipart/form-data" method="post">
-      <input type="file" name="avatar" id="avatar">
-      <input type="text" name="username" id="username">
-      <button type="submit">Send</button>
+   <form enctype="multipart/form-data" method="post">
+     <input type="file" name="avatar" id="avatar" />
+     <input type="text" name="username" id="username" />
+     <button type="submit">Send</button>
    </form>
-
    ```
 
 2. GET /users/{username}/avatar: get user avatar

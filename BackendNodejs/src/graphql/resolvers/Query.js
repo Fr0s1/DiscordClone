@@ -4,7 +4,7 @@ async function user(parent, args, context) {
     let user = await User.findOne({
         username: args.username
     })
-    
+
     return user
 }
 
@@ -68,13 +68,17 @@ async function userMessages(parent, args, context) {
                 ]
             }]
         }
-    ).sort({ sentTime: 'desc' }).limit(limit)
+    ).sort({ sentTime: 'desc' }).limit(limit + 1)
+    // Get one more message so that if there aren't any message left
+    // Next cursor is empty
+    
+    let sentMessages = messages.slice(0, limit)
 
     let result = {
-        messages,
-        count: messages.length,
+        messages: sentMessages,
+        count: sentMessages.length,
         get nextCursor() {
-            return this.count > 0 ? messages[messages.length - 1].sentTime : ""
+            return messages[limit] ? messages[limit].sentTime : ""
         }
     }
     return result
@@ -93,13 +97,17 @@ async function groupMessages(parent, args, context) {
             sentTime: { $lt: nextCursor }
         }
         ]
-    }).sort({ sentTime: 'desc' }).limit(limit)
+    }).sort({ sentTime: 'desc' }).limit(limit + 1)
+    // Get one more message so that if there aren't any message left
+    // Next cursor is empty
+
+    let sentGroupMessages = messages.slice(0, limit)
 
     let result = {
-        messages,
-        count: messages.length,
+        messages: sentGroupMessages,
+        count: sentGroupMessages.length,
         get nextCursor() {
-            return this.count > 0 ? messages[messages.length - 1].sentTime : ""
+            return messages[limit] ? messages[limit].sentTime : ""
         }
     }
     return result

@@ -1,18 +1,27 @@
 <template>
   <div class="container">
-    <div>{{ username }}</div>
+    <div>{{ user.username }}</div>
     <div id="content" class="content p-0">
       <div class="profile-header">
         <div class="profile-header-cover"></div>
         <div class="profile-header-content">
-          <div class="profile-header-img mb-4">
-            <img v-bind:src="user.avatar" class="mb-4" alt="" />
+          <div v-if="user.avatar != ''" class="profile-header-img mb-4">
+            <b-avatar square v-bind:src="user.avatar" size="130px"></b-avatar>
+          </div>
+
+          <div v-else class="profile-header-img mb-4">
+            <b-avatar
+              square
+              src="https://thumbs.dreamstime.com/b/default-avatar-profile-icon-social-media-user-vector-image-icon-default-avatar-profile-icon-social-media-user-vector-image-209162840.jpg"
+              size="140px"
+            ></b-avatar>
           </div>
 
           <div class="profile-header-info">
             <h4 class="m-t-sm">{{ user.name }}</h4>
-            <p class="m-b-sm">UXUI + Frontend Developer</p>
-            
+            <button @click="addContact(user)" class="btn btn-primary">
+              Message
+            </button>
           </div>
         </div>
 
@@ -46,21 +55,28 @@
           <div class="col-md-8">
             <div class="tab-content p-0">
               <div class="tab-pane fade active show" id="profile-friends">
-                <div class="m-b-10"><b>Friend List (9)</b></div>
+                <div class="m-b-10" style="color: white">
+                  <b>Friend List ({{ user.friendlist.length }})</b>
+                </div>
 
                 <ul class="friend-list clearfix">
-                  <li  
+                  <li
                     style="background-color: #242526"
-                    v-for="list in user.friendlist"
-                    v-bind:key="list.username"
+                    v-for="friend in user.friendlist"
+                    v-bind:key="friend.username"
                   >
-                    <a :href="'/profile/'+ list.username">
+                    <a :href="'/profile/' + friend.username">
                       <div class="friend-img">
-                        <img v-bind:src="list.avatar" alt="" />
+                        <img v-bind:src="friend.avatar" alt="" />
                       </div>
                       <div class="friend-info">
-                        <h4>{{ list.username }}</h4>
-                        <p>392 friends</p>
+                        <h4>{{ friend.username }}</h4>
+                        <p>
+                          {{ friend.friendlist.length }}
+                          {{
+                            friend.friendlist.length > 1 ? "friends" : "friend"
+                          }}
+                        </p>
                       </div>
                       <i style="color: black" class="bi bi-three-dots"></i>
                     </a>
@@ -120,20 +136,26 @@
 import { useRoute } from "vue-router";
 import gql from "graphql-tag";
 import { computed } from "@vue/reactivity";
-
+export const ADD_CONTACT = gql`
+  mutation ($username: String!) {
+    addUserToContactList(username: $username) {
+      username
+    }
+  }
+`;
 export default {
-  // inject: ["currentUsername"],
+  inject: ["currentUsername"],
   setup() {
     const route = useRoute();
-
     const id = computed(() => route.params.id);
     return { id };
   },
 
   data() {
     return {
-      friendlist: [],
-      user: {},
+      user: {
+        friendlist: [],
+      },
     };
   },
   apollo: {
@@ -150,6 +172,9 @@ export default {
               friendlist {
                 username
                 avatar
+                friendlist {
+                  username
+                }
               }
             }
           }
@@ -161,15 +186,34 @@ export default {
     },
   },
 
+  mounted() {
+    const route = useRoute();
+    if(route.params.id == this.currentUsername) {
+      this.$router.push('/user/'+this.currentUsername);
+    }
+  },
   methods: {
+    addContact(user) {
+      console.log(user.username);
+      this.$apollo.mutate({
+        mutation: ADD_CONTACT,
+        variables: {
+          username: user.username,
+        },
+      });
+    },
+  },
+  watch: {
+    user(newVal, oldVal) {
+      console.log(newVal);
+    },
   },
 };
 </script>
 
 <style scoped>
-body {
-  background: #eaeaea;
-  margin-top: 20px;
+.container {
+  background-color: #2c2f33;
 }
 .profile-info-list {
   padding: 0;
@@ -269,7 +313,7 @@ body .fc-icon {
   position: relative;
 }
 .profile-header .profile-header-tab {
-  background: #fff;
+  background: #23272a;
   list-style-type: none;
   margin: -1.25rem 0 0;
   padding: 0 0 0 8.75rem;
@@ -282,7 +326,7 @@ body .fc-icon {
 }
 .profile-header .profile-header-tab > li > a {
   display: block;
-  color: #000;
+  color: #fff;
   line-height: 1.25rem;
   padding: 0.625rem 1.25rem;
   text-decoration: none;
@@ -292,7 +336,7 @@ body .fc-icon {
 }
 .profile-header .profile-header-tab > li.active > a,
 .profile-header .profile-header-tab > li > a.active {
-  color: #007aff;
+  color: #23272a;
 }
 .profile-header .profile-header-content:after,
 .profile-header .profile-header-content:before {
@@ -307,7 +351,7 @@ body .fc-icon {
 body .fc th a,
 body .fc-ltr .fc-basic-view .fc-day-top .fc-day-number,
 body .fc-widget-header a {
-  color: #000;
+  color: #fff;
 }
 .profile-header-img {
   float: left;
@@ -320,7 +364,7 @@ body .fc-widget-header a {
   -webkit-border-radius: 0.25rem;
   -moz-border-radius: 0.25rem;
   border-radius: 0.25rem;
-  background: #fff;
+  background: #2c2f33;
 }
 .profile-header-info h4 {
   font-weight: 500;
@@ -385,7 +429,7 @@ body .fc-widget-header a {
 .profile-info-list > li.title {
   font-size: 0.625rem;
   font-weight: 700;
-  color: #8a8a8f;
+  color: #fff;
   padding: 0 0 0.3125rem;
 }
 .profile-info-list > li + li.title {
@@ -396,9 +440,10 @@ body .fc-widget-header a {
 }
 .profile-info-list > li .field {
   font-weight: 700;
+  color: #fff;
 }
 .profile-info-list > li .value {
-  color: #666;
+  color: #fff;
 }
 .profile-info-list > li.img-list a {
   display: inline-block;
@@ -418,7 +463,7 @@ body .fc-widget-header a {
 }
 .table.table-profile th {
   border: none;
-  color: #000;
+  color: #fff;
   padding-bottom: 0.3125rem;
   padding-top: 0;
 }
@@ -429,7 +474,7 @@ body .fc-widget-header a {
   padding-top: 1.5625rem;
 }
 .table.table-profile .field {
-  color: #666;
+  color: #fff;
   font-weight: 600;
   width: 25%;
   text-align: right;
@@ -447,10 +492,10 @@ body .fc-widget-header a {
 .friend-list > li > a {
   display: block;
   text-decoration: none;
-  color: #000;
+  color: #fff;
   padding: 0.625rem;
   margin: 1px;
-  background: #fff;
+  background: #2c2f33;
 }
 .friend-list > li > a:after,
 .friend-list > li > a:before {
@@ -463,7 +508,7 @@ body .fc-widget-header a {
   width: 3rem;
   height: 3rem;
   overflow: hidden;
-  background: #efeff4;
+  background: #2c2f33;
 }
 .friend-list .friend-info {
   margin-left: 3.625rem;
@@ -474,7 +519,7 @@ body .fc-widget-header a {
   font-weight: 600;
 }
 .friend-list .friend-info p {
-  color: #666;
+  color: #fff;
   margin: 0;
 }
 </style>

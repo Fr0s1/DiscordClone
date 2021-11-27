@@ -7,10 +7,21 @@
       @click="setActiveGroup(index)"
       :key="index"
     >
-      <img :src="group.groupAvatar" alt="avatar" />
+      <img
+        :src="group.groupAvatar === '' ? default_avatar : group.groupAvatar"
+        alt="avatar"
+      />
       <div class="about">
         <div class="name">{{ group.groupName }}</div>
       </div>
+      <div
+        class="badge bg-success float-right"
+        v-if="
+          group.groupName !== activeGroupName &&
+          realtimeGroupMessages[group._id] &&
+          realtimeGroupMessages[group._id].length > 0
+        "
+      ></div>
     </li>
   </ul>
 </template>
@@ -26,28 +37,41 @@ export default {
     contactIsGroup: {
       type: Boolean,
     },
+    realtimeGroupMessages: {
+      type: Object,
+    },
   },
   data() {
     return {
       activeGroupIndex: null,
-      nextCursor: new Date().toISOString(),
       limit: 10,
+      default_avatar: require("@/assets/images/default_avatar.jpg"),
     };
   },
   methods: {
     setActiveGroup(index) {
+      if (!this.contactIsGroup) {
+        this.$emit("change-contact-type");
+      }
+
+      // Because now when user click delete message, only the content is changed to "Message deleted" so when user change to another contact
+      // Empty current real time messages array
+      if (this.activeGroupIndex && this.activeGroupId !== "") {
+        this.$emit("empty-realtime-group-messages", this.activeGroupId);
+      }
+
       this.activeGroupIndex = index;
+
+      this.$emit("empty-realtime-group-messages", this.activeGroupId);
+
       this.$emit("fetch-group-messages", {
         limit: this.limit,
-        nextCursor: this.nextCursor,
+        nextCursor: new Date().toISOString(),
         groupId: this.groups[this.activeGroupIndex]._id,
         firstFetch: true,
         contactIsGroup: true,
         shouldScroll: true,
-      });
-
-      this.$emit("joinSocketIORoom", {
-        roomId: this.groups[this.activeGroupIndex]._id,
+        activeGroupIndex: this.activeGroupIndex,
       });
     },
   },
@@ -57,160 +81,100 @@ export default {
         return this.groups[this.activeGroupIndex].groupName;
       }
     },
+    activeGroupId() {
+      if (this.groups.length > 0) {
+        return this.groups[this.activeGroupIndex]._id;
+      }
+    },
+  },
+  watch: {
+    groups(newGroupList, oldGroupList) {
+      if (newGroupList && newGroupList.length > 0) {
+        this.groups.forEach((group) => {
+          this.$emit("joinSocketIORoom", {
+            roomId: group._id,
+          });
+        });
+      }
+    },
   },
 };
 </script>
 
 <style scoped>
-.btn{
+ul li:first-child {
+  margin-top: 5px;
+}
+
+ul li {
+  width: 250px;
+  margin: auto;
+}
+
+.badge {
+  height: 15px;
+  width: 15px;
+  border-radius: 50%;
+}
+
+.badge:empty {
+  display: block;
+
+  color: #86c541;
+}
+
+.btn {
   width: 40px;
 }
-.card {
-  background: #fff;
-  transition: 0.5s;
-  border: 0;
-  margin-bottom: 30px;
-  border-radius: 0.55rem;
-  position: relative;
-  width: 100%;
-  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 10%);
-}
-.chat-app .people-list {
-  width: 280px;
-  position: absolute;
-  left: 0;
-  top: 0;
-  padding: 20px;
-  z-index: 7;
-}
-
-.chat-app .chat {
-  margin-left: 280px;
-  border-left: 1px solid #eaeaea;
-}
-
-.people-list {
-  -moz-transition: 0.5s;
-  -o-transition: 0.5s;
-  -webkit-transition: 0.5s;
-  transition: 0.5s;
-}
-
-.people-list .chat-list li {
+.chat-list li {
   padding: 10px 15px;
   list-style: none;
   border-radius: 3px;
 }
 
-.people-list .chat-list li:hover {
+.chat-list li:hover {
   background: #efefef;
   cursor: pointer;
 }
 
-.people-list .chat-list li.active {
+.chat-list li.active {
   background: #efefef;
 }
 
-.people-list .chat-list li .name {
+.chat-list li .name {
   font-size: 15px;
 }
 
-.people-list .chat-list img {
+.chat-list img {
   width: 45px;
   height: 45px;
   border-radius: 50%;
 }
-
-.people-list img {
+img {
   float: left;
   border-radius: 50%;
 }
 
-.people-list .about {
+.about {
   float: left;
   padding-left: 8px;
 }
 
-.people-list .status {
+.status {
   color: #999;
   font-size: 13px;
 }
 
-.online,
-.offline,
-.me {
-  margin-right: 2px;
-  font-size: 8px;
-  vertical-align: middle;
-}
-
-.online {
-  color: #86c541;
-}
-
-.offline {
-  color: #e47297;
-}
-
-.me {
-  color: #1d8ecd;
-}
-
-.float-right {
-  float: right;
-}
-
-.clearfix:after {
-  visibility: hidden;
-  display: block;
-  font-size: 0;
-  content: " ";
-  clear: both;
-  height: 0;
-}
-
-@media only screen and (max-width: 767px) {
-  .chat-app .people-list {
-    height: 465px;
-    width: 100%;
-    overflow-x: auto;
-    background: #fff;
-    left: -400px;
-    display: none;
-  }
-  .chat-app .people-list.open {
-    left: 0;
-  }
-  .chat-app .chat {
-    margin: 0;
-  }
-  .chat-app .chat .chat-header {
-    border-radius: 0.55rem 0.55rem 0 0;
-  }
-  .chat-app .chat-history {
-    height: 300px;
-    overflow-x: auto;
-  }
-}
-
 @media only screen and (min-width: 768px) and (max-width: 992px) {
-  .chat-app .chat-list {
+  .chat-list {
     height: 650px;
-    overflow-x: auto;
-  }
-  .chat-app .chat-history {
-    height: 600px;
     overflow-x: auto;
   }
 }
 
 @media only screen and (min-device-width: 768px) and (max-device-width: 1024px) and (orientation: landscape) and (-webkit-min-device-pixel-ratio: 1) {
-  .chat-app .chat-list {
+  .chat-list {
     height: 480px;
-    overflow-x: auto;
-  }
-  .chat-app .chat-history {
-    height: calc(100vh - 350px);
     overflow-x: auto;
   }
 }

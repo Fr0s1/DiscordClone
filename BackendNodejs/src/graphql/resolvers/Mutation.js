@@ -32,6 +32,9 @@ async function addUser(parent, args, context) {
             phone_number: args.phone_number,
             email: args.email,
             name: args.name,
+            birthdate: args.birthdate,
+            accountStatus: "Online", // This mutation only called once from frontend when user first sign up, so account status is online
+            lastOnlineTime: new Date().toISOString()
         })
 
         return newUser
@@ -42,7 +45,7 @@ async function addUser(parent, args, context) {
 
 // Create group chat
 async function createGroup(parent, args, context) {
-    let admin = args.username
+    let admin = context.tokenPayload.username
     let Group = context.mongo.Group
 
     try {
@@ -50,6 +53,7 @@ async function createGroup(parent, args, context) {
     } catch (e) {
         throw new Error(e)
     }
+
     // Fetch information of user who created this group
     let userFound = await User.findOne({
         username: admin
@@ -109,36 +113,32 @@ async function addUserToGroup(parent, args, context) {
     } else {
         let userId = userFound._id
 
-        let groupAdmin = await User.findOne({
-            username: args.admin
-        })
-
         let groupFound = await Group.findOne({
-            groupName: args.groupName,
-            admin: groupAdmin._id
+            _id: args.groupId
         })
 
-        if (groupAdmin && groupFound) {
+        if (groupFound) {
             if (groupFound.members.includes(userId)) {
                 throw new Error('User is already in group')
             } else {
                 let result = await Group.findOneAndUpdate({
-                    groupName: args.groupName,
-                    admin: groupAdmin._id
+                    _id: groupFound._id
                 }, {
                     $push: { members: userId }
                 }, {
                     new: true
                 })
 
-                console.log(result)
-
-                // Include this group to user list of group the user is in
-                await User.findOneAndUpdate({
-                    username
-                }, {
-                    $push: { groups: groupFound._id }
-                })
+                if (!userFound.groups.includes(groupFound._id)) {
+                    // Include this group to user list of group the user is in
+                    await User.findOneAndUpdate({
+                        username
+                    }, {
+                        $push: { groups: groupFound._id }
+                    }, {
+                        returnDocument: 'after'
+                    })
+                }
 
                 return result
             }
@@ -163,35 +163,23 @@ async function removeUserFromGroup(parent, args, context) {
     } else {
         let userId = userFound._id
 
-        let groupAdmin = await User.findOne({
-            username: args.admin
-        })
-
         let groupFound = await Group.findOne({
-            groupName: args.groupName,
-            admin: groupAdmin._id
+            _id: args.groupId
         })
 
         // Check if group exists
-        if (groupAdmin && groupFound) {
+        if (groupFound) {
             if (groupFound.members.includes(userId)) {
 
                 groupFound.members.splice(groupFound.members.indexOf(userId), 1)
 
                 await Group.updateOne({
-                    groupName: args.groupName,
-                    admin: groupAdmin._id
+                    _id: groupFound._id
                 }, {
                     members: groupFound.members
                 })
 
-                userFound.groups.splice(userFound.groups.indexOf(groupFound._id), 1)
-
-                await User.findOneAndUpdate({
-                    _id: userId
-                }, {
-                    groups: userFound.groups
-                })
+                pubsub.publish("MEMBER_LEAVES_GROUP", { type: "leave", user: userFound })
 
                 return groupFound
             } else {
@@ -200,6 +188,28 @@ async function removeUserFromGroup(parent, args, context) {
         } else {
             throw new Error('Group does not exist')
         }
+    }
+}
+
+async function changeMessageInfo(parent, args, context) {
+    let Message = context.mongo.Message
+
+    let messageId = args.messageId
+
+    let newMessageInfo = { ...args }
+    delete newMessageInfo.messageId
+
+    try {
+        let result = await Message.findByIdAndUpdate({
+            _id: messageId
+        }, newMessageInfo, {
+            returnDocument: "after"
+        })
+
+        return result
+
+    } catch (e) {
+        throw new Error("Can't update message info at the moment" + e)
     }
 }
 
@@ -254,16 +264,22 @@ async function deleteGroupMessage(parent, args, context) {
             throw new Error(`Message with id ${messageId} does not exists`)
         }
 
-        if (username == foundMessage.sender.username) {
-            let Bucket = process.env.BUCKET_NAME
-            let Key = `groupmessage/${foundMessage._id}/`
+        if (username === foundMessage.sender.username) {
+            if (foundMessage.files.length > 0) {
+                let Bucket = process.env.BUCKET_NAME
+                let Key = `groupmessage/${foundMessage._id}/`
+                context.aws.emptyS3Directory(Bucket, Key)
+            }
+
             let deletedMessage = await GroupMessage.findByIdAndDelete({
                 _id: foundMessage._id
             })
 
-            await context.aws.emptyS3Directory(Bucket, Key)
+            pubsub.publish("GROUP_MESSAGE_DELETED", deletedMessage)
 
             return deletedMessage
+        } else {
+            throw new Error("Message not sent by this user")
         }
 
     } catch (e) {
@@ -276,6 +292,8 @@ async function updateUserInfo(parent, args, context) {
     let phone_number = args.phone_number
     let name = args.name
     let email = args.email
+    let birthdate = args.birthdate
+
     let User = context.mongo.User
 
     let accountStatus = args.accountStatus
@@ -307,6 +325,14 @@ async function updateUserInfo(parent, args, context) {
 
         updatedInfo.email = email
     }
+    if (birthdate) {
+        UserAttributes.push({
+            Name: "birthdate",
+            Value: birthdate
+        })
+
+        updatedInfo.birthdate = birthdate
+    }
 
     if (accountStatus) {
         updatedInfo.accountStatus = accountStatus
@@ -332,13 +358,19 @@ async function updateUserInfo(parent, args, context) {
         })
 
         if (updatedInfo.accountStatus) {
-            pubsub.publish("ACCOUNT_STATUS_CHANGED", {
+            let publishInfo = {
                 username,
-                accountStatus: updatedInfo.accountStatus
-            })
+                accountStatus: updatedInfo.accountStatus,
+            }
+
+            pubsub.publish("ACCOUNT_STATUS_CHANGED", { ...publishInfo, lastOnlineTime: updatedInfo.lastOnlineTime })
+
+            pubsub.publish("GROUP_MEMBERS_ACCOUNT_STATUS_CHANGED", publishInfo)
         }
 
-        let data = await cognitoClient.adminUpdateUserAttributes(params).promise()
+        if (UserAttributes.length > 0) {
+            let data = await cognitoClient.adminUpdateUserAttributes(params).promise()
+        }
 
         return updatedUser
     } catch (e) {
@@ -358,12 +390,17 @@ async function addUserToContactList(parent, args, context) {
 
         if (addedUser) {
             let result = await User.findOneAndUpdate({
-                username: currentUser
+                username: currentUser,
+                contactlist: { $nin: [addedUser._id] } // Check if added user is already in logged in user's contact list
             }, {
                 $push: { contactlist: addedUser._id }
+            }, {
+                returnDocument: "after"
             })
 
-            console.log(result)
+            if (result === null) {
+                throw new Error(`User ${username} is already contactlist`)
+            }
             return result
         } else {
             throw new Error(`User with username ${username} does not exist`)
@@ -371,8 +408,39 @@ async function addUserToContactList(parent, args, context) {
     } catch (e) {
         throw new Error(e)
     }
-
 }
+
+async function removeUserFromContactList(parent, args, context) {
+    let username = args.username
+
+    let User = context.mongo.User
+
+    try {
+        let userFound = await User.findOne({
+            username
+        })
+
+        if (!userFound) {
+            throw new Error(`User ${username} does not exist`)
+        } else {
+            let currentUser = context.tokenPayload.username
+
+            let result = await User.findOneAndUpdate({
+                username: currentUser
+            }, {
+                $pull: { contactlist: userFound._id }
+            }, {
+                returnDocument: "after"
+            })
+
+            return result
+        }
+    } catch (e) {
+        console.log(e)
+        throw new Error("Can't do that operation at the moment")
+    }
+}
+
 module.exports = {
     addUser,
     createGroup,
@@ -381,5 +449,7 @@ module.exports = {
     deleteMessage,
     deleteGroupMessage,
     updateUserInfo,
-    addUserToContactList
+    addUserToContactList,
+    removeUserFromContactList,
+    changeMessageInfo
 }
