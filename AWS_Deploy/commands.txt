@@ -1,0 +1,21 @@
+Authenticate to private registry:
+aws ecr get-login-password --region ap-southeast-1 | docker login --username AWS --password-stdin 207986101045.dkr.ecr.ap-southeast-1.amazonaws.com
+
+
+Tag local image to push to ECR:
+
+docker tag frost2203/discordclone-filesserver:local 207986101045.dkr.ecr.ap-southeast-1.amazonaws.com/discordclone-filesserver:eks
+docker tag frost2203/discordclone-graphql:local 207986101045.dkr.ecr.ap-southeast-1.amazonaws.com/discordclone-graphql:eks
+docker tag frost2203/discordclone-socketio:local 207986101045.dkr.ecr.ap-southeast-1.amazonaws.com/discordclone-socketio:eks
+
+
+Push image to ECR Private Registry:
+docker push 207986101045.dkr.ecr.ap-southeast-1.amazonaws.com/discordclone-socketio:eks
+docker push 207986101045.dkr.ecr.ap-southeast-1.amazonaws.com/discordclone-filesserver:eks
+docker push 207986101045.dkr.ecr.ap-southeast-1.amazonaws.com/discordclone-graphql:eks
+
+Export data to MongoDB Atlas
+mongodump
+cd dump
+
+mongorestore "mongodb+srv://frost:<password>@<db-host>/<db-database>" <folder-name>/

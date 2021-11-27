@@ -68,7 +68,7 @@ async function getAuthData() {
 
     try {
         app.use(new VueSocketIO({
-            debug: true,
+            debug: process.env.NODE_ENV === "development",
             connection: config.socketIO_Endpoint,
             options: {
                 withCredentials: process.env.NODE_ENV !== "development",

@@ -1030,7 +1030,6 @@ export default {
     // });
 
     this.peer.on("open", (id) => {
-      console.log("My peer ID is: " + id);
       // Save user peerId to backend
       this.axios.post(
         `${this.config.socketIO_HTTP}/session/${this.currentUsername}/peerId`,

@@ -390,13 +390,17 @@ async function addUserToContactList(parent, args, context) {
 
         if (addedUser) {
             let result = await User.findOneAndUpdate({
-                username: currentUser
+                username: currentUser,
+                contactlist: { $nin: [addedUser._id] } // Check if added user is already in logged in user's contact list
             }, {
                 $push: { contactlist: addedUser._id }
             }, {
                 returnDocument: "after"
             })
 
+            if (result === null) {
+                throw new Error(`User ${username} is already contactlist`)
+            }
             return result
         } else {
             throw new Error(`User with username ${username} does not exist`)
@@ -436,6 +440,7 @@ async function removeUserFromContactList(parent, args, context) {
         throw new Error("Can't do that operation at the moment")
     }
 }
+
 module.exports = {
     addUser,
     createGroup,
