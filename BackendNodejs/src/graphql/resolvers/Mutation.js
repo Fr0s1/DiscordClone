@@ -32,7 +32,9 @@ async function addUser(parent, args, context) {
             phone_number: args.phone_number,
             email: args.email,
             name: args.name,
-            birthdate: args.birthdate
+            birthdate: args.birthdate,
+            accountStatus: "Online", // This mutation only called once from frontend when user first sign up, so account status is online
+            lastOnlineTime: new Date().toISOString()
         })
 
         return newUser
@@ -359,9 +361,10 @@ async function updateUserInfo(parent, args, context) {
             let publishInfo = {
                 username,
                 accountStatus: updatedInfo.accountStatus,
+                lastOnlineTime: updatedUser.lastOnlineTime 
             }
 
-            pubsub.publish("ACCOUNT_STATUS_CHANGED", { ...publishInfo, lastOnlineTime: updatedInfo.lastOnlineTime })
+            pubsub.publish("ACCOUNT_STATUS_CHANGED", publishInfo)
 
             pubsub.publish("GROUP_MEMBERS_ACCOUNT_STATUS_CHANGED", publishInfo)
         }
@@ -388,13 +391,17 @@ async function addUserToContactList(parent, args, context) {
 
         if (addedUser) {
             let result = await User.findOneAndUpdate({
-                username: currentUser
+                username: currentUser,
+                contactlist: { $nin: [addedUser._id] } // Check if added user is already in logged in user's contact list
             }, {
                 $push: { contactlist: addedUser._id }
             }, {
                 returnDocument: "after"
             })
 
+            if (result === null) {
+                throw new Error(`User ${username} is already contactlist`)
+            }
             return result
         } else {
             throw new Error(`User with username ${username} does not exist`)
@@ -434,6 +441,7 @@ async function removeUserFromContactList(parent, args, context) {
         throw new Error("Can't do that operation at the moment")
     }
 }
+
 module.exports = {
     addUser,
     createGroup,
