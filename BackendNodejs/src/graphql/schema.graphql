@@ -80,7 +80,7 @@ type Subscription {
 type AccountStatusInfo {
   username: String!
   accountStatus: AccountStatus!
-  lastOnlineTime: AccountStatus
+  lastOnlineTime: Date
 }
 
 enum AccountStatus {

@@ -354,7 +354,7 @@ export default {
             loggedInUsername: this.currentUsername,
           },
           updateQuery: (previousResult, { subscriptionData }) => {
-            // Append next messages to current array messages fetched from GraphQL
+            // Update account status in contact list when user online or offline
             let accountStatusInfo = subscriptionData.data.accountStatusInfo;
 
             if (accountStatusInfo) {
