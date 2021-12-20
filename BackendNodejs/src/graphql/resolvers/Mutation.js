@@ -361,7 +361,7 @@ async function updateUserInfo(parent, args, context) {
             let publishInfo = {
                 username,
                 accountStatus: updatedInfo.accountStatus,
-                lastOnlineTime: updatedUser.lastOnlineTime 
+                lastOnlineTime: updatedUser.lastOnlineTime
             }
 
             pubsub.publish("ACCOUNT_STATUS_CHANGED", publishInfo)
