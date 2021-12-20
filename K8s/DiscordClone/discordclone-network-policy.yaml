@@ -1,0 +1,32 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: 
+  name: fileserver-ingress-policy
+  namespace: discord-backend
+spec:
+  podSelector:
+    matchLabels:
+      app: files-server
+  policyTypes:
+    - Ingress
+  ingress:
+  - from: 
+      - namespaceSelector:
+          matchLabels:
+            kubernetes.io/metadata.name: discord-backend
+        podSelector:
+          matchLabels:
+            app: graphql-server
+    ports:
+      - port: 8000
+        protocol: TCP
+  - from:
+      - namespaceSelector:
+          matchLabels:
+            kubernetes.io/metadata.name: discord-backend
+        podSelector:
+          matchLabels:
+            app: socketio-server
+    ports:
+      - port: 8000
+        protocol: TCP

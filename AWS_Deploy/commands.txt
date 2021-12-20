@@ -18,4 +18,16 @@ Export data to MongoDB Atlas
 mongodump
 cd dump
 
-mongorestore "mongodb+srv://frost:<password>@<db-host>/<db-database>" <folder-name>/
+mongorestore "mongodb+srv://frost:Fr0s1At|aS@cluster0.sjmym.mongodb.net/discord" discord/
+
+eksctl create iamserviceaccount \
+    --name aws-node \
+    --namespace kube-system \
+    --cluster DiscordCloneBackend \
+    --attach-policy-arn arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy \
+    --approve \
+    --override-existing-serviceaccounts
+
+kubectl annotate serviceaccount \
+    -n kube-system aws-node \
+    eks.amazonaws.com/role-arn=arn:aws:iam::207986101045:role/AmazonEKSCNIRole
